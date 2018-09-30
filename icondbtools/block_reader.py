@@ -35,7 +35,7 @@ class BlockReader(object):
             self._db.close()
             self._db = None
 
-    def find_block_hash_by_block_height(self, block_height: int) -> Optional[bytes]:
+    def get_block_hash_by_block_height(self, block_height: int) -> Optional[dict]:
         key_prefix = b'block_height_key'
         block_height_key = key_prefix + block_height.to_bytes(12, 'big')
 
@@ -43,17 +43,17 @@ class BlockReader(object):
         if key is None:
             return
 
-        return self.find_block_by_key(key)
+        return self.get_block_by_key(key)
 
-    def find_block_by_block_hash(self, block_hash: str) -> Optional[bytes]:
+    def get_block_by_block_hash(self, block_hash: str) -> Optional[dict]:
         """
 
         :param block_hash: ex) 'd7c3ebf769b4988cf83225240d2f2208efc21dd69650fd494906a3336291c9a0'
         :return: bytes including utf-8 encoded text in json format
         """
-        return self.find_block_by_key(block_hash.encode())
+        return self.get_block_by_key(block_hash.encode())
 
-    def find_block_by_key(self, key: bytes) -> Optional[dict]:
+    def get_block_by_key(self, key: bytes) -> Optional[dict]:
         """key is utf-8 encoded bytes of block_hash hexa string
 
         :param key: ex) b'd7c3ebf769b4988cf83225240d2f2208efc21dd69650fd494906a3336291c9a0'
@@ -64,26 +64,27 @@ class BlockReader(object):
         block: dict = json.loads(value)
         return block
 
-    def get_last_block(self):
+    def get_last_block(self) -> Optional[dict]:
         last_block_key = b'last_block_key'
         key: bytes = self._db.get(last_block_key)
-        return self.find_block_by_key(key)
+        return self.get_block_by_key(key)
 
     def get_state_root_hash_by_block_height(self, block_height: int) -> Optional[bytes]:
-        block: dict = self.find_block_hash_by_block_height(block_height)
+        block: dict = self.get_block_hash_by_block_height(block_height)
         return self._get_state_root_hash(block)
 
     def get_state_root_hash_by_block_hash(self, block_hash: str) -> Optional[bytes]:
-        block: dict = self.find_block_hash_by_block_hash(block_hash)
+        block: dict = self.get_block_by_block_hash(block_hash)
         return self._get_state_root_hash(block)
 
-    def _get_state_root_hash(self, block: dict) -> Optional[bytes]:
+    @staticmethod
+    def get_commit_state(block: dict, default_value: bytes=None) -> Optional[bytes]:
         try:
             return bytes.fromhex(block['commit_state']['icon_dex'])
         except:
             pass
 
-        return None
+        return default_value
 
 
 def main():
@@ -103,7 +104,7 @@ def read_blocks(reader, start_height: int, count: int):
 
     with open('blocks.txt', 'wt') as f:
         for i in range(start_height, start_height + count):
-            block: dict = reader.find_block_hash_by_block_height(i)
+            block: dict = reader.get_block_hash_by_block_height(i)
             if block is None:
                 print(f'last block: {i - 1}')
                 break

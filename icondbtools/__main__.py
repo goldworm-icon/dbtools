@@ -14,12 +14,32 @@
 # limitations under the License.
 
 import argparse
+import sys
+
+
+def run_last_block(args):
+    if args.help:
+        print(f'{sys.argv[0]} {args.command}')
 
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('command', help='command: blockbyheight lastblock ')
+    command_handlers = {
+        'lastblock': run_last_block
+    }
+
+    parser = argparse.ArgumentParser(
+        prog='icondbtools',
+        description='icon db tools')
+    parser.add_argument(
+        'command',
+        help='blockbyheight blockbyhash lastblock stateroothash',
+        required=True)
+
     args = parser.parse_args()
+
+    command_handler = command_handlers[args.command]
+    if command_handler:
+        command_handler(args)
 
 
 if __name__ == '__main__':
