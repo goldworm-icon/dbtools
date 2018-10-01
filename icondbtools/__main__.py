@@ -43,7 +43,7 @@ def print_block(args):
 
 
 def sync(args):
-    db_path: str = args.db_path
+    db_path: str = args.db
     start: int = args.start
     count: int = args.count
     builtin_score_owner = 'hx677133298ed5319607a321a38169031a8867085c'
@@ -65,19 +65,20 @@ def main():
 
     # create the parser for the 'sync' command
     parser_sync = subparsers.add_parser('sync')
-    parser_sync.add_argument('--db', type=str)
-    parser_sync.add_argument('--start', type=int, default=0, help='start height to sync')
-    parser_sync.add_argument('--count', type=int, default=999999999, help='The number of blocks to sync')
+    parser_sync.add_argument('--db', type=str, required=True)
+    parser_sync.add_argument('-s', '--start', type=int, default=0, help='start height to sync')
+    parser_sync.add_argument('-c', '--count', type=int, default=999999999, help='The number of blocks to sync')
+    # parser_sync.add_argument('--stop_on_error', action='store_true')
     parser_sync.set_defaults(func=sync)
 
     # create the parser for lastblock
     parser_last_block = subparsers.add_parser('lastblock')
-    parser_last_block.add_argument('--db', type=str)
+    parser_last_block.add_argument('--db', type=str, required=True)
     parser_last_block.set_defaults(func=print_last_block)
 
     # create the parser for block
     parser_block = subparsers.add_parser('block')
-    parser_block.add_argument('--db', type=str)
+    parser_block.add_argument('--db', type=str, required=True)
     parser_block.add_argument('--height', type=int, default=0, help='start height to sync', required=True)
     parser_block.set_defaults(func=print_block)
 
