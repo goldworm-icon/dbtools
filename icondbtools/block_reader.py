@@ -89,12 +89,12 @@ class BlockReader(object):
 
 def main():
     reader = BlockReader()
-    reader.open('./data/block')
+    reader.open('../data/icon_dex')
 
-    # read_blocks(reader, start_height=20000, count=100)
+    read_blocks(reader, start_height=1, count=1)
     # read_last_block(reader)
-    print(reader.get_state_root_hash_by_block_height(100))
-    print(reader.get_state_root_hash_by_block_height(23366))
+    # print(reader.get_state_root_hash_by_block_height(100))
+    # print(reader.get_state_root_hash_by_block_height(23366))
 
     reader.close()
 

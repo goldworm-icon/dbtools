@@ -16,13 +16,26 @@
 import argparse
 import sys
 
+from .icon_service_validator import IconServiceValidator
+
 
 def run_last_block(args):
     if args.help:
         print(f'{sys.argv[0]} {args.command}')
 
 
+def validate_icon_service(loopchain_db_path: str):
+    loopchain_db_path = './data/testnet_db'
+    builtin_score_owner = 'hx677133298ed5319607a321a38169031a8867085c'
+
+    executor = IconServiceValidator()
+    executor.open(builtin_score_owner=builtin_score_owner)
+    executor.run(loopchain_db_path, 0, 2)
+    executor.close()
+
+
 def main():
+    """
     command_handlers = {
         'lastblock': run_last_block
     }
@@ -40,6 +53,8 @@ def main():
     command_handler = command_handlers[args.command]
     if command_handler:
         command_handler(args)
+    """
+    validate_icon_service()
 
 
 if __name__ == '__main__':
