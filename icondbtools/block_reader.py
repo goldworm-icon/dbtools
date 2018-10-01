@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import json
+import sys
 import time
 from typing import Optional
 
@@ -89,9 +90,10 @@ class BlockReader(object):
 
 def main():
     reader = BlockReader()
-    reader.open('../data/icon_dex')
+    reader.open('/home/goldworm/work/icon/db_data/testnet_db')
 
-    read_blocks(reader, start_height=1, count=1)
+    start_height = int(sys.argv[1])
+    read_blocks(reader, start_height=start_height, count=1)
     # read_last_block(reader)
     # print(reader.get_state_root_hash_by_block_height(100))
     # print(reader.get_state_root_hash_by_block_height(23366))

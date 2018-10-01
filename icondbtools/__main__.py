@@ -25,12 +25,13 @@ def run_last_block(args):
 
 
 def validate_icon_service(loopchain_db_path: str):
-    loopchain_db_path = './data/testnet_db'
     builtin_score_owner = 'hx677133298ed5319607a321a38169031a8867085c'
+
+    print(f'loopchain_db_path: {loopchain_db_path}')
 
     executor = IconServiceValidator()
     executor.open(builtin_score_owner=builtin_score_owner)
-    executor.run(loopchain_db_path, 0, 2)
+    executor.run(loopchain_db_path)
     executor.close()
 
 
@@ -54,7 +55,7 @@ def main():
     if command_handler:
         command_handler(args)
     """
-    validate_icon_service()
+    validate_icon_service(sys.argv[1])
 
 
 if __name__ == '__main__':

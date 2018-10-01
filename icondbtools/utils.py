@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from iconservice.base.address import Address
+from iconservice.base.address import Address, MalformedAddress
 from iconservice.base.block import Block
 
 from .loopchain_block import LoopchainBlock
@@ -40,7 +40,7 @@ def convert_transaction_to_request(loopchain_block: 'LoopchainBlock', tx_dict: d
     request = {'method': 'icx_sendTransaction', 'params': params}
 
     params['from'] = Address.from_string(tx_dict['from'])
-    params['to'] = Address.from_string(tx_dict['to'])
+    params['to'] = MalformedAddress.from_string(tx_dict['to'])
 
     if 'tx_hash' in tx_dict:
         params['txHash'] = tx_dict['tx_hash']
