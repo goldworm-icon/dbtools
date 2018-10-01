@@ -17,45 +17,73 @@ import argparse
 import sys
 
 from .icon_service_validator import IconServiceValidator
+from .block_reader import BlockReader
+
+def print_last_block(args):
+    db_path: str = args.db
+
+    block_reader = BlockReader()
+    block_reader.open(db_path)
+    block: dict = block_reader.get_last_block()
+    block_reader.close()
+
+    print(block)
 
 
-def run_last_block(args):
-    if args.help:
-        print(f'{sys.argv[0]} {args.command}')
+def print_block(args):
+    db_path: str = args.db
+    height: int = args.height
+
+    block_reader = BlockReader()
+    block_reader.open(db_path)
+    block: dict = block_reader.get_block_hash_by_block_height(height)
+    block_reader.close()
+
+    print(block)
 
 
-def validate_icon_service(loopchain_db_path: str):
+def sync(args):
+    db_path: str = args.db_path
+    start: int = args.start
+    count: int = args.count
     builtin_score_owner = 'hx677133298ed5319607a321a38169031a8867085c'
 
-    print(f'loopchain_db_path: {loopchain_db_path}')
+    print(f'loopchain_db_path: {db_path}\n'
+          f'start: {start}\n'
+          f'count: {count}')
 
-    executor = IconServiceValidator()
-    executor.open(builtin_score_owner=builtin_score_owner)
-    executor.run(loopchain_db_path)
-    executor.close()
+    validator = IconServiceValidator()
+    validator.open(builtin_score_owner=builtin_score_owner)
+    validator.run(db_path, start_height=start, count=count)
+    validator.close()
 
 
 def main():
-    """
-    command_handlers = {
-        'lastblock': run_last_block
-    }
+    parser = argparse.ArgumentParser(prog='icondbtools', description='icon db tools')
 
-    parser = argparse.ArgumentParser(
-        prog='icondbtools',
-        description='icon db tools')
-    parser.add_argument(
-        'command',
-        help='blockbyheight blockbyhash lastblock stateroothash',
-        required=True)
+    subparsers = parser.add_subparsers(title='subcommands')
+
+    # create the parser for the 'sync' command
+    parser_sync = subparsers.add_parser('sync')
+    parser_sync.add_argument('--db', type=str)
+    parser_sync.add_argument('--start', type=int, default=0, help='start height to sync')
+    parser_sync.add_argument('--count', type=int, default=999999999, help='The number of blocks to sync')
+    parser_sync.set_defaults(func=sync)
+
+    # create the parser for lastblock
+    parser_last_block = subparsers.add_parser('lastblock')
+    parser_last_block.add_argument('--db', type=str)
+    parser_last_block.set_defaults(func=print_last_block)
+
+    # create the parser for block
+    parser_block = subparsers.add_parser('block')
+    parser_block.add_argument('--db', type=str)
+    parser_block.add_argument('--height', type=int, default=0, help='start height to sync', required=True)
+    parser_block.set_defaults(func=print_block)
 
     args = parser.parse_args()
-
-    command_handler = command_handlers[args.command]
-    if command_handler:
-        command_handler(args)
-    """
-    validate_icon_service(sys.argv[1])
+    print(args)
+    args.func(args)
 
 
 if __name__ == '__main__':
