@@ -91,6 +91,9 @@ def create_block(loopchain_block: 'LoopchainBlock') -> 'Block':
 
 
 def str_to_int(value: str) -> int:
+    if isinstance(value, int):
+        return value
+
     if value.startswith('0x') or value.startswith('-0x'):
         base = 16
     else:
