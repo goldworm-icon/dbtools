@@ -19,7 +19,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="icon-db-tools",
+    name="icondbtools",
     version="0.0.1",
     author="ICON Foundation",
     author_email="goldworm@icon.foundation",
