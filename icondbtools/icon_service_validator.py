@@ -38,11 +38,13 @@ class IconServiceValidator(object):
              builtin_score_owner: str=''):
         conf = IconConfig('', default_icon_config)
         conf.update_conf({
-            ConfigKey.SERVICE_FEE: fee,
-            ConfigKey.SERVICE_AUDIT: audit,
-            ConfigKey.SERVICE_DEPLOYER_WHITELIST: deployer_whitelist,
-            ConfigKey.SERVICE_SCORE_PACKAGE_VALIDATOR: score_package_validator,
-            ConfigKey.BUILTIN_SCORE_OWNER: builtin_score_owner
+            'builtinScoreOwner': builtin_score_owner,
+            'service': {
+                'fee': fee,
+                'audit': audit,
+                'scorePackageValidator': score_package_validator,
+                'deployerWhiteList': deployer_whitelist
+            }
         })
 
         self._engine.open(conf)
@@ -91,7 +93,6 @@ class IconServiceValidator(object):
 
     def _check_invoke_result(self, tx_results: list):
         for tx_result in tx_results:
-            print(tx_result)
             tx_hash: str = tx_result.tx_hash
             tx_info_in_db: dict =\
                 self._block_reader.get_transaction_result_by_hash(tx_hash)
@@ -113,12 +114,14 @@ class IconServiceValidator(object):
             if step_used != tx_result.step_used:
                 print(f'step_used: {step_used} != {tx_result.step_used}')
                 return False
-            if step != tx_result.step_used * tx_result.step_price:
-                print(f'step: {step} != {tx_result.step_used * tx_result.step_price}')
+
+            tx_result_step: int = tx_result.step_used * tx_result.step_price
+            if step != tx_result_step:
+                print(f'step: {step} != {tx_result_step}')
                 return False
-            # if step_price != tx_result.step_price:
-            #     print(f'step_price: {step_price} != {tx_result.step_price}')
-            #     return False
+            if step_price != tx_result.step_price:
+                print(f'step_price: {step_price} != {tx_result.step_price}')
+                return False
             if event_logs != tx_result.event_logs:
                 print(f'event_logs: {event_logs} != {tx_result.event_logs}')
                 return False
