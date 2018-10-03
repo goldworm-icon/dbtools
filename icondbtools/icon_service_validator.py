@@ -58,10 +58,10 @@ class IconServiceValidator(object):
 
         print('block_height | commit_state | state_root_hash')
 
-        for i in range(start_height, start_height + count):
-            block_dict: dict = self._block_reader.get_block_hash_by_block_height(i)
+        for height in range(start_height, start_height + count):
+            block_dict: dict = self._block_reader.get_block_hash_by_block_height(height)
             if block_dict is None:
-                print(f'last block: {i - 1}')
+                print(f'last block: {height - 1}')
                 break
 
             loopchain_block = LoopchainBlock.from_dict(block_dict)
@@ -71,14 +71,14 @@ class IconServiceValidator(object):
             commit_state: bytes = self._block_reader.get_commit_state(block_dict, b'')
 
             # "commit_state" is the field name of state_root_hash in loopchain block
-            print(f'{i} | {commit_state.hex()} | {state_root_hash.hex()}')
+            print(f'{height} | {commit_state.hex()[:6]} | {state_root_hash.hex()[:6]}')
 
             if commit_state:
                 if stop_on_error and commit_state != state_root_hash:
                     print(block_dict)
                     break
 
-            if i > 0 and not self._check_invoke_result(tx_results):
+            if height > 0 and not self._check_invoke_result(tx_results):
                 break
 
             self._engine.commit(block)
@@ -92,21 +92,28 @@ class IconServiceValidator(object):
         return self._engine.invoke(block, tx_requests)
 
     def _check_invoke_result(self, tx_results: list):
+        """Compare the transaction results from IconServiceEngine
+        with the results stored in loopchain db
+
+        :param tx_results: the transaction results that IconServiceEngine.invoke() returns
+        :return: True(same) False(different)
+        """
+
         for tx_result in tx_results:
-            tx_hash: str = tx_result.tx_hash
             tx_info_in_db: dict =\
-                self._block_reader.get_transaction_result_by_hash(tx_hash)
+                self._block_reader.get_transaction_result_by_hash(
+                    tx_result.tx_hash.hex())
             tx_result_in_db = tx_info_in_db['result']
 
             status: int = int(tx_result_in_db['status'], 16)
-            tx_hash: str = tx_result_in_db['txHash']
+            tx_hash: bytes = bytes.fromhex(tx_result_in_db['txHash'])
             step_used: int = int(tx_result_in_db['stepUsed'], 16)
             step_price: int = int(tx_result_in_db['stepPrice'], 16)
             event_logs: list = tx_result_in_db['eventLogs']
             step: int = step_used * step_price
 
             if tx_hash != tx_result.tx_hash:
-                print(f'tx_hash: {tx_hash} != {tx_result.tx_hash}')
+                print(f'tx_hash: {tx_hash.hex()} != {tx_result.tx_hash.hex()}')
                 return False
             if status != tx_result.status:
                 print(f'status: {status} != {tx_result.status}')

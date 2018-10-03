@@ -45,9 +45,9 @@ def convert_transaction_to_request(loopchain_block: 'LoopchainBlock', tx_dict: d
     params['to'] = convert_to_address(tx_dict['to'])
 
     if 'tx_hash' in tx_dict:
-        params['txHash'] = tx_dict['tx_hash']
+        params['txHash'] = bytes.fromhex(tx_dict['tx_hash'])
     else:
-        params['txHash'] = tx_dict['txHash']
+        params['txHash'] = bytes.fromhex(tx_dict['txHash'])
 
     if 'timestamp' in tx_dict:
         params['timestamp'] = str_to_int(tx_dict['timestamp'])
