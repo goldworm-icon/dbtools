@@ -79,21 +79,20 @@ class BlockReader(object):
         tx_result: dict = json.loads(value)
         return tx_result
 
-
-    def get_state_root_hash_by_block_height(self, block_height: int) -> Optional[bytes]:
+    def get_state_root_hash_by_block_height(
+            self, block_height: int) -> Optional[bytes]:
         block: dict = self.get_block_hash_by_block_height(block_height)
-        return self._get_state_root_hash(block)
+        return self.get_commit_state(block)
 
     def get_state_root_hash_by_block_hash(self, block_hash: str) -> Optional[bytes]:
         block: dict = self.get_block_by_block_hash(block_hash)
-        return self._get_state_root_hash(block)
-
+        return self.get_commit_state(block)
 
     @staticmethod
     def get_commit_state(block: dict, default_value: bytes=None) -> Optional[bytes]:
         try:
             return bytes.fromhex(block['commit_state']['icon_dex'])
-        except:
+        except KeyError:
             pass
 
         return default_value

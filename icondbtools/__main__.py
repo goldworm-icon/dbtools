@@ -55,6 +55,7 @@ def print_transaction_result(args):
 
     print(tx_result)
 
+
 def sync(args):
     db_path: str = args.db
     start: int = args.start
@@ -83,7 +84,7 @@ def clear(args):
     for path in paths:
         try:
             shutil.rmtree(path)
-        except:
+        except FileNotFoundError:
             pass
 
 

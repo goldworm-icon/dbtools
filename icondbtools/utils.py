@@ -15,7 +15,8 @@
 
 from typing import Union
 
-from iconservice.base.address import Address, MalformedAddress
+from iconservice.base.address import Address
+from iconservice.base.address import MalformedAddress
 from iconservice.base.block import Block
 from iconservice.base.exception import InvalidParamsException
 from .loopchain_block import LoopchainBlock
@@ -68,9 +69,9 @@ def convert_transaction_to_request(loopchain_block: 'LoopchainBlock', tx_dict: d
 
 def convert_to_address(to: str) -> Union['Address', 'MalformedAddress']:
     try:
-        address = MalformedAddress.from_string(to)
-    except InvalidParamsException:
         address = Address.from_string(to)
+    except InvalidParamsException:
+        address = MalformedAddress.from_string(to)
 
     return address
 
@@ -110,3 +111,7 @@ def str_to_int(value: str) -> int:
         base = 10
 
     return int(value, base)
+
+
+def compare_transaction_result(tx_result1, tx_result2) -> bool:
+    pass
