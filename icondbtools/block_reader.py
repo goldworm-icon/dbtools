@@ -70,6 +70,16 @@ class BlockReader(object):
         key: bytes = self._db.get(last_block_key)
         return self.get_block_by_key(key)
 
+    def get_transaction_result_by_hash(self, tx_hash: str) -> Optional[dict]:
+        if tx_hash.startswith('0x'):
+            tx_hash = tx_hash[2:]
+
+        key: bytes = tx_hash.encode()
+        value: bytes = self._db.get(key)
+        tx_result: dict = json.loads(value)
+        return tx_result
+
+
     def get_state_root_hash_by_block_height(self, block_height: int) -> Optional[bytes]:
         block: dict = self.get_block_hash_by_block_height(block_height)
         return self._get_state_root_hash(block)
@@ -77,6 +87,7 @@ class BlockReader(object):
     def get_state_root_hash_by_block_hash(self, block_hash: str) -> Optional[bytes]:
         block: dict = self.get_block_by_block_hash(block_hash)
         return self._get_state_root_hash(block)
+
 
     @staticmethod
     def get_commit_state(block: dict, default_value: bytes=None) -> Optional[bytes]:

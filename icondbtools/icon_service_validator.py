@@ -13,8 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import sys
-
 from iconcommons.icon_config import IconConfig
 from iconservice.base.block import Block
 from iconservice.icon_config import default_icon_config
@@ -49,7 +47,11 @@ class IconServiceValidator(object):
 
         self._engine.open(conf)
 
-    def run(self, db_path: str, start_height: int=0, count: int=99999999):
+    def run(self,
+            db_path: str,
+            start_height: int=0,
+            count: int=99999999,
+            stop_on_error: bool=True):
         self._block_reader.open(db_path)
 
         print('block_height | commit_state | state_root_hash')
@@ -70,7 +72,7 @@ class IconServiceValidator(object):
             print(f'{i} | {commit_state.hex()} | {state_root_hash.hex()}')
 
             if commit_state:
-                if commit_state != state_root_hash:
+                if stop_on_error and commit_state != state_root_hash:
                     print(block_dict)
                     break
 

@@ -13,11 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import Union
+
 from iconservice.base.address import Address, MalformedAddress
 from iconservice.base.block import Block
-
+from iconservice.base.exception import InvalidParamsException
 from .loopchain_block import LoopchainBlock
-from .transaction import Transaction
 
 
 def create_transaction_requests(loopchain_block: 'LoopchainBlock') -> list:
@@ -40,7 +41,7 @@ def convert_transaction_to_request(loopchain_block: 'LoopchainBlock', tx_dict: d
     request = {'method': 'icx_sendTransaction', 'params': params}
 
     params['from'] = Address.from_string(tx_dict['from'])
-    params['to'] = MalformedAddress.from_string(tx_dict['to'])
+    params['to'] = convert_to_address(tx_dict['to'])
 
     if 'tx_hash' in tx_dict:
         params['txHash'] = tx_dict['tx_hash']
@@ -63,6 +64,15 @@ def convert_transaction_to_request(loopchain_block: 'LoopchainBlock', tx_dict: d
             params[key] = tx_dict[key]
 
     return request
+
+
+def convert_to_address(to: str) -> Union['Address', 'MalformedAddress']:
+    try:
+        address = MalformedAddress.from_string(to)
+    except InvalidParamsException:
+        address = Address.from_string(to)
+
+    return address
 
 
 def convert_genesis_transaction_to_request(tx_dict: dict):
