@@ -18,7 +18,7 @@ import sys
 import shutil
 
 from .block_reader import BlockReader
-from .icon_service_validator import IconServiceValidator
+from .icon_service_syncer import IconServiceSyncer
 
 
 def print_last_block(args):
@@ -61,17 +61,21 @@ def sync(args):
     start: int = args.start
     count: int = args.count
     stop_on_error: bool = args.stop_on_error
+    no_commit: bool = args.no_commit
+    write_precommit_data: bool = args.write_precommit_data
     builtin_score_owner: str = args.builtin_score_owner
 
     print(f'loopchain_db_path: {db_path}\n'
           f'start: {start}\n'
           f'count: {count}')
 
-    validator = IconServiceValidator()
-    validator.open(builtin_score_owner=builtin_score_owner)
-    validator.run(
-        db_path, start_height=start, count=count, stop_on_error=stop_on_error)
-    validator.close()
+    syncer = IconServiceSyncer()
+    syncer.open(builtin_score_owner=builtin_score_owner)
+    syncer.run(
+        db_path, start_height=start, count=count,
+        stop_on_error=stop_on_error, no_commit=no_commit,
+        write_precommit_data=write_precommit_data)
+    syncer.close()
 
 
 def clear(args):
@@ -107,9 +111,13 @@ def main():
         default=mainnet_builtin_score_owner,
         help='BuiltinScoreOwner')
     parser_sync.add_argument(
-        '--stop_on_error',
+        '--stop-on-error',
         action='store_true',
         help='stop running when commit_state is different from state_root_hash')
+    parser_sync.add_argument(
+        '--no-commit', action='store_true', help='Do not commit')
+    parser_sync.add_argument(
+        '--write-precommit-data', action='store_true', help='Write precommit data to file')
     parser_sync.set_defaults(func=sync)
 
     # create the parser for lastblock

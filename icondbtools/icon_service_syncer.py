@@ -16,7 +16,6 @@
 from iconcommons.icon_config import IconConfig
 from iconservice.base.block import Block
 from iconservice.icon_config import default_icon_config
-from iconservice.icon_constant import ConfigKey
 from iconservice.icon_service_engine import IconServiceEngine
 from iconservice.iconscore.icon_score_result import TransactionResult
 
@@ -25,7 +24,7 @@ from .block_reader import BlockReader
 from .loopchain_block import LoopchainBlock
 
 
-class IconServiceValidator(object):
+class IconServiceSyncer(object):
     def __init__(self):
         self._block_reader = BlockReader()
         self._engine = IconServiceEngine()
@@ -53,7 +52,18 @@ class IconServiceValidator(object):
             db_path: str,
             start_height: int=0,
             count: int=99999999,
-            stop_on_error: bool=True):
+            stop_on_error: bool=True,
+            no_commit: bool=False,
+            write_precommit_data: bool=False):
+        """Begin to synchronize IconServiceEngine with blocks from loopchain db
+
+        :param db_path: loopchain db path
+        :param start_height: start height to sync
+        :param count: The number of blocks to sync
+        :param stop_on_error: If error happens, stop syncing
+        :param no_commit: Do not commit
+        :return:
+        """
         self._block_reader.open(db_path)
 
         print('block_height | commit_state | state_root_hash')
@@ -73,15 +83,20 @@ class IconServiceValidator(object):
             # "commit_state" is the field name of state_root_hash in loopchain block
             print(f'{height} | {commit_state.hex()[:6]} | {state_root_hash.hex()[:6]}')
 
+            if write_precommit_data:
+                self._print_precommit_data(block)
+
             if commit_state:
                 if stop_on_error and commit_state != state_root_hash:
                     print(block_dict)
+                    self._print_precommit_data(block)
                     break
 
             if height > 0 and not self._check_invoke_result(tx_results):
                 break
 
-            self._engine.commit(block)
+            if not no_commit:
+                self._engine.commit(block)
 
         self._block_reader.close()
 
@@ -105,6 +120,7 @@ class IconServiceValidator(object):
                     tx_result.tx_hash.hex())
             tx_result_in_db = tx_info_in_db['result']
 
+            # informations extracted from db
             status: int = int(tx_result_in_db['status'], 16)
             tx_hash: bytes = bytes.fromhex(tx_result_in_db['txHash'])
             step_used: int = int(tx_result_in_db['stepUsed'], 16)
@@ -135,6 +151,28 @@ class IconServiceValidator(object):
 
         return True
 
+    def _print_precommit_data(self, block: 'Block'):
+        """Print the latest updated states stored in IconServiceEngine
+
+        :return:
+        """
+        precommit_data_manager: 'PrecommitDataManager' =\
+            self._engine._precommit_data_manager
+
+        precommit_data: 'PrecommitData' = precommit_data_manager.get(block.hash)
+        block_batch: 'OrderedDict' = precommit_data.block_batch
+        state_root_hash: bytes = block_batch.digest()
+
+        filename = f'{block.height}-precommit-data.txt'
+        with open(filename, 'wt') as f:
+            for i, key in enumerate(block_batch):
+                value: bytes = block_batch[key]
+                line = f'{i}: {key.hex()} - {value.hex()}'
+                print(line)
+                f.write(f'{line}\n')
+
+            f.write(f'state_root_hash: {state_root_hash.hex()}\n')
+
     def close(self):
         self._engine.close()
 
@@ -142,7 +180,7 @@ class IconServiceValidator(object):
 def main():
     loopchain_db_path = '../data/icon_dex'
 
-    executor = IconServiceValidator()
+    executor = IconServiceSyncer()
     executor.open(builtin_score_owner='hx677133298ed5319607a321a38169031a8867085c')
     executor.run(loopchain_db_path, 0, 1)
     executor.close()
