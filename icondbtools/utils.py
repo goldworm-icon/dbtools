@@ -113,5 +113,12 @@ def str_to_int(value: str) -> int:
     return int(value, base)
 
 
-def compare_transaction_result(tx_result1, tx_result2) -> bool:
-    pass
+def object_to_str(value) -> str:
+    if isinstance(value, Address):
+        return str(value)
+    elif isinstance(value, int):
+        return hex(value)
+    elif isinstance(value, bytes):
+        return f'0x{value.hex()}'
+
+    return value

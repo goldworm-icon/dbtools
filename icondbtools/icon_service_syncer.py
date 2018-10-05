@@ -14,11 +14,11 @@
 # limitations under the License.
 
 from iconcommons.icon_config import IconConfig
+
+from iconservice.base.address import Address
 from iconservice.base.block import Block
 from iconservice.icon_config import default_icon_config
 from iconservice.icon_service_engine import IconServiceEngine
-from iconservice.iconscore.icon_score_result import TransactionResult
-
 from . import utils
 from .block_reader import BlockReader
 from .loopchain_block import LoopchainBlock
@@ -76,23 +76,27 @@ class IconServiceSyncer(object):
 
             loopchain_block = LoopchainBlock.from_dict(block_dict)
             block: 'Block' = utils.create_block(loopchain_block)
+            tx_requests: list = utils.create_transaction_requests(loopchain_block)
 
-            tx_results, state_root_hash = self._invoke(loopchain_block)
+            tx_results, state_root_hash = self._engine.invoke(block, tx_requests)
             commit_state: bytes = self._block_reader.get_commit_state(block_dict, b'')
 
             # "commit_state" is the field name of state_root_hash in loopchain block
-            print(f'{height} | {commit_state.hex()[:6]} | {state_root_hash.hex()[:6]}')
+            print(f'{height} | {commit_state.hex()[:6]} | {state_root_hash.hex()[:6]} | {len(tx_requests)}')
 
             if write_precommit_data:
                 self._print_precommit_data(block)
 
-            if commit_state:
-                if stop_on_error and commit_state != state_root_hash:
-                    print(block_dict)
-                    self._print_precommit_data(block)
-                    break
+            try:
+                if commit_state:
+                    if stop_on_error and commit_state != state_root_hash:
+                        raise Exception()
 
-            if height > 0 and not self._check_invoke_result(tx_results):
+                if height > 0 and not self._check_invoke_result(tx_results):
+                    raise Exception()
+            except:
+                print(block_dict)
+                self._print_precommit_data(block)
                 break
 
             if not no_commit:
@@ -100,15 +104,11 @@ class IconServiceSyncer(object):
 
         self._block_reader.close()
 
-    def _invoke(self, loopchain_block: 'LoopchainBlock') -> ('TransactionResult', bytes):
-        block: 'Block' = utils.create_block(loopchain_block)
-        tx_requests: list = utils.create_transaction_requests(loopchain_block)
-
-        return self._engine.invoke(block, tx_requests)
-
     def _check_invoke_result(self, tx_results: list):
         """Compare the transaction results from IconServiceEngine
         with the results stored in loopchain db
+
+        If transaction result is not compatible to protocol v3, pass it
 
         :param tx_results: the transaction results that IconServiceEngine.invoke() returns
         :return: True(same) False(different)
@@ -119,6 +119,10 @@ class IconServiceSyncer(object):
                 self._block_reader.get_transaction_result_by_hash(
                     tx_result.tx_hash.hex())
             tx_result_in_db = tx_info_in_db['result']
+
+            # tx_v2 dose not have transaction result_v3
+            if 'status' not in tx_result_in_db:
+                continue
 
             # informations extracted from db
             status: int = int(tx_result_in_db['status'], 16)
@@ -145,8 +149,35 @@ class IconServiceSyncer(object):
             if step_price != tx_result.step_price:
                 print(f'step_price: {step_price} != {tx_result.step_price}')
                 return False
-            if event_logs != tx_result.event_logs:
-                print(f'event_logs: {event_logs} != {tx_result.event_logs}')
+
+            if not self._check_event_log(event_logs, tx_result.event_logs):
+                return False
+
+        return True
+
+    def _check_event_log(self, event_logs_in_db: dict, event_logs_in_tx_result: 'EventLogs'):
+        for event_log, tx_result_event_log in zip(event_logs_in_db, event_logs_in_tx_result):
+            tx_result_event_log: dict = tx_result_event_log.to_dict()
+
+            # convert Address to str
+            if 'score_address' in tx_result_event_log:
+                score_address: 'Address' = tx_result_event_log['score_address']
+                del tx_result_event_log['score_address']
+                tx_result_event_log['scoreAddress'] = str(score_address)
+
+            # convert Address objects to str objects in 'indexes'
+            indexed: list = tx_result_event_log['indexed']
+            for i in range(len(indexed)):
+                value = indexed[i]
+                indexed[i] = utils.object_to_str(value)
+
+            data: list = tx_result_event_log['data']
+            for i in range(len(data)):
+                value = data[i]
+                data[i] = utils.object_to_str(value)
+
+            if event_log != tx_result_event_log:
+                print(f'{event_log} != {tx_result_event_log}')
                 return False
 
         return True
