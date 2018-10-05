@@ -150,12 +150,14 @@ class IconServiceSyncer(object):
                 print(f'step_price: {step_price} != {tx_result.step_price}')
                 return False
 
-            if not self._check_event_log(event_logs, tx_result.event_logs):
+            if not self._check_event_logs(event_logs, tx_result.event_logs):
                 return False
 
         return True
 
-    def _check_event_log(self, event_logs_in_db: dict, event_logs_in_tx_result: 'EventLogs'):
+    def _check_event_logs(self,
+                          event_logs_in_db: dict,
+                          event_logs_in_tx_result: 'EventLogs'):
         for event_log, tx_result_event_log in zip(event_logs_in_db, event_logs_in_tx_result):
             tx_result_event_log: dict = tx_result_event_log.to_dict()
 
