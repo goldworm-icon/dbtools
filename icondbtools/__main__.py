@@ -17,14 +17,16 @@ import argparse
 import sys
 import shutil
 
-from .block_reader import BlockReader
+from .block_database_reader import BlockDatabaseReader
 from .icon_service_syncer import IconServiceSyncer
+from .state_database_reader import StateDatabaseReader, StateHash
+from .timer import Timer
 
 
 def print_last_block(args):
     db_path: str = args.db
 
-    block_reader = BlockReader()
+    block_reader = BlockDatabaseReader()
     block_reader.open(db_path)
     block: dict = block_reader.get_last_block()
     block_reader.close()
@@ -36,7 +38,7 @@ def print_block(args):
     db_path: str = args.db
     height: int = args.height
 
-    block_reader = BlockReader()
+    block_reader = BlockDatabaseReader()
     block_reader.open(db_path)
     block: dict = block_reader.get_block_hash_by_block_height(height)
     block_reader.close()
@@ -48,7 +50,7 @@ def print_transaction_result(args):
     db_path: str = args.db
     tx_hash: str = args.tx_hash
 
-    block_reader = BlockReader()
+    block_reader = BlockDatabaseReader()
     block_reader.open(db_path)
     tx_result: dict = block_reader.get_transaction_result_by_hash(tx_hash)
     block_reader.close()
@@ -90,6 +92,28 @@ def clear(args):
             shutil.rmtree(path)
         except FileNotFoundError:
             pass
+
+
+def run_command_state_hash(args):
+    """Create hash from state db
+
+    :param args:
+    :return:
+    """
+    timer = Timer()
+    db_path: str = args.db
+
+    reader = StateDatabaseReader()
+    reader.open(db_path)
+
+    timer.start()
+    state_hash: 'StateHash' = reader.create_state_hash()
+    timer.stop()
+
+    reader.close()
+
+    print(state_hash)
+    print(f'elapsedTime: {timer.duration()} seconds')
 
 
 def main():
@@ -141,6 +165,11 @@ def main():
     # create the parser for clear
     parser_clear = subparsers.add_parser('clear', help='clear .score and .statedb')
     parser_clear.set_defaults(func=clear)
+
+    # create the parser for statehash
+    parser_state_hash = subparsers.add_parser('statehash')
+    parser_state_hash.add_argument('--db', type=str, required=True)
+    parser_state_hash.set_defaults(func=run_command_state_hash)
 
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)

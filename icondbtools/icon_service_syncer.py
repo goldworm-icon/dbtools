@@ -20,13 +20,13 @@ from iconservice.base.block import Block
 from iconservice.icon_config import default_icon_config
 from iconservice.icon_service_engine import IconServiceEngine
 from . import utils
-from .block_reader import BlockReader
+from .block_database_reader import BlockDatabaseReader
 from .loopchain_block import LoopchainBlock
 
 
 class IconServiceSyncer(object):
     def __init__(self):
-        self._block_reader = BlockReader()
+        self._block_reader = BlockDatabaseReader()
         self._engine = IconServiceEngine()
 
     def open(self,

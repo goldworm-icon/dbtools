@@ -21,7 +21,7 @@ from typing import Optional
 import plyvel
 
 
-class BlockReader(object):
+class BlockDatabaseReader(object):
     """Read block data from leveldb managed by loopchain
     """
 
@@ -99,7 +99,7 @@ class BlockReader(object):
 
 
 def main():
-    reader = BlockReader()
+    reader = BlockDatabaseReader()
     reader.open('/home/goldworm/work/icon/db_data/testnet_db')
 
     start_height = int(sys.argv[1])
