@@ -16,6 +16,7 @@
 import plyvel
 import hashlib
 from iconservice.icx.icx_account import Account
+from iconservice.base.block import Block
 
 
 class StateHash(object):
@@ -48,8 +49,25 @@ class StateDatabaseReader(object):
             self._db.close()
             self._db = None
 
-    def get_account(self, address: 'Address') -> Account:
-        raise NotImplementedError
+    def get_account(self, address: 'Address') -> 'Account':
+        """Read the account from statedb
+
+        :param address:
+        :return:
+        """
+        value: bytes = self._db.get(address.to_bytes())
+        return Account.from_bytes(value)
+
+    def get_last_block(self) -> 'Block':
+        """Read the last commited block from statedb
+
+        :return: last block
+        """
+        value: bytes = self._db.get(b'last_block')
+        if value is None:
+            return None
+
+        return Block.from_bytes(value)
 
     def create_state_hash(self) -> 'StateHash':
         """Read key and value from state db and create sha3 hash value from them

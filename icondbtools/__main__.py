@@ -67,8 +67,21 @@ def sync(args):
     write_precommit_data: bool = args.write_precommit_data
     builtin_score_owner: str = args.builtin_score_owner
 
+    # If --start option is not present, set start point to the last block height from statedb
+    if start < 0:
+        try:
+            state_db_path = '.statedb/icon_dex'
+            reader = StateDatabaseReader()
+            reader.open(state_db_path)
+            block: 'Block' = reader.get_last_block()
+            start = block.height + 1
+        except:
+            start = 0
+        finally:
+            reader.close()
+
     print(f'loopchain_db_path: {db_path}\n'
-          f'start: {start}\n'
+          f'start: {args.start}, {start}\n'
           f'count: {count}')
 
     syncer = IconServiceSyncer()
@@ -116,6 +129,27 @@ def run_command_state_hash(args):
     print(f'elapsedTime: {timer.duration()} seconds')
 
 
+def run_command_state_last_block(args):
+    """Read the last block from statedb
+
+    :param args:
+    :return:
+    """
+    db_path: str = args.db
+
+    try:
+        reader = StateDatabaseReader()
+        reader.open(db_path)
+
+        block: 'Block' = reader.get_last_block()
+        print(f'height: {block.height}\n'
+              f'timestamp: {block.timestamp}\n'
+              f'prev_hash: 0x{block.prev_hash.hex()}\n'
+              f'block_hash: 0x{block.hash.hex()}')
+    finally:
+        reader.close()
+
+
 def main():
     mainnet_builtin_score_owner = 'hx677133298ed5319607a321a38169031a8867085c'
 
@@ -126,7 +160,7 @@ def main():
     # create the parser for the 'sync' command
     parser_sync = subparsers.add_parser('sync')
     parser_sync.add_argument('--db', type=str, required=True)
-    parser_sync.add_argument('-s', '--start', type=int, default=0, help='start height to sync')
+    parser_sync.add_argument('-s', '--start', type=int, default=-1, help='start height to sync')
     parser_sync.add_argument(
         '-c', '--count', type=int, default=999999999, help='The number of blocks to sync')
     parser_sync.add_argument(
@@ -170,6 +204,11 @@ def main():
     parser_state_hash = subparsers.add_parser('statehash')
     parser_state_hash.add_argument('--db', type=str, required=True)
     parser_state_hash.set_defaults(func=run_command_state_hash)
+
+    # create the parser for statelastblock
+    parser_state_last_block = subparsers.add_parser('statelastblock')
+    parser_state_last_block.add_argument('--db', type=str, required=True)
+    parser_state_last_block.set_defaults(func=run_command_state_last_block)
 
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
