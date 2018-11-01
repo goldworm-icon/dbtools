@@ -66,6 +66,10 @@ def sync(args):
     no_commit: bool = args.no_commit
     write_precommit_data: bool = args.write_precommit_data
     builtin_score_owner: str = args.builtin_score_owner
+    fee: bool = bool(args.fee)
+    audit: bool = bool(args.fee)
+    deployer_whitelist: bool = bool(args.deployer_whitelist)
+    score_package_validator: bool = bool(args.score_package_validator)
 
     # If --start option is not present, set start point to the last block height from statedb
     if start < 0:
@@ -85,7 +89,12 @@ def sync(args):
           f'count: {count}')
 
     syncer = IconServiceSyncer()
-    syncer.open(builtin_score_owner=builtin_score_owner)
+    syncer.open(
+        fee=fee,
+        audit=audit,
+        deployer_whitelist=deployer_whitelist,
+        score_package_validator=score_package_validator,
+        builtin_score_owner=builtin_score_owner)
     syncer.run(
         db_path, start_height=start, count=count,
         stop_on_error=stop_on_error, no_commit=no_commit,
@@ -176,6 +185,10 @@ def main():
         '--no-commit', action='store_true', help='Do not commit')
     parser_sync.add_argument(
         '--write-precommit-data', action='store_true', help='Write precommit data to file')
+    parser_sync.add_argument('--fee', type=int, default=1, help='Enable fee')
+    parser_sync.add_argument('--audit', type=int, default=1, help='Enable audit')
+    parser_sync.add_argument('--deployer-whitelist', type=int, default=0, help='Enable deployer whitelist')
+    parser_sync.add_argument('--score-package-validator', type=int, default=0, help='Enable score package validator')
     parser_sync.set_defaults(func=sync)
 
     # create the parser for lastblock
