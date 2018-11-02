@@ -14,13 +14,14 @@
 # limitations under the License.
 
 import argparse
-import sys
 import shutil
+import sys
+from datetime import datetime
 
+from iconservice.base.address import Address
 from .block_database_reader import BlockDatabaseReader
 from .icon_service_syncer import IconServiceSyncer
 from .state_database_reader import StateDatabaseReader, StateHash
-from iconservice.base.address import Address
 from .timer import Timer
 
 
@@ -67,10 +68,10 @@ def sync(args):
     no_commit: bool = args.no_commit
     write_precommit_data: bool = args.write_precommit_data
     builtin_score_owner: str = args.builtin_score_owner
-    fee: bool = bool(args.fee)
-    audit: bool = bool(args.fee)
-    deployer_whitelist: bool = bool(args.deployer_whitelist)
-    score_package_validator: bool = bool(args.score_package_validator)
+    fee: bool = not args.no_fee
+    audit: bool = not args.no_audit
+    deployer_whitelist: bool = args.deployer_whitelist
+    score_package_validator: bool = args.score_package_validator
 
     # If --start option is not present, set start point to the last block height from statedb
     if start < 0:
@@ -87,7 +88,11 @@ def sync(args):
 
     print(f'loopchain_db_path: {db_path}\n'
           f'start: {args.start}, {start}\n'
-          f'count: {count}')
+          f'count: {count}\n'
+          f'fee: {fee}\n'
+          f'audit: {audit}\n'
+          f'deployerWhitelist: {deployer_whitelist}\n'
+          f'scorePackageValidator: {score_package_validator}\n')
 
     syncer = IconServiceSyncer()
     syncer.open(
@@ -152,8 +157,10 @@ def run_command_state_last_block(args):
         reader.open(db_path)
 
         block: 'Block' = reader.get_last_block()
+
         print(f'height: {block.height}\n'
-              f'timestamp: {block.timestamp}\n'
+              f'timestamp: {block.timestamp} '
+              f'({datetime.fromtimestamp(block.timestamp / 10 ** 6)})\n'
               f'prev_hash: 0x{block.prev_hash.hex()}\n'
               f'block_hash: 0x{block.hash.hex()}')
     finally:
@@ -211,10 +218,10 @@ def main():
         '--no-commit', action='store_true', help='Do not commit')
     parser_sync.add_argument(
         '--write-precommit-data', action='store_true', help='Write precommit data to file')
-    parser_sync.add_argument('--fee', type=int, default=1, help='Enable fee')
-    parser_sync.add_argument('--audit', type=int, default=1, help='Enable audit')
-    parser_sync.add_argument('--deployer-whitelist', type=int, default=0, help='Enable deployer whitelist')
-    parser_sync.add_argument('--score-package-validator', type=int, default=0, help='Enable score package validator')
+    parser_sync.add_argument('--no-fee', action='store_true', help='Disable fee')
+    parser_sync.add_argument('--no-audit', action='store_true', help='Diable audit')
+    parser_sync.add_argument('--deployer-whitelist', action='store_true', help='Enable deployer whitelist')
+    parser_sync.add_argument('--score-package-validator', action='store_true', help='Enable score package validator')
     parser_sync.set_defaults(func=sync)
 
     # create the parser for lastblock
