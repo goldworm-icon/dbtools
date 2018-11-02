@@ -56,7 +56,13 @@ class StateDatabaseReader(object):
         :return:
         """
         value: bytes = self._db.get(address.to_bytes())
-        return Account.from_bytes(value)
+        if value is None:
+            return None
+
+        account = Account.from_bytes(value)
+        account.address = address
+
+        return account
 
     def get_last_block(self) -> 'Block':
         """Read the last commited block from statedb

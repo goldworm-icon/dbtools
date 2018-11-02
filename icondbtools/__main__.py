@@ -20,6 +20,7 @@ import shutil
 from .block_database_reader import BlockDatabaseReader
 from .icon_service_syncer import IconServiceSyncer
 from .state_database_reader import StateDatabaseReader, StateHash
+from iconservice.base.address import Address
 from .timer import Timer
 
 
@@ -159,6 +160,31 @@ def run_command_state_last_block(args):
         reader.close()
 
 
+def run_command_account(args):
+    """Print the account info of a given address
+
+    :param args:
+    :return:
+    """
+    db_path: str = args.db
+    address: 'Address' = Address.from_string(args.address)
+
+    try:
+        reader = StateDatabaseReader()
+        reader.open(db_path)
+
+        account: 'Account' = reader.get_account(address)
+        if account is None:
+            print(f'Account not found: {address}')
+        else:
+            print(f'address: {account.address}\n'
+                  f'amount: {account.icx / 10 ** 18} in icx\n'
+                  f'is_c_rep: {account.c_rep}\n'
+                  f'is_locked: {account.locked}')
+    finally:
+        reader.close()
+
+
 def main():
     mainnet_builtin_score_owner = 'hx677133298ed5319607a321a38169031a8867085c'
 
@@ -222,6 +248,14 @@ def main():
     parser_state_last_block = subparsers.add_parser('statelastblock')
     parser_state_last_block.add_argument('--db', type=str, required=True)
     parser_state_last_block.set_defaults(func=run_command_state_last_block)
+
+    # create the parser for account
+    parser_account = subparsers.add_parser('account')
+    parser_account.add_argument('--db', type=str, required=True)
+    parser_account.add_argument(
+        '--address', type=str, required=True,
+        help='EOA or SCORE address. ex) hx21a0f22e65ad8cd76c282b8b7fb35ba0368aa9bd')
+    parser_account.set_defaults(func=run_command_account)
 
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
