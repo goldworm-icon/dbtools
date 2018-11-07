@@ -88,12 +88,13 @@ class IconServiceSyncer(object):
                 self._print_precommit_data(block)
 
             try:
-                if commit_state:
-                    if stop_on_error and commit_state != state_root_hash:
-                        raise Exception()
+                if stop_on_error:
+                    if commit_state:
+                        if commit_state != state_root_hash:
+                            raise Exception()
 
-                if height > 0 and not self._check_invoke_result(tx_results):
-                    raise Exception()
+                    if height > 0 and not self._check_invoke_result(tx_results):
+                        raise Exception()
             except:
                 print(block_dict)
                 self._print_precommit_data(block)

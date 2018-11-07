@@ -63,6 +63,7 @@ def print_transaction_result(args):
 def sync(args):
     db_path: str = args.db
     start: int = args.start
+    end: int = args.end
     count: int = args.count
     stop_on_error: bool = args.stop_on_error
     no_commit: bool = args.no_commit
@@ -86,8 +87,14 @@ def sync(args):
         finally:
             reader.close()
 
+    if end > -1:
+        if end < start:
+            raise ValueError(f'end({end} < start({start})')
+        count: int = end - start + 1
+
     print(f'loopchain_db_path: {db_path}\n'
           f'start: {args.start}, {start}\n'
+          f'end: {end}\n'
           f'count: {count}\n'
           f'fee: {fee}\n'
           f'audit: {audit}\n'
@@ -203,6 +210,7 @@ def main():
     parser_sync = subparsers.add_parser('sync')
     parser_sync.add_argument('--db', type=str, required=True)
     parser_sync.add_argument('-s', '--start', type=int, default=-1, help='start height to sync')
+    parser_sync.add_argument('--end', type=int, default=-1, help='end height to sync, inclusive')
     parser_sync.add_argument(
         '-c', '--count', type=int, default=999999999, help='The number of blocks to sync')
     parser_sync.add_argument(
