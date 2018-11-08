@@ -13,10 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import plyvel
 import hashlib
-from iconservice.icx.icx_account import Account
+
+import plyvel
+
 from iconservice.base.block import Block
+from iconservice.icx.icx_account import Account
 
 
 class StateHash(object):
@@ -75,7 +77,22 @@ class StateDatabaseReader(object):
 
         return Block.from_bytes(value)
 
-    def create_state_hash(self) -> 'StateHash':
+    def create_state_hash(self, prefix: bytes=None) -> 'StateHash':
+        """Read key and value from state db and create sha3 hash value from them
+
+        :return: StateHash object
+        """
+
+        if prefix is None:
+            db = self._db
+        else:
+            db = self._db.prefixed_db(prefix)
+
+        state_hash, rows, total_key_size, total_value_size = self._create_state_hash(db)
+        return StateHash(state_hash, rows, total_key_size, total_value_size)
+
+    @staticmethod
+    def _create_state_hash(db) -> tuple:
         """Read key and value from state db and create sha3 hash value from them
 
         :return: StateHash object
@@ -86,7 +103,6 @@ class StateDatabaseReader(object):
         total_value_size = 0
 
         sha3_256 = hashlib.sha3_256()
-        db = self._db
 
         for key, value in db:
             sha3_256.update(key)
@@ -97,4 +113,4 @@ class StateDatabaseReader(object):
             total_value_size += len(value)
 
         state_hash: bytes = sha3_256.digest()
-        return StateHash(state_hash, rows, total_key_size, total_value_size)
+        return state_hash, rows, total_key_size, total_value_size

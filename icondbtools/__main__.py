@@ -137,12 +137,20 @@ def run_command_state_hash(args):
     """
     timer = Timer()
     db_path: str = args.db
+    prefix: str = args.prefix
 
     reader = StateDatabaseReader()
     reader.open(db_path)
 
+    # convert hexa string to bytes
+    if prefix is not None:
+        if prefix.startswith('0x'):
+            prefix = prefix[2:]
+
+        prefix: bytes = bytes.fromhex(prefix[2:])
+
     timer.start()
-    state_hash: 'StateHash' = reader.create_state_hash()
+    state_hash: 'StateHash' = reader.create_state_hash(prefix)
     timer.stop()
 
     reader.close()
@@ -257,6 +265,8 @@ def main():
     # create the parser for statehash
     parser_state_hash = subparsers.add_parser('statehash')
     parser_state_hash.add_argument('--db', type=str, required=True)
+    parser_state_hash.add_argument('--prefix', type=str, default=None,
+        help='Generate a state hash using data of which keys start with a given prefix')
     parser_state_hash.set_defaults(func=run_command_state_hash)
 
     # create the parser for statelastblock
