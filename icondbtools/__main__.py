@@ -135,7 +135,6 @@ def run_command_state_hash(args):
     :param args:
     :return:
     """
-    timer = Timer()
     db_path: str = args.db
     prefix: str = args.prefix
 
@@ -149,14 +148,10 @@ def run_command_state_hash(args):
 
         prefix: bytes = bytes.fromhex(prefix)
 
-    timer.start()
     state_hash: 'StateHash' = reader.create_state_hash(prefix)
-    timer.stop()
-
     reader.close()
 
     print(state_hash)
-    print(f'elapsedTime: {timer.duration()} seconds')
 
 
 def run_command_state_last_block(args):
@@ -288,7 +283,12 @@ def main():
 
     args = parser.parse_args()
     print(args)
+
+    timer = Timer()
+    timer.start()
     args.func(args)
+    timer.stop()
+    print(f'elapsedTime: {timer.duration()} seconds')
 
 
 if __name__ == '__main__':
