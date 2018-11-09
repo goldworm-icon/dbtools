@@ -147,7 +147,7 @@ def run_command_state_hash(args):
         if prefix.startswith('0x'):
             prefix = prefix[2:]
 
-        prefix: bytes = bytes.fromhex(prefix[2:])
+        prefix: bytes = bytes.fromhex(prefix)
 
     timer.start()
     state_hash: 'StateHash' = reader.create_state_hash(prefix)
