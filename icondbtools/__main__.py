@@ -73,6 +73,7 @@ def sync(args):
     audit: bool = not args.no_audit
     deployer_whitelist: bool = args.deployer_whitelist
     score_package_validator: bool = args.score_package_validator
+    channel: str = args.channel
 
     # If --start option is not present, set start point to the last block height from statedb
     if start < 0:
@@ -109,7 +110,7 @@ def sync(args):
         score_package_validator=score_package_validator,
         builtin_score_owner=builtin_score_owner)
     syncer.run(
-        db_path, start_height=start, count=count,
+        db_path, channel, start_height=start, count=count,
         stop_on_error=stop_on_error, no_commit=no_commit,
         write_precommit_data=write_precommit_data)
     syncer.close()
@@ -233,6 +234,9 @@ def main():
     parser_sync.add_argument('--no-audit', action='store_true', help='Diable audit')
     parser_sync.add_argument('--deployer-whitelist', action='store_true', help='Enable deployer whitelist')
     parser_sync.add_argument('--score-package-validator', action='store_true', help='Enable score package validator')
+    parser_sync.add_argument(
+        '--channel', type=str,
+        default='icon_dex', help='channel name used as a key of commit_state in block data')
     parser_sync.set_defaults(func=sync)
 
     # create the parser for lastblock

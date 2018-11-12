@@ -89,9 +89,9 @@ class BlockDatabaseReader(object):
         return self.get_commit_state(block)
 
     @staticmethod
-    def get_commit_state(block: dict, default_value: bytes=None) -> Optional[bytes]:
+    def get_commit_state(block: dict, channel: str='icon_dex', default_value: bytes=None) -> Optional[bytes]:
         try:
-            return bytes.fromhex(block['commit_state']['icon_dex'])
+            return bytes.fromhex(block['commit_state'][channel])
         except KeyError:
             pass
 

@@ -50,6 +50,7 @@ class IconServiceSyncer(object):
 
     def run(self,
             db_path: str,
+            channel: str,
             start_height: int=0,
             count: int=99999999,
             stop_on_error: bool=True,
@@ -58,10 +59,12 @@ class IconServiceSyncer(object):
         """Begin to synchronize IconServiceEngine with blocks from loopchain db
 
         :param db_path: loopchain db path
+        :param channel: channel name used as a key to get commit_state in loopchain db
         :param start_height: start height to sync
         :param count: The number of blocks to sync
         :param stop_on_error: If error happens, stop syncing
         :param no_commit: Do not commit
+        :param write_precommit_data:
         :return:
         """
         self._block_reader.open(db_path)
@@ -79,7 +82,7 @@ class IconServiceSyncer(object):
             tx_requests: list = utils.create_transaction_requests(loopchain_block)
 
             tx_results, state_root_hash = self._engine.invoke(block, tx_requests)
-            commit_state: bytes = self._block_reader.get_commit_state(block_dict, b'')
+            commit_state: bytes = self._block_reader.get_commit_state(block_dict, channel, b'')
 
             # "commit_state" is the field name of state_root_hash in loopchain block
             print(f'{height} | {commit_state.hex()[:6]} | {state_root_hash.hex()[:6]} | {len(tx_requests)}')
