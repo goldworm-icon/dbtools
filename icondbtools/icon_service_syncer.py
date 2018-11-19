@@ -71,8 +71,10 @@ class IconServiceSyncer(object):
 
         print('block_height | commit_state | state_root_hash')
 
+        prev_block: 'Block' = None
+
         for height in range(start_height, start_height + count):
-            block_dict: dict = self._block_reader.get_block_hash_by_block_height(height)
+            block_dict: dict = self._block_reader.get_block_by_block_height(height)
             if block_dict is None:
                 print(f'last block: {height - 1}')
                 break
@@ -80,6 +82,11 @@ class IconServiceSyncer(object):
             loopchain_block = LoopchainBlock.from_dict(block_dict)
             block: 'Block' = utils.create_block(loopchain_block)
             tx_requests: list = utils.create_transaction_requests(loopchain_block)
+
+            if prev_block is not None:
+                # print(f'prev_block({prev_block.hash.hex()}) == block({block.prev_hash.hex()})')
+                if prev_block.hash != block.prev_hash:
+                    raise Exception()
 
             tx_results, state_root_hash = self._engine.invoke(block, tx_requests)
             commit_state: bytes = self._block_reader.get_commit_state(block_dict, channel, b'')
@@ -105,6 +112,8 @@ class IconServiceSyncer(object):
 
             if not no_commit:
                 self._engine.commit(block)
+
+            prev_block = block
 
         self._block_reader.close()
 

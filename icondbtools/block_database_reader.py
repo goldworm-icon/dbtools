@@ -36,7 +36,7 @@ class BlockDatabaseReader(object):
             self._db.close()
             self._db = None
 
-    def get_block_hash_by_block_height(self, block_height: int) -> Optional[dict]:
+    def get_block_by_block_height(self, block_height: int) -> Optional[dict]:
         key_prefix = b'block_height_key'
         block_height_key = key_prefix + block_height.to_bytes(12, 'big')
 
@@ -47,7 +47,7 @@ class BlockDatabaseReader(object):
         return self.get_block_by_key(key)
 
     def get_block_by_block_hash(self, block_hash: str) -> Optional[dict]:
-        """
+        """Get block data with hexa string representing block hash
 
         :param block_hash: ex) 'd7c3ebf769b4988cf83225240d2f2208efc21dd69650fd494906a3336291c9a0'
         :return: bytes including utf-8 encoded text in json format
@@ -81,7 +81,7 @@ class BlockDatabaseReader(object):
 
     def get_state_root_hash_by_block_height(
             self, block_height: int) -> Optional[bytes]:
-        block: dict = self.get_block_hash_by_block_height(block_height)
+        block: dict = self.get_block_by_block_height(block_height)
         return self.get_commit_state(block)
 
     def get_state_root_hash_by_block_hash(self, block_hash: str) -> Optional[bytes]:
@@ -116,7 +116,7 @@ def read_blocks(reader, start_height: int, count: int):
 
     with open('blocks.txt', 'wt') as f:
         for i in range(start_height, start_height + count):
-            block: dict = reader.get_block_hash_by_block_height(i)
+            block: dict = reader.get_block_by_block_height(i)
             if block is None:
                 print(f'last block: {i - 1}')
                 break

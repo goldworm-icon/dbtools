@@ -39,10 +39,15 @@ def print_last_block(args):
 def print_block(args):
     db_path: str = args.db
     height: int = args.height
+    block_hash: str = args.hash
 
     block_reader = BlockDatabaseReader()
     block_reader.open(db_path)
-    block: dict = block_reader.get_block_hash_by_block_height(height)
+
+    if block_hash is not None:
+        block: dict = block_reader.get_block_by_block_hash(block_hash)
+    else:
+        block: dict = block_reader.get_block_by_block_height(height)
     block_reader.close()
 
     print(block)
@@ -247,7 +252,10 @@ def main():
     # create the parser for block
     parser_block = subparsers.add_parser('block')
     parser_block.add_argument('--db', type=str, required=True)
-    parser_block.add_argument('--height', type=int, default=0, help='start height to sync', required=True)
+    parser_block.add_argument('--height', type=int, default=0, help='start height to sync', required=False)
+    parser_block.add_argument('--hash', type=str,
+        help='block hash without "0x" (ex: e9cad58aae99c1cae85c2545ad33ddb34e8dc4b5e5dd9f363a30cb55e809018e)',
+        required=False)
     parser_block.set_defaults(func=print_block)
 
     # create the parser for txresult
