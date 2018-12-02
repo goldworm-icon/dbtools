@@ -137,7 +137,7 @@ class IconServiceSyncer(object):
             if 'status' not in tx_result_in_db:
                 continue
 
-            # informations extracted from db
+            # information extracted from db
             status: int = int(tx_result_in_db['status'], 16)
             tx_hash: bytes = bytes.fromhex(tx_result_in_db['txHash'])
             step_used: int = int(tx_result_in_db['stepUsed'], 16)
