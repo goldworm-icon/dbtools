@@ -115,11 +115,13 @@ def sync(args):
         deployer_whitelist=deployer_whitelist,
         score_package_validator=score_package_validator,
         builtin_score_owner=builtin_score_owner)
-    syncer.run(
+    ret: int = syncer.run(
         db_path, channel, start_height=start, count=count,
         stop_on_error=stop_on_error, no_commit=no_commit,
         write_precommit_data=write_precommit_data)
     syncer.close()
+
+    return ret
 
 
 def clear(args):
@@ -329,10 +331,13 @@ def main():
 
     timer = Timer()
     timer.start()
-    args.func(args)
+    ret = args.func(args)
     timer.stop()
     print(f'elapsedTime: {timer.duration()} seconds')
 
+    return ret
+
 
 if __name__ == '__main__':
-    main()
+    ret = main()
+    sys.exit(ret)

@@ -55,7 +55,7 @@ class IconServiceSyncer(object):
             count: int=99999999,
             stop_on_error: bool=True,
             no_commit: bool=False,
-            write_precommit_data: bool=False):
+            write_precommit_data: bool=False) -> int:
         """Begin to synchronize IconServiceEngine with blocks from loopchain db
 
         :param db_path: loopchain db path
@@ -65,11 +65,12 @@ class IconServiceSyncer(object):
         :param stop_on_error: If error happens, stop syncing
         :param no_commit: Do not commit
         :param write_precommit_data:
-        :return:
+        :return: 0(success), otherwise(error)
         """
+        ret: int = 0
         self._block_reader.open(db_path)
 
-        print('block_height | commit_state | state_root_hash')
+        print('block_height | commit_state | state_root_hash | tx_count')
 
         prev_block: 'Block' = None
 
@@ -108,6 +109,7 @@ class IconServiceSyncer(object):
             except:
                 print(block_dict)
                 self._print_precommit_data(block)
+                ret: int = 1
                 break
 
             if not no_commit:
@@ -116,6 +118,8 @@ class IconServiceSyncer(object):
             prev_block = block
 
         self._block_reader.close()
+
+        return ret
 
     def _check_invoke_result(self, tx_results: list):
         """Compare the transaction results from IconServiceEngine
