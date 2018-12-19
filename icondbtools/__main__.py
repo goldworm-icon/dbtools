@@ -23,6 +23,7 @@ from .block_database_reader import BlockDatabaseReader
 from .icon_service_syncer import IconServiceSyncer
 from .invalid_transaction_checker import InvalidTransactionChecker
 from .state_database_reader import StateDatabaseReader, StateHash
+from .tps_calculator import TPSCalculator
 from .timer import Timer
 
 
@@ -221,7 +222,7 @@ def setup_invalid_transaction(subparsers):
 
 def run_command_invalid_transaction(args):
     """Check whether invalid transaction are present or not
-    for example transaction that is processed without any fees
+    for example transactions that are processed without any fees
 
     :param args:
     :return:
@@ -236,6 +237,33 @@ def run_command_invalid_transaction(args):
         checker.run(start, end)
     finally:
         checker.close()
+
+
+def setup_tps_calculation(subparsers):
+    parser = subparsers.add_parser('tps')
+    parser.add_argument('--db', type=str, required=True)
+    parser.add_argument('--start', type=int, default=0, required=False)
+    parser.add_argument('--end', type=int, default=-1, required=False)
+    parser.set_defaults(func=run_command_tps_calculation)
+
+
+def run_command_tps_calculation(args):
+    """Calculate tps for confirmed transactions in blockchain
+    TPS = # of confirmed txs between start block and end block / (end block timestamp - start block timestamp)
+
+    :param args:
+    :return:
+    """
+    db_path: str = args.db
+    start: int = args.start
+    end: int = args.end
+
+    calculator = TPSCalculator()
+    try:
+        calculator.open(db_path)
+        calculator.run(start, end)
+    finally:
+        calculator.close()
 
 
 def main():
@@ -321,6 +349,8 @@ def main():
 
     # create the parser for invalid tx checker
     setup_invalid_transaction(subparsers)
+
+    setup_tps_calculation(subparsers)
 
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)

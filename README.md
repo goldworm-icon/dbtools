@@ -14,6 +14,7 @@
 * [statehash](#statehash)
 * [statelastblock](#statelastblock)
 * [account](#account)
+* [tps](#tps)
 
 ## sync
 
@@ -181,4 +182,46 @@ address: hx677133298ed5319607a321a38169031a8867085c
 amount: 11.5856642 in icx
 is_c_rep: False
 is_locked: False                    
+```
+
+## tps
+* Calculate tps based on confirmed transactions that a specific range of blocks contain.
+* The term "tps" means "transactions per second"
+* db: loopchain database
+
+```bash
+usage: icondbtools tps [-h] --db DB [--start START] [--end END]
+
+optional arguments:
+  -h, --help     show this help message and exit
+  --db DB
+  --start START
+  --end END
+
+(venv) $ icondbtools tps --db ../db_data/mainnet/20181018/.score_data/db/icon_dex/ --start 2
+height   |      txs |  total txs |         period_s
+---------------------------------------------------
+       2 |        5 |          5 |              0.0
+       3 |        2 |          7 |         0.347491
+       4 |        1 |          8 |         0.332745
+       5 |        1 |          9 |         0.440178
+       6 |        1 |         10 |         0.433037
+       7 |        1 |         11 |         0.636413
+       8 |        1 |         12 |         0.581929
+       9 |        1 |         13 |         0.643707
+...
+      49 |        9 |       3414 |         0.421763
+      50 |       36 |       3450 |          0.36228
+      51 |      546 |       3996 |         1.237751
+      52 |      546 |       4542 |         2.229265
+      53 |      546 |       5088 |         1.354028
+      54 |      433 |       5521 |         1.229462
+      55 |       36 |       5557 |         8.596111
+      56 |       69 |       5626 |         0.418352
+      57 |       80 |       5706 |         0.418352
+tps: 79.93847007350809
+transactions: 5706
+blocks: 56
+period: 71.3799 seconds, 71379900 microseconds
+---------------------------------------------------
 ```
