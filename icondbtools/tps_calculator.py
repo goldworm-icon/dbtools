@@ -33,9 +33,10 @@ class TPSCalculator(object):
         start_us: int = 0
         end_us: int = 1
         period_us: int = 0
+        total_period_us: int = 0
         prev_timestamp_us: int = 0
 
-        print(f'{"height":>8} | {"txs":>8} | {"total txs":>10} | {"period_s":>16}')
+        print(f'{"height":>8} | {"txs":>8} | {"total txs":>10} | {"period_s":>16} | {"total period_s":>16}')
         self._print_horizon_line('-', 51)
 
         for height in range(start, end + 1):
@@ -53,9 +54,10 @@ class TPSCalculator(object):
             tx_list: list = block['confirmed_transaction_list']
             count = len(tx_list)
             tx_count += count
-
-            print(f'{height:>8} | {count:>8} | {tx_count:>10} | {period_us / 10**6:>16}')
+            total_period_us += period_us
             prev_timestamp_us = timestamp_us
+
+            print(f'{height:>8} | {count:>8} | {tx_count:>10} | {period_us / 10**6:>16} | {total_period_us / 10**6:>16}')
 
         self._print_result(tx_count, start_us, end_us, start, end)
 
