@@ -1,5 +1,6 @@
 import plyvel
-from iconservice.base.address import Address, AddressPrefix
+
+from iconservice.base.address import Address
 
 
 class ScoreDatabaseManager(object):
@@ -25,7 +26,7 @@ class ScoreDatabaseManager(object):
             self._score_address.to_bytes(),
             dict_db_data_type,
             dict_db_name.encode('utf-8'),
-            address]
+            address.to_bytes()]
 
         return b'|'.join(items)
 

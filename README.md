@@ -15,6 +15,7 @@
 * [statelastblock](#statelastblock)
 * [account](#account)
 * [tps](#tps)
+* [token](#token)
 
 ## sync
 
@@ -224,4 +225,41 @@ transactions: 5706
 blocks: 56
 period: 71.3799 seconds, 71379900 microseconds
 ---------------------------------------------------
+```
+
+## token
+* Read a token balance from IRC2 Standard Token SCORE
+* Write a new balance to StateDB for IRC2 Standard Token SCORE
+* Refer to [ICON Token Standard RI](https://github.com/icon-project/samples/tree/master/irc2_token)
+
+```
+(venv) $ icondbtools token --help
+usage: icondbtools token [-h] --db DB --score SCORE --user USER
+                         [--balance BALANCE]
+
+optional arguments:
+  -h, --help         show this help message and exit
+  --db DB
+  --score SCORE      score address ex)
+                     cx63af7f2e073985a9e9965765e809f66da3b0f238
+  --user USER        user address ex)
+                     hxd7cf2f6bcbbfa542a08e9cd0e48bf848018a2ec7
+  --balance BALANCE  token balance to write. ex) 100
+
+# Read a token balance from StateDB.
+
+(venv) $ icondbtools token --db ./icon_dex/ --score cx63af7f2e073985a9e9965765e809f66da3b0f238 --user hxd7cf2f6bcbbfa542a08e9cd0e48bf848018a2ec7
+token balance: 100
+elapsedTime: 0.03488469123840332 seconds
+
+# Write a token balance to StateDB.
+
+(venv) $ icondbtools token --db ./icon_dex/ --score cx63af7f2e073985a9e9965765e809f66da3b0f238 --user hxd7cf2f6bcbbfa542a08e9cd0e48bf848018a2ec7 --balance 1234
+elapsedTime: 0.019192934036254883 seconds
+
+# Read a token balance from StateDB.
+
+(venv) $ icondbtools token --db ./icon_dex/ --score cx63af7f2e073985a9e9965765e809f66da3b0f238 --user hxd7cf2f6bcbbfa542a08e9cd0e48bf848018a2ec7
+token balance: 1234
+elapsedTime: 0.03488469123840332 seconds
 ```

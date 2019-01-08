@@ -19,6 +19,7 @@ import sys
 from datetime import datetime
 
 from iconservice.base.address import Address
+from iconservice.utils import int_to_bytes
 from .block_database_reader import BlockDatabaseReader
 from .icon_service_syncer import IconServiceSyncer
 from .invalid_transaction_checker import InvalidTransactionChecker
@@ -268,12 +269,13 @@ def run_command_tps_calculation(args):
 
 
 def setup_token(subparsers):
-    parser = subparsers.add_parser('dictdb')
+    parser = subparsers.add_parser('token')
     parser.add_argument('--db', type=str, required=True)
-    parser.add_argument('--score', type=str, required=True)
-    parser.add_argument('--user', type=str, required=True)
-    parser.add_argument('--dict-db-name', type=str, required=True)
-    parser.add_argument('--value', type=int, default=-1, required=False)
+    parser.add_argument(
+        '--score', type=str, required=True, help='score address ex) cx63af7f2e073985a9e9965765e809f66da3b0f238')
+    parser.add_argument(
+        '--user', type=str, required=True, help='user address ex) hxd7cf2f6bcbbfa542a08e9cd0e48bf848018a2ec7')
+    parser.add_argument('--balance', type=int, default=-1, required=False, help='token balance to write. ex) 100')
     parser.set_defaults(func=run_command_token)
 
 
@@ -281,17 +283,19 @@ def run_command_token(args):
     db_path: str = args.db
     score_address: 'Address' = Address.from_string(args.score)
     address: 'Address' = Address.from_string(args.user)
-    value: int = args.value
-    name: str = args.dict_db_name
+    balance: int = args.balance
+    # Name of DictDB in Standard Token
+    name: str = 'balances'
 
     manager = ScoreDatabaseManager()
     manager.open(db_path, score_address)
 
-    if value < 0:
+    if balance < 0:
         value: bytes = manager.read_from_dict_db(name, address)
         balance: int = int.from_bytes(value, 'big')
         print(f'token balance: {balance}')
     else:
+        value: bytes = int_to_bytes(balance)
         manager.write_to_dict_db(name, address, value)
 
     manager.close()
