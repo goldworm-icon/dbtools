@@ -24,6 +24,7 @@ from .icon_service_syncer import IconServiceSyncer
 from .invalid_transaction_checker import InvalidTransactionChecker
 from .state_database_reader import StateDatabaseReader, StateHash
 from .tps_calculator import TPSCalculator
+from .score_database_manager import ScoreDatabaseManager
 from .timer import Timer
 
 
@@ -266,6 +267,36 @@ def run_command_tps_calculation(args):
         calculator.close()
 
 
+def setup_token(subparsers):
+    parser = subparsers.add_parser('dictdb')
+    parser.add_argument('--db', type=str, required=True)
+    parser.add_argument('--score', type=str, required=True)
+    parser.add_argument('--user', type=str, required=True)
+    parser.add_argument('--dict-db-name', type=str, required=True)
+    parser.add_argument('--value', type=int, default=-1, required=False)
+    parser.set_defaults(func=run_command_token)
+
+
+def run_command_token(args):
+    db_path: str = args.db
+    score_address: 'Address' = Address.from_string(args.score)
+    address: 'Address' = Address.from_string(args.user)
+    value: int = args.value
+    name: str = args.dict_db_name
+
+    manager = ScoreDatabaseManager()
+    manager.open(db_path, score_address)
+
+    if value < 0:
+        value: bytes = manager.read_from_dict_db(name, address)
+        balance: int = int.from_bytes(value, 'big')
+        print(f'token balance: {balance}')
+    else:
+        manager.write_to_dict_db(name, address, value)
+
+    manager.close()
+
+
 def main():
     mainnet_builtin_score_owner = 'hx677133298ed5319607a321a38169031a8867085c'
 
@@ -351,6 +382,8 @@ def main():
     setup_invalid_transaction(subparsers)
 
     setup_tps_calculation(subparsers)
+
+    setup_token(subparsers)
 
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
