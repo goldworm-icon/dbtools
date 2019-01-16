@@ -26,7 +26,7 @@ class TPSCalculator(object):
     def open(self, db_path: str):
         self._block_reader.open(db_path)
 
-    def run(self, start: int, end: int):
+    def run(self, start: int, end: int, span_us: int = -1):
         tx_count: int = 0
         end = self._validate_end_height(end)
 
@@ -37,7 +37,7 @@ class TPSCalculator(object):
         prev_timestamp_us: int = 0
 
         print(f'{"height":>8} | {"txs":>8} | {"total txs":>10} | {"period_s":>16} | {"total period_s":>16}')
-        self._print_horizon_line('-', 51)
+        self._print_horizon_line('-', 80)
 
         for height in range(start, end + 1):
             block: dict = self._block_reader.get_block_by_block_height(height)
@@ -50,6 +50,11 @@ class TPSCalculator(object):
                 end_us = timestamp_us
             else:
                 period_us = timestamp_us - prev_timestamp_us
+
+            # Calculate tps with blocks only in the given span
+            if span_us < timestamp_us - start_us:
+                end_us = prev_timestamp_us
+                break
 
             tx_list: list = block['confirmed_transaction_list']
             count = len(tx_list)

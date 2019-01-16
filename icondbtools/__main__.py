@@ -153,7 +153,7 @@ def run_command_state_hash(args):
     reader = StateDatabaseReader()
     reader.open(db_path)
 
-    # convert hexa string to bytes
+    # convert hex string to bytes
     if prefix is not None:
         if prefix.startswith('0x'):
             prefix = prefix[2:]
@@ -246,6 +246,7 @@ def setup_tps_calculation(subparsers):
     parser.add_argument('--db', type=str, required=True)
     parser.add_argument('--start', type=int, default=0, required=False)
     parser.add_argument('--end', type=int, default=-1, required=False)
+    parser.add_argument('--span', type=int, default=-1, required=False, help="unit: second")
     parser.set_defaults(func=run_command_tps_calculation)
 
 
@@ -259,11 +260,12 @@ def run_command_tps_calculation(args):
     db_path: str = args.db
     start: int = args.start
     end: int = args.end
+    span_us: int = args.span * 10 ** 6
 
     calculator = TPSCalculator()
     try:
         calculator.open(db_path)
-        calculator.run(start, end)
+        calculator.run(start, end, span_us)
     finally:
         calculator.close()
 
