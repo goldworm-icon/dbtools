@@ -54,6 +54,7 @@ class TPSCalculator(object):
             # Calculate tps with blocks only in the given span
             if span_us < timestamp_us - start_us:
                 end_us = prev_timestamp_us
+                end = height - 1
                 break
 
             tx_list: list = block['confirmed_transaction_list']
