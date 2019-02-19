@@ -13,8 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from iconcommons.icon_config import IconConfig
+import logging
+from typing import TYPE_CHECKING
 
+from iconcommons.icon_config import IconConfig
 from iconservice.base.address import Address
 from iconservice.base.block import Block
 from iconservice.icon_config import default_icon_config
@@ -23,6 +25,10 @@ from . import utils
 from .block_database_reader import BlockDatabaseReader
 from .loopchain_block import LoopchainBlock
 
+if TYPE_CHECKING:
+    from iconservice.precommit_data_manager import PrecommitData, PrecommitDataManager
+    from iconservice.database.batch import BlockBatch
+
 
 class IconServiceSyncer(object):
     def __init__(self):
@@ -30,11 +36,11 @@ class IconServiceSyncer(object):
         self._engine = IconServiceEngine()
 
     def open(self,
-             fee: bool=True,
-             audit: bool=True,
-             deployer_whitelist: bool=False,
-             score_package_validator: bool=False,
-             builtin_score_owner: str=''):
+             fee: bool = True,
+             audit: bool = True,
+             deployer_whitelist: bool = False,
+             score_package_validator: bool = False,
+             builtin_score_owner: str = ''):
         conf = IconConfig('', default_icon_config)
         conf.update_conf({
             'builtinScoreOwner': builtin_score_owner,
@@ -51,11 +57,11 @@ class IconServiceSyncer(object):
     def run(self,
             db_path: str,
             channel: str,
-            start_height: int=0,
-            count: int=99999999,
-            stop_on_error: bool=True,
-            no_commit: bool=False,
-            write_precommit_data: bool=False) -> int:
+            start_height: int = 0,
+            count: int = 99999999,
+            stop_on_error: bool = True,
+            no_commit: bool = False,
+            write_precommit_data: bool = False) -> int:
         """Begin to synchronize IconServiceEngine with blocks from loopchain db
 
         :param db_path: loopchain db path
@@ -106,7 +112,9 @@ class IconServiceSyncer(object):
 
                     if height > 0 and not self._check_invoke_result(tx_results):
                         raise Exception()
-            except:
+            except Exception as e:
+                logging.exception(e)
+
                 print(block_dict)
                 self._print_precommit_data(block)
                 ret: int = 1
@@ -172,11 +180,11 @@ class IconServiceSyncer(object):
 
         return True
 
-    def _check_event_logs(self,
-                          event_logs_in_db: dict,
-                          event_logs_in_tx_result: 'EventLogs'):
-        for event_log, tx_result_event_log in zip(event_logs_in_db, event_logs_in_tx_result):
-            tx_result_event_log: dict = tx_result_event_log.to_dict()
+    @staticmethod
+    def _check_event_logs(event_logs_in_db: list,
+                          event_logs_in_tx_result: list):
+        for event_log, _tx_result_event_log in zip(event_logs_in_db, event_logs_in_tx_result):
+            tx_result_event_log: dict = _tx_result_event_log.to_dict()
 
             # convert Address to str
             if 'score_address' in tx_result_event_log:
@@ -206,18 +214,23 @@ class IconServiceSyncer(object):
 
         :return:
         """
-        precommit_data_manager: 'PrecommitDataManager' =\
-            self._engine._precommit_data_manager
+        precommit_data_manager: PrecommitDataManager =\
+            getattr(self._engine, '_precommit_data_manager')
 
-        precommit_data: 'PrecommitData' = precommit_data_manager.get(block.hash)
-        block_batch: 'OrderedDict' = precommit_data.block_batch
+        precommit_data: PrecommitData = precommit_data_manager.get(block.hash)
+        block_batch: BlockBatch = precommit_data.block_batch
         state_root_hash: bytes = block_batch.digest()
 
         filename = f'{block.height}-precommit-data.txt'
         with open(filename, 'wt') as f:
             for i, key in enumerate(block_batch):
                 value: bytes = block_batch[key]
-                line = f'{i}: {key.hex()} - {value.hex()}'
+
+                if value:
+                    line = f'{i}: {key.hex()} - {value.hex()}'
+                else:
+                    line = f'{i}: {key.hex()} - None'
+
                 print(line)
                 f.write(f'{line}\n')
 
@@ -229,10 +242,11 @@ class IconServiceSyncer(object):
 
 def main():
     loopchain_db_path = '../data/icon_dex'
+    channel: str = 'icon_dex'
 
     executor = IconServiceSyncer()
     executor.open(builtin_score_owner='hx677133298ed5319607a321a38169031a8867085c')
-    executor.run(loopchain_db_path, 0, 1)
+    executor.run(loopchain_db_path, channel, 0, 1)
     executor.close()
 
 
