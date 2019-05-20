@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import inspect
 import logging
 from typing import TYPE_CHECKING
 
@@ -121,7 +121,10 @@ class IconServiceSyncer(object):
                 break
 
             if not no_commit:
-                self._engine.commit(block)
+                if 'block' in inspect.signature(self._engine.commit).parameters:
+                    self._engine.commit(block)
+                else:
+                    self._engine.commit(block.height, block.hash, block.hash)
 
             prev_block = block
 
