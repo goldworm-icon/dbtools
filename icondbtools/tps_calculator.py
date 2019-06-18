@@ -42,7 +42,10 @@ class TPSCalculator(object):
         for height in range(start, end + 1):
             block: dict = self._block_reader.get_block_by_block_height(height)
 
-            timestamp_us: int = block['time_stamp']
+            try:
+                timestamp_us: int = int(block['timestamp'], 16)
+            except:
+                timestamp_us: int = block['time_stamp']
 
             if height == start:
                 start_us = timestamp_us
@@ -57,7 +60,11 @@ class TPSCalculator(object):
                 end = height - 1
                 break
 
-            tx_list: list = block['confirmed_transaction_list']
+            try:
+                tx_list: list = block['transactions']
+            except:
+                tx_list: list = block['confirmed_transaction_list']
+
             count = len(tx_list)
             tx_count += count
             total_period_us += period_us
@@ -69,7 +76,11 @@ class TPSCalculator(object):
 
     def _validate_end_height(self, end: int):
         last_block: dict = self._block_reader.get_last_block()
-        last_height: int = last_block['height']
+
+        try:
+            last_height: int = int(last_block['height'], 16)
+        except:
+            last_height: int = last_block["height"]
 
         if 0 <= end <= last_height:
             return end
