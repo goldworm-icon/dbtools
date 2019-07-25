@@ -83,6 +83,7 @@ def sync(args):
     deployer_whitelist: bool = args.deployer_whitelist
     score_package_validator: bool = args.score_package_validator
     channel: str = args.channel
+    backup_period: int = args.backup_period
 
     # If --start option is not present, set start point to the last block height from statedb
     if start < 0:
@@ -121,7 +122,8 @@ def sync(args):
     ret: int = syncer.run(
         db_path, channel, start_height=start, count=count,
         stop_on_error=stop_on_error, no_commit=no_commit,
-        write_precommit_data=write_precommit_data)
+        write_precommit_data=write_precommit_data,
+        backup_period=backup_period)
     syncer.close()
 
     return ret
@@ -337,6 +339,7 @@ def main():
     parser_sync.add_argument(
         '--channel', type=str,
         default='icon_dex', help='channel name used as a key of commit_state in block data')
+    parser_sync.add_argument('--backup-period', type=int, default=0, help="Backup statedb every this period blocks")
     parser_sync.set_defaults(func=sync)
 
     # create the parser for lastblock

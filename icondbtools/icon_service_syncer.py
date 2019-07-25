@@ -14,7 +14,9 @@
 # limitations under the License.
 
 import logging
-from typing import TYPE_CHECKING
+import shutil
+import os
+from typing import TYPE_CHECKING, Optional
 
 from iconcommons.icon_config import IconConfig
 from iconservice.base.address import Address
@@ -61,6 +63,7 @@ class IconServiceSyncer(object):
             count: int = 99999999,
             stop_on_error: bool = True,
             no_commit: bool = False,
+            backup_period: int = 0,
             write_precommit_data: bool = False) -> int:
         """Begin to synchronize IconServiceEngine with blocks from loopchain db
 
@@ -70,6 +73,7 @@ class IconServiceSyncer(object):
         :param count: The number of blocks to sync
         :param stop_on_error: If error happens, stop syncing
         :param no_commit: Do not commit
+        :param backup_state_period: state backup period in block
         :param write_precommit_data:
         :return: 0(success), otherwise(error)
         """
@@ -78,7 +82,7 @@ class IconServiceSyncer(object):
 
         print('block_height | commit_state | state_root_hash | tx_count')
 
-        prev_block: 'Block' = None
+        prev_block: Optional['Block'] = None
 
         for height in range(start_height, start_height + count):
             block_dict: dict = self._block_reader.get_block_by_block_height(height)
@@ -121,8 +125,9 @@ class IconServiceSyncer(object):
                 break
 
             if not no_commit:
-                self._engine.commit(block)
+                self._engine.commit(block.height, block.hash, None)
 
+            self._backup_state_db(block, backup_period)
             prev_block = block
 
         self._block_reader.close()
@@ -235,6 +240,23 @@ class IconServiceSyncer(object):
                 f.write(f'{line}\n')
 
             f.write(f'state_root_hash: {state_root_hash.hex()}\n')
+
+    @staticmethod
+    def _backup_state_db(block: 'Block', backup_period: int):
+        if backup_period <= 0:
+            return
+        if block.height == 0:
+            return
+
+        if block.height % backup_period == 0:
+            print(f"----------- Backup statedb: {block.height} ------------")
+            dirname: str = f"block-{block.height}"
+
+            for basename in (".score", ".statedb"):
+                try:
+                    shutil.copytree(basename, f"{dirname}/{basename}/")
+                except FileExistsError:
+                    pass
 
     def close(self):
         self._engine.close()
