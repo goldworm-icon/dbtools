@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import inspect
 import logging
 import shutil
 import os
@@ -125,7 +125,10 @@ class IconServiceSyncer(object):
                 break
 
             if not no_commit:
-                self._engine.commit(block.height, block.hash, None)
+                if 'block' in inspect.signature(self._engine.commit).parameters:
+                    self._engine.commit(block)
+                else:
+                    self._engine.commit(block.height, block.hash, None)
 
             self._backup_state_db(block, backup_period)
             prev_block = block
