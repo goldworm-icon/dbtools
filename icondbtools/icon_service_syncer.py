@@ -99,7 +99,8 @@ class IconServiceSyncer(object):
                 if prev_block.hash != block.prev_hash:
                     raise Exception()
 
-            tx_results, state_root_hash = self._engine.invoke(block, tx_requests)
+            invoke_result = self._engine.invoke(block, tx_requests)
+            tx_results, state_root_hash = invoke_result[0], invoke_result[1]
             commit_state: bytes = self._block_reader.get_commit_state(block_dict, channel, b'')
 
             # "commit_state" is the field name of state_root_hash in loopchain block
