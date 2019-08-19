@@ -17,7 +17,10 @@ import asyncio
 import inspect
 import logging
 import shutil
+<<<<<<< HEAD
 from concurrent.futures import ThreadPoolExecutor
+=======
+>>>>>>> 371fd33... Add --is-config to sync command
 from typing import TYPE_CHECKING, Optional
 
 from iconcommons.icon_config import IconConfig

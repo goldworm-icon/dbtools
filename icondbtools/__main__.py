@@ -21,7 +21,6 @@ from typing import TYPE_CHECKING
 
 from iconservice.base.address import Address
 from iconservice.utils import int_to_bytes
-
 from .block_database_reader import BlockDatabaseReader
 from .icon_service_syncer import IconServiceSyncer
 from .invalid_transaction_checker import InvalidTransactionChecker
