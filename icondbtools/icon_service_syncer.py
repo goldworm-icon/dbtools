@@ -12,9 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+import asyncio
 import inspect
 import logging
 import shutil
+from concurrent.futures import ThreadPoolExecutor
 from typing import TYPE_CHECKING, Optional
 
 from iconcommons.icon_config import IconConfig
@@ -34,6 +37,8 @@ if TYPE_CHECKING:
 
 
 class IconServiceSyncer(object):
+    _TAG = "SYNC"
+
     def __init__(self):
         self._block_reader = BlockDatabaseReader()
         self._engine = IconServiceEngine()
@@ -63,7 +68,38 @@ class IconServiceSyncer(object):
         Logger.load_config(conf)
         self._engine.open(conf)
 
-    def run(self,
+    def run(self, *args, **kwargs) -> int:
+        Logger.debug(tag=self._TAG, msg=f"run() start: {args} {kwargs}")
+
+        loop = asyncio.get_event_loop()
+        future = asyncio.Future()
+
+        try:
+            asyncio.ensure_future(self._wait_for_complete(future, *args, **kwargs))
+            loop.run_until_complete(future)
+        finally:
+            loop.close()
+
+        ret = future.result()
+        Logger.debug(tag=self._TAG, msg=f"run() end: {ret}")
+
+        return ret
+
+    async def _wait_for_complete(self, result_future: asyncio.Future, *args, **kwargs):
+        Logger.debug(tag=self._TAG, msg="_wait_for_complete() start")
+
+        executor = ThreadPoolExecutor(max_workers=1)
+        f = executor.submit(self._run, *args, **kwargs)
+        future = asyncio.wrap_future(f)
+
+        await future
+
+        Logger.debug(tag=self._TAG, msg="_wait_for_complete() end1")
+        result_future.set_result(future.result())
+
+        Logger.debug(tag=self._TAG, msg="_wait_for_complete() end2")
+
+    def _run(self,
             db_path: str,
             channel: str,
             start_height: int = 0,
@@ -84,6 +120,8 @@ class IconServiceSyncer(object):
         :param write_precommit_data:
         :return: 0(success), otherwise(error)
         """
+        Logger.debug(tag=self._TAG, msg="_run() start")
+
         ret: int = 0
         self._block_reader.open(db_path)
 
@@ -143,6 +181,7 @@ class IconServiceSyncer(object):
 
         self._block_reader.close()
 
+        Logger.debug(tag=self._TAG, msg=f"_run() end: {ret}")
         return ret
 
     def _check_invoke_result(self, tx_results: list):

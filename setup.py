@@ -23,7 +23,7 @@ with open('requirements.txt') as requirements:
 
 setuptools.setup(
     name="icondbtools",
-    version="0.0.3",
+    version="1.0.0",
     author="ICON Foundation",
     author_email="goldworm@icon.foundation",
     description="icon db tools",
