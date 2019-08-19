@@ -15,14 +15,15 @@
 import inspect
 import logging
 import shutil
-import os
 from typing import TYPE_CHECKING, Optional
 
 from iconcommons.icon_config import IconConfig
+from iconcommons.logger import Logger
 from iconservice.base.address import Address
 from iconservice.base.block import Block
 from iconservice.icon_config import default_icon_config
 from iconservice.icon_service_engine import IconServiceEngine
+
 from . import utils
 from .block_database_reader import BlockDatabaseReader
 from .loopchain_block import LoopchainBlock
@@ -38,22 +39,28 @@ class IconServiceSyncer(object):
         self._engine = IconServiceEngine()
 
     def open(self,
+             config_path: str,
              fee: bool = True,
              audit: bool = True,
              deployer_whitelist: bool = False,
              score_package_validator: bool = False,
              builtin_score_owner: str = ''):
-        conf = IconConfig('', default_icon_config)
+        conf = IconConfig("", default_icon_config)
+
+        if config_path != "":
+            conf.load(config_path)
+
         conf.update_conf({
-            'builtinScoreOwner': builtin_score_owner,
-            'service': {
-                'fee': fee,
-                'audit': audit,
-                'scorePackageValidator': score_package_validator,
-                'deployerWhiteList': deployer_whitelist
+            "builtinScoreOwner": builtin_score_owner,
+            "service": {
+                "fee": fee,
+                "audit": audit,
+                "scorePackageValidator": score_package_validator,
+                "deployerWhiteList": deployer_whitelist
             }
         })
 
+        Logger.load_config(conf)
         self._engine.open(conf)
 
     def run(self,

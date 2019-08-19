@@ -84,6 +84,7 @@ def sync(args):
     score_package_validator: bool = args.score_package_validator
     channel: str = args.channel
     backup_period: int = args.backup_period
+    iconservice_config_path: str = args.is_config
 
     # If --start option is not present, set start point to the last block height from statedb
     if start < 0:
@@ -114,6 +115,7 @@ def sync(args):
 
     syncer = IconServiceSyncer()
     syncer.open(
+        config_path=iconservice_config_path,
         fee=fee,
         audit=audit,
         deployer_whitelist=deployer_whitelist,
@@ -340,6 +342,7 @@ def main():
         '--channel', type=str,
         default='icon_dex', help='channel name used as a key of commit_state in block data')
     parser_sync.add_argument('--backup-period', type=int, default=0, help="Backup statedb every this period blocks")
+    parser_sync.add_argument('--is-config', type=str, default="", help="iconservice_config.json filepath")
     parser_sync.set_defaults(func=sync)
 
     # create the parser for lastblock
