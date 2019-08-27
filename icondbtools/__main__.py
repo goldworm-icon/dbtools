@@ -17,16 +17,22 @@ import argparse
 import shutil
 import sys
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from iconservice.base.address import Address
 from iconservice.utils import int_to_bytes
+
 from .block_database_reader import BlockDatabaseReader
 from .icon_service_syncer import IconServiceSyncer
 from .invalid_transaction_checker import InvalidTransactionChecker
-from .state_database_reader import StateDatabaseReader, StateHash
-from .tps_calculator import TPSCalculator
 from .score_database_manager import ScoreDatabaseManager
+from .state_database_reader import StateDatabaseReader, StateHash
 from .timer import Timer
+from .tps_calculator import TPSCalculator
+
+if TYPE_CHECKING:
+    from iconservice.base.block import Block
+    from iconservice.icx.icx_account import Account
 
 
 def print_last_block(args):
@@ -86,15 +92,16 @@ def sync(args):
     backup_period: int = args.backup_period
     iconservice_config_path: str = args.is_config
 
+    reader = StateDatabaseReader()
+
     # If --start option is not present, set start point to the last block height from statedb
     if start < 0:
         try:
             state_db_path = '.statedb/icon_dex'
-            reader = StateDatabaseReader()
             reader.open(state_db_path)
             block: 'Block' = reader.get_last_block()
             start = block.height + 1
-        except:
+        except AttributeError:
             start = 0
         finally:
             reader.close()
@@ -114,27 +121,27 @@ def sync(args):
           f'scorePackageValidator: {score_package_validator}\n')
 
     syncer = IconServiceSyncer()
-    syncer.open(
-        config_path=iconservice_config_path,
-        fee=fee,
-        audit=audit,
-        deployer_whitelist=deployer_whitelist,
-        score_package_validator=score_package_validator,
-        builtin_score_owner=builtin_score_owner)
-    ret: int = syncer.run(
-        db_path, channel, start_height=start, count=count,
-        stop_on_error=stop_on_error, no_commit=no_commit,
-        write_precommit_data=write_precommit_data,
-        backup_period=backup_period)
-    syncer.close()
+    try:
+        syncer.open(
+            config_path=iconservice_config_path,
+            fee=fee,
+            audit=audit,
+            deployer_whitelist=deployer_whitelist,
+            score_package_validator=score_package_validator,
+            builtin_score_owner=builtin_score_owner)
+        return syncer.run(
+            db_path, channel, start_height=start, count=count,
+            stop_on_error=stop_on_error, no_commit=no_commit,
+            write_precommit_data=write_precommit_data,
+            backup_period=backup_period)
+    finally:
+        syncer.close()
 
-    return ret
 
-
-def clear(args):
+def clear(_args):
     """Clear .score and .statedb
 
-    :param args:
+    :param _args:
     :return:
     """
     paths = ['.score', '.statedb']
@@ -177,9 +184,9 @@ def run_command_state_last_block(args):
     :return:
     """
     db_path: str = args.db
+    reader = StateDatabaseReader()
 
     try:
-        reader = StateDatabaseReader()
         reader.open(db_path)
 
         block: 'Block' = reader.get_last_block()
@@ -201,19 +208,18 @@ def run_command_account(args):
     """
     db_path: str = args.db
     address: 'Address' = Address.from_string(args.address)
+    reader = StateDatabaseReader()
 
     try:
-        reader = StateDatabaseReader()
         reader.open(db_path)
 
         account: 'Account' = reader.get_account(address)
         if account is None:
-            print(f'Account not found: {address}')
+            print(f"Account not found: {address}")
         else:
-            print(f'address: {account.address}\n'
-                  f'amount: {account.icx / 10 ** 18} in icx\n'
-                  f'is_c_rep: {account.c_rep}\n'
-                  f'is_locked: {account.locked}')
+            print(f"address: {account.address}\n"
+                  f"amount: {account.balance / 10 ** 18} in icx\n"
+                  f"stake: {account.stake}\n")
     finally:
         reader.close()
 
@@ -355,8 +361,9 @@ def main():
     parser_block.add_argument('--db', type=str, required=True)
     parser_block.add_argument('--height', type=int, default=0, help='start height to sync', required=False)
     parser_block.add_argument('--hash', type=str,
-        help='block hash without "0x" (ex: e9cad58aae99c1cae85c2545ad33ddb34e8dc4b5e5dd9f363a30cb55e809018e)',
-        required=False)
+                              help='blockHash without "0x"\n'
+                              "(ex: e9cad58aae99c1cae85c2545ad33ddb34e8dc4b5e5dd9f363a30cb55e809018e)",
+                              required=False)
     parser_block.set_defaults(func=print_block)
 
     # create the parser for txresult
@@ -374,7 +381,7 @@ def main():
     parser_state_hash = subparsers.add_parser('statehash')
     parser_state_hash.add_argument('--db', type=str, required=True)
     parser_state_hash.add_argument('--prefix', type=str, default=None,
-        help='Generate a state hash using data of which keys start with a given prefix')
+                                   help='Generate a state hash using data of which keys start with a given prefix')
     parser_state_hash.set_defaults(func=run_command_state_hash)
 
     # create the parser for statelastblock
@@ -406,7 +413,7 @@ def main():
 
     timer = Timer()
     timer.start()
-    ret = args.func(args)
+    ret: int = args.func(args)
     timer.stop()
     print(f'elapsedTime: {timer.duration()} seconds')
 
@@ -414,5 +421,5 @@ def main():
 
 
 if __name__ == '__main__':
-    ret = main()
-    sys.exit(ret)
+    exit_code: int = main()
+    sys.exit(exit_code)

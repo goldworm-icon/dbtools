@@ -309,7 +309,9 @@ class IconServiceSyncer(object):
                     pass
 
     def close(self):
+        Logger.debug(tag=self._TAG, msg="close() start")
         self._engine.close()
+        Logger.debug(tag=self._TAG, msg="close() end")
 
 
 def main():
