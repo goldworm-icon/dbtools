@@ -17,19 +17,16 @@ import asyncio
 import inspect
 import logging
 import shutil
-<<<<<<< HEAD
 from concurrent.futures import ThreadPoolExecutor
-=======
->>>>>>> 371fd33... Add --is-config to sync command
 from typing import TYPE_CHECKING, Optional
 
 from iconcommons.icon_config import IconConfig
 from iconcommons.logger import Logger
+
 from iconservice.base.address import Address
 from iconservice.base.block import Block
 from iconservice.icon_config import default_icon_config
 from iconservice.icon_service_engine import IconServiceEngine
-
 from . import utils
 from .block_database_reader import BlockDatabaseReader
 from .loopchain_block import LoopchainBlock
@@ -81,6 +78,7 @@ class IconServiceSyncer(object):
             asyncio.ensure_future(self._wait_for_complete(future, *args, **kwargs))
             loop.run_until_complete(future)
         finally:
+            self._engine.close()
             loop.close()
 
         ret = future.result()
@@ -119,7 +117,7 @@ class IconServiceSyncer(object):
         :param count: The number of blocks to sync
         :param stop_on_error: If error happens, stop syncing
         :param no_commit: Do not commit
-        :param backup_state_period: state backup period in block
+        :param backup_period: state backup period in block
         :param write_precommit_data:
         :return: 0(success), otherwise(error)
         """
@@ -312,20 +310,4 @@ class IconServiceSyncer(object):
                     pass
 
     def close(self):
-        Logger.debug(tag=self._TAG, msg="close() start")
-        self._engine.close()
-        Logger.debug(tag=self._TAG, msg="close() end")
-
-
-def main():
-    loopchain_db_path = '../data/icon_dex'
-    channel: str = 'icon_dex'
-
-    executor = IconServiceSyncer()
-    executor.open(builtin_score_owner='hx677133298ed5319607a321a38169031a8867085c')
-    executor.run(loopchain_db_path, channel, 0, 1)
-    executor.close()
-
-
-if __name__ == '__main__':
-    main()
+        pass
