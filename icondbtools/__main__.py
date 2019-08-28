@@ -100,7 +100,7 @@ def sync(args):
             reader.open(state_db_path)
             block: 'Block' = reader.get_last_block()
             start = block.height + 1
-        except AttributeError:
+        except:
             start = 0
         finally:
             reader.close()
