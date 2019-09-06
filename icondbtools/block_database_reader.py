@@ -20,6 +20,8 @@ from typing import Optional
 
 import plyvel
 
+from . import utils
+
 
 class BlockDatabaseReader(object):
     """Read block data from leveldb managed by loopchain
@@ -89,13 +91,13 @@ class BlockDatabaseReader(object):
         return self.get_commit_state(block)
 
     @staticmethod
-    def get_commit_state(block: dict, channel: str='icon_dex', default_value: bytes=None) -> Optional[bytes]:
+    def get_commit_state(block: dict, channel: str = 'icon_dex', default_value: bytes = None) -> Optional[bytes]:
         try:
-            return bytes.fromhex(block['commit_state'][channel])
+            version = block['version']
+            return utils.convert_hex_str_to_bytes(
+                block['stateHash'] if version == '0.3' else block['commit_state'][channel])
         except KeyError:
-            pass
-
-        return default_value
+            return default_value
 
 
 def main():
@@ -104,9 +106,6 @@ def main():
 
     start_height = int(sys.argv[1])
     read_blocks(reader, start_height=start_height, count=1)
-    # read_last_block(reader)
-    # print(reader.get_state_root_hash_by_block_height(100))
-    # print(reader.get_state_root_hash_by_block_height(23366))
 
     reader.close()
 
