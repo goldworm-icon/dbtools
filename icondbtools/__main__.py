@@ -18,6 +18,7 @@ import shutil
 import sys
 from datetime import datetime
 from typing import TYPE_CHECKING
+from pprint import pprint
 
 from iconservice.base.address import Address
 from iconservice.utils import int_to_bytes
@@ -42,7 +43,7 @@ def print_last_block(args):
     block: dict = block_reader.get_last_block()
     block_reader.close()
 
-    print(block)
+    pprint(block)
 
 
 def print_block(args):
@@ -59,7 +60,7 @@ def print_block(args):
         block: dict = block_reader.get_block_by_block_height(height)
     block_reader.close()
 
-    print(block)
+    pprint(block)
 
 
 def print_transaction_result(args):
@@ -71,7 +72,7 @@ def print_transaction_result(args):
     tx_result: dict = block_reader.get_transaction_result_by_hash(tx_hash)
     block_reader.close()
 
-    print(tx_result)
+    pprint(tx_result)
 
 
 def sync(args):
