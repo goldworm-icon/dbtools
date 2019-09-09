@@ -20,7 +20,7 @@ from typing import Optional
 
 import plyvel
 
-from . import utils
+from icondbtools.utils.convert_type import convert_hex_str_to_bytes
 
 
 class BlockDatabaseReader(object):
@@ -94,7 +94,7 @@ class BlockDatabaseReader(object):
     def get_commit_state(block: dict, channel: str = 'icon_dex', default_value: bytes = None) -> Optional[bytes]:
         try:
             version = block['version']
-            return utils.convert_hex_str_to_bytes(
+            return convert_hex_str_to_bytes(
                 block['stateHash'] if version == '0.3' else block['commit_state'][channel])
         except KeyError:
             return default_value

@@ -27,7 +27,8 @@ from iconservice.base.block import Block
 from iconservice.icon_config import default_icon_config
 from iconservice.icon_service_engine import IconServiceEngine
 
-from . import utils
+from icondbtools.utils.convert_type import object_to_str
+from icondbtools.utils.transaction import create_transaction_requests
 from .block_database_reader import BlockDatabaseReader
 from .loopchain_block import LoopchainBlock
 
@@ -139,7 +140,7 @@ class IconServiceSyncer(object):
 
             block: 'Block' = LoopchainBlock.from_dict(block_dict)
 
-            tx_requests: list = utils.create_transaction_requests(block)
+            tx_requests: list = create_transaction_requests(block)
 
             if prev_block is not None and prev_block.hash != block.prev_hash:
                 raise Exception()
@@ -251,12 +252,12 @@ class IconServiceSyncer(object):
             indexed: list = tx_result_event_log['indexed']
             for i in range(len(indexed)):
                 value = indexed[i]
-                indexed[i] = utils.object_to_str(value)
+                indexed[i] = object_to_str(value)
 
             data: list = tx_result_event_log['data']
             for i in range(len(data)):
                 value = data[i]
-                data[i] = utils.object_to_str(value)
+                data[i] = object_to_str(value)
 
             if event_log != tx_result_event_log:
                 print(f'{event_log} != {tx_result_event_log}')

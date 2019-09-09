@@ -15,7 +15,7 @@
 
 from iconservice.base.block import Block
 
-from . import utils
+from icondbtools.utils.convert_type import convert_hex_str_to_int, convert_hex_str_to_bytes
 
 
 class LoopchainBlock(Block):
@@ -41,12 +41,12 @@ class LoopchainBlock(Block):
             'transactions': {"0.3": "transactions", "0.1a": "confirmed_transaction_list"}
         }
 
-        height = utils.convert_hex_str_to_int(block['height'])
-        hash = utils.convert_hex_str_to_bytes(block[keynames['hash'][version]])
+        height = convert_hex_str_to_int(block['height'])
+        hash = convert_hex_str_to_bytes(block[keynames['hash'][version]])
         timestamp = block[keynames['timestamp'][version]]
         if version == "0.3":
             timestamp = int(timestamp, 16)
-        prev_hash = utils.convert_hex_str_to_bytes(block[keynames['prev_hash'][version]])
+        prev_hash = convert_hex_str_to_bytes(block[keynames['prev_hash'][version]])
         transactions = block[keynames['transactions'][version]]
 
         return LoopchainBlock(height, hash, timestamp, prev_hash, transactions=transactions)
