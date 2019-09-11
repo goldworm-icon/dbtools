@@ -17,7 +17,7 @@ import unittest
 
 from iconservice.base.address import Address
 
-from icondbtools.loopchain_block import LoopchainBlock
+from icondbtools.libs.loopchain_block import LoopchainBlock
 
 
 class TestLoopchainBlock(unittest.TestCase):

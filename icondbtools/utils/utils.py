@@ -19,7 +19,7 @@ from iconservice.base.address import Address
 from iconservice.base.address import MalformedAddress
 from iconservice.base.block import Block
 from iconservice.base.exception import InvalidParamsException
-from .loopchain_block import LoopchainBlock
+from icondbtools.libs.loopchain_block import LoopchainBlock
 
 
 def create_transaction_requests(loopchain_block: 'LoopchainBlock') -> list:

@@ -13,17 +13,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import setuptools
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
+
+version = os.environ.get('VERSION')
+if version is None:
+    with open(os.path.join('.', 'VERSION')) as version_file:
+        version = version_file.read().strip()
 
 with open('requirements.txt') as requirements:
     requires = list(requirements)
 
 setuptools.setup(
     name="icondbtools",
-    version="1.0.0",
+    version=version,
     author="ICON Foundation",
     author_email="goldworm@icon.foundation",
     description="icon db tools",

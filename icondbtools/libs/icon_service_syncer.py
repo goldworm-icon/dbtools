@@ -27,7 +27,7 @@ from iconservice.base.address import Address
 from iconservice.base.block import Block
 from iconservice.icon_config import default_icon_config
 from iconservice.icon_service_engine import IconServiceEngine
-from . import utils
+from icondbtools import utils
 from .block_database_reader import BlockDatabaseReader
 from .loopchain_block import LoopchainBlock
 
