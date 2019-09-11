@@ -27,9 +27,8 @@ from icondbtools.command.command_sync import CommandSync
 from icondbtools.command.command_token import CommandToken
 from icondbtools.command.command_tps import CommandTps
 from icondbtools.command.command_txresult import CommandTxResult
-
 from icondbtools.libs.timer import Timer
-from icondbtools.utils import get_preptools_version
+from icondbtools.utils import get_dbtools_version
 
 
 def main():
@@ -48,7 +47,7 @@ def main():
         CommandInvalidTx,
     ]
 
-    version = get_preptools_version()
+    version = get_dbtools_version()
     parser = argparse.ArgumentParser(prog='icondbtools', description=f'icon db tools v{version}')
 
     sub_parser = parser.add_subparsers(title='subcommands')
