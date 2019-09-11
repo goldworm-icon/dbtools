@@ -13,62 +13,40 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from iconservice.base.address import AddressPrefix, Address
+from iconservice.base.block import Block
+
+from icondbtools.utils.convert_type import convert_hex_str_to_int, convert_hex_str_to_bytes
 
 
-class LoopchainBlock(object):
+class LoopchainBlock(Block):
+
     def __init__(self,
-                 version: str=None,
-                 prev_block_hash: bytes=None,
-                 merkle_tree_hash: bytes=None,
-                 timestamp: int=0,
-                 block_hash: bytes=None,
-                 height: int=-1,
-                 peer_id: 'Address'=None,
-                 commit_state: bytes=None):
-        super().__init__()
-
-        self.version: str = version
-        self.prev_block_hash: bytes = prev_block_hash
-        self.merkle_tree_root_hash: bytes = merkle_tree_hash
-        self.timestamp: int = timestamp
-        self.block_hash: bytes = block_hash
-        self.height: int = height
-        self.peer_id: 'Address' = peer_id
-        self.commit_state: bytes = commit_state
-
-        self.transactions = None
+                 height: int = -1,
+                 hash: bytes = None,
+                 timestamp: int = -1,
+                 prev_hash: bytes = None,
+                 cumulative_fee: int = 0,
+                 transactions: list = None):
+        super().__init__(height, hash, timestamp, prev_hash, cumulative_fee)
+        self.transactions = transactions
 
     @staticmethod
     def from_dict(block: dict) -> 'LoopchainBlock':
-        version: str = block['version']
-        prev_block_hash: bytes = bytes.fromhex(block['prev_block_hash'])
-        merkle_tree_root_hash: bytes = bytes.fromhex(block['merkle_tree_root_hash'])
-        timestamp: int = block['time_stamp']
-        block_hash: bytes = bytes.fromhex(block['block_hash'])
-        height: int = block['height']
+        version = block['version']
 
-        peer_id = block['peer_id']
-        if peer_id:
-            peer_id: 'Address' = Address.from_string(peer_id)
-        else:
-            peer_id = None
+        keynames = {
+            'hash': {"0.3": "hash", "0.1a": "block_hash"},
+            'timestamp': {"0.3": "timestamp", "0.1a": "time_stamp"},
+            'prev_hash': {"0.3": "prevHash", "0.1a": "prev_block_hash"},
+            'transactions': {"0.3": "transactions", "0.1a": "confirmed_transaction_list"}
+        }
 
-        try:
-            commit_state: bytes = bytes.fromhex(block['commit_state']['icon_dex'])
-        except:
-            commit_state: bytes = b''
+        height = convert_hex_str_to_int(block['height'])
+        hash = convert_hex_str_to_bytes(block[keynames['hash'][version]])
+        timestamp = block[keynames['timestamp'][version]]
+        if version == "0.3":
+            timestamp = int(timestamp, 16)
+        prev_hash = convert_hex_str_to_bytes(block[keynames['prev_hash'][version]])
+        transactions = block[keynames['transactions'][version]]
 
-        loopchain_block = LoopchainBlock(
-            version=version,
-            prev_block_hash=prev_block_hash,
-            merkle_tree_hash=merkle_tree_root_hash,
-            timestamp=timestamp,
-            block_hash=block_hash,
-            height=height,
-            peer_id=peer_id,
-            commit_state=commit_state)
-
-        loopchain_block.transactions: dict = block['confirmed_transaction_list']
-
-        return loopchain_block
+        return LoopchainBlock(height, hash, timestamp, prev_hash, transactions=transactions)

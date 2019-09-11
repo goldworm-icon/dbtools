@@ -17,9 +17,10 @@ from typing import Union
 
 from iconservice.base.address import Address
 from iconservice.base.address import MalformedAddress
-from iconservice.base.block import Block
 from iconservice.base.exception import InvalidParamsException
-from .loopchain_block import LoopchainBlock
+
+from icondbtools.loopchain_block import LoopchainBlock
+from icondbtools.utils.convert_type import str_to_int
 
 
 def create_transaction_requests(loopchain_block: 'LoopchainBlock') -> list:
@@ -41,8 +42,10 @@ def convert_transaction_to_request(loopchain_block: 'LoopchainBlock', tx_dict: d
     params = {}
     request = {'method': 'icx_sendTransaction', 'params': params}
 
-    params['from'] = Address.from_string(tx_dict['from'])
-    params['to'] = convert_to_address(tx_dict['to'])
+    if "from" in tx_dict:
+        params['from'] = Address.from_string(tx_dict['from'])
+    if "to" in tx_dict:
+        params['to'] = convert_to_address(tx_dict['to'])
 
     if 'tx_hash' in tx_dict:
         params['txHash'] = bytes.fromhex(tx_dict['tx_hash'])
@@ -64,7 +67,27 @@ def convert_transaction_to_request(loopchain_block: 'LoopchainBlock', tx_dict: d
         if key in tx_dict:
             params[key] = tx_dict[key]
 
+    data_type: str = tx_dict.get("dataType", "")
+    if data_type == "base":
+        params["data"] = convert_base_transaction(tx_dict["data"])
+
     return request
+
+
+def convert_base_transaction(data: dict) -> dict:
+    ret = {
+        "prep": {},
+        "result": {}
+    }
+    prep = data["prep"]
+    for key in prep:
+        ret["prep"][key] = int(prep[key], 16)
+
+    result = data["result"]
+    for key in result:
+        ret["result"][key] = int(result[key], 16)
+
+    return ret
 
 
 def convert_to_address(to: str) -> Union['Address', 'MalformedAddress']:
@@ -91,34 +114,3 @@ def convert_genesis_transaction_to_request(tx_dict: dict):
         account['balance'] = int(account['balance'], 16)
 
     return request
-
-
-def create_block(loopchain_block: 'LoopchainBlock') -> 'Block':
-    return Block(
-        block_height=loopchain_block.height,
-        block_hash=loopchain_block.block_hash,
-        timestamp=loopchain_block.timestamp,
-        prev_hash=loopchain_block.prev_block_hash)
-
-
-def str_to_int(value: str) -> int:
-    if isinstance(value, int):
-        return value
-
-    if value.startswith('0x') or value.startswith('-0x'):
-        base = 16
-    else:
-        base = 10
-
-    return int(value, base)
-
-
-def object_to_str(value) -> str:
-    if isinstance(value, Address):
-        return str(value)
-    elif isinstance(value, int):
-        return hex(value)
-    elif isinstance(value, bytes):
-        return f'0x{value.hex()}'
-
-    return value
