@@ -17,16 +17,20 @@ import asyncio
 import inspect
 import logging
 import shutil
+import time
 from concurrent.futures import ThreadPoolExecutor
 from typing import TYPE_CHECKING, Optional
 
 from iconcommons.icon_config import IconConfig
 from iconcommons.logger import Logger
-
 from iconservice.base.address import Address
 from iconservice.base.block import Block
 from iconservice.icon_config import default_icon_config
+from iconservice.icon_constant import REV_IISS
 from iconservice.icon_service_engine import IconServiceEngine
+from iconservice.iconscore.icon_score_context import IconScoreContextType, IconScoreContext
+
+from icondbtools.word_detector import WordDetector
 from . import utils
 from .block_database_reader import BlockDatabaseReader
 from .loopchain_block import LoopchainBlock
@@ -123,6 +127,9 @@ class IconServiceSyncer(object):
         """
         Logger.debug(tag=self._TAG, msg="_run() start")
 
+        word_detector = WordDetector(filename='iconservice.log',
+                                     block_word=r'calculate().+start',
+                                     release_word=r'on_calculate_done().+end')
         ret: int = 0
         self._block_reader.open(db_path)
 
@@ -171,11 +178,22 @@ class IconServiceSyncer(object):
                 ret: int = 1
                 break
 
+            is_calculation_block = self._check_calculation_block(block)
+
+            if is_calculation_block:
+                word_detector.start()
+
             if not no_commit:
+                while word_detector.get_hold():
+                    time.sleep(0.5)
+
                 if 'block' in inspect.signature(self._engine.commit).parameters:
                     self._engine.commit(block)
                 else:
                     self._engine.commit(block.height, block.hash, None)
+
+            while word_detector.get_hold():
+                time.sleep(0.5)
 
             self._backup_state_db(block, backup_period)
             prev_block = block
@@ -291,6 +309,23 @@ class IconServiceSyncer(object):
                 f.write(f'{line}\n')
 
             f.write(f'state_root_hash: {state_root_hash.hex()}\n')
+
+    def _check_calculation_block(self, block: 'Block') -> bool:
+        """check calculation block"""
+
+        precommit_data_manager: PrecommitDataManager = getattr(self._engine, '_precommit_data_manager')
+        precommit_data: PrecommitData = precommit_data_manager.get(block.hash)
+        if precommit_data.revision < REV_IISS:
+            return False
+
+        context = IconScoreContext(IconScoreContextType.DIRECT)
+        context.block = block
+
+        if hasattr(context.engine.iiss, 'get_start_block_of_calc'):
+            start_block = context.engine.iiss.get_start_block_of_calc(context)
+            return start_block == block.height or start_block == block.height - 1
+        else:
+            return context.engine.iiss._is_iiss_calc()
 
     @staticmethod
     def _backup_state_db(block: 'Block', backup_period: int):
