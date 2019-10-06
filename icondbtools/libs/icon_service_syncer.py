@@ -30,8 +30,9 @@ from iconservice.icon_constant import REV_IISS
 from iconservice.icon_service_engine import IconServiceEngine
 from iconservice.iconscore.icon_score_context import IconScoreContextType, IconScoreContext
 
+from icondbtools.utils.convert_type import object_to_str
+from icondbtools.utils.transaction import create_transaction_requests
 from icondbtools.word_detector import WordDetector
-from . import utils
 from .block_database_reader import BlockDatabaseReader
 from .loopchain_block import LoopchainBlock
 
@@ -105,14 +106,14 @@ class IconServiceSyncer(object):
         Logger.debug(tag=self._TAG, msg="_wait_for_complete() end2")
 
     def _run(self,
-            db_path: str,
-            channel: str,
-            start_height: int = 0,
-            count: int = 99999999,
-            stop_on_error: bool = True,
-            no_commit: bool = False,
-            backup_period: int = 0,
-            write_precommit_data: bool = False) -> int:
+             db_path: str,
+             channel: str,
+             start_height: int = 0,
+             count: int = 99999999,
+             stop_on_error: bool = True,
+             no_commit: bool = False,
+             backup_period: int = 0,
+             write_precommit_data: bool = False) -> int:
         """Begin to synchronize IconServiceEngine with blocks from loopchain db
 
         :param db_path: loopchain db path
@@ -139,21 +140,21 @@ class IconServiceSyncer(object):
 
         for height in range(start_height, start_height + count):
             block_dict: dict = self._block_reader.get_block_by_block_height(height)
+
             if block_dict is None:
                 print(f'last block: {height - 1}')
                 break
 
-            loopchain_block = LoopchainBlock.from_dict(block_dict)
-            block: 'Block' = utils.create_block(loopchain_block)
-            tx_requests: list = utils.create_transaction_requests(loopchain_block)
+            block: 'Block' = LoopchainBlock.from_dict(block_dict)
 
-            if prev_block is not None:
-                # print(f'prev_block({prev_block.hash.hex()}) == block({block.prev_hash.hex()})')
-                if prev_block.hash != block.prev_hash:
-                    raise Exception()
+            tx_requests: list = create_transaction_requests(block)
+
+            if prev_block is not None and prev_block.hash != block.prev_hash:
+                raise Exception()
 
             invoke_result = self._engine.invoke(block, tx_requests)
             tx_results, state_root_hash = invoke_result[0], invoke_result[1]
+
             commit_state: bytes = self._block_reader.get_commit_state(block_dict, channel, b'')
 
             # "commit_state" is the field name of state_root_hash in loopchain block
@@ -173,7 +174,6 @@ class IconServiceSyncer(object):
             except Exception as e:
                 logging.exception(e)
 
-                print(block_dict)
                 self._print_precommit_data(block)
                 ret: int = 1
                 break
@@ -214,7 +214,7 @@ class IconServiceSyncer(object):
         """
 
         for tx_result in tx_results:
-            tx_info_in_db: dict =\
+            tx_info_in_db: dict = \
                 self._block_reader.get_transaction_result_by_hash(
                     tx_result.tx_hash.hex())
             tx_result_in_db = tx_info_in_db['result']
@@ -270,12 +270,12 @@ class IconServiceSyncer(object):
             indexed: list = tx_result_event_log['indexed']
             for i in range(len(indexed)):
                 value = indexed[i]
-                indexed[i] = utils.object_to_str(value)
+                indexed[i] = object_to_str(value)
 
             data: list = tx_result_event_log['data']
             for i in range(len(data)):
                 value = data[i]
-                data[i] = utils.object_to_str(value)
+                data[i] = object_to_str(value)
 
             if event_log != tx_result_event_log:
                 print(f'{event_log} != {tx_result_event_log}')
@@ -288,7 +288,7 @@ class IconServiceSyncer(object):
 
         :return:
         """
-        precommit_data_manager: PrecommitDataManager =\
+        precommit_data_manager: PrecommitDataManager = \
             getattr(self._engine, '_precommit_data_manager')
 
         precommit_data: PrecommitData = precommit_data_manager.get(block.hash)
