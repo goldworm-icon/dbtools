@@ -315,7 +315,7 @@ class IconServiceSyncer(object):
 
         precommit_data_manager: PrecommitDataManager = getattr(self._engine, '_precommit_data_manager')
         precommit_data: PrecommitData = precommit_data_manager.get(block.hash)
-        if precommit_data.revision < Revision.IISS.value():
+        if precommit_data.revision < Revision.IISS.value:
             return False
 
         context = IconScoreContext(IconScoreContextType.DIRECT)
