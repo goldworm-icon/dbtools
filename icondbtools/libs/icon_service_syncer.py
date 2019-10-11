@@ -26,7 +26,7 @@ from iconcommons.logger import Logger
 from iconservice.base.address import Address
 from iconservice.base.block import Block
 from iconservice.icon_config import default_icon_config
-from iconservice.icon_constant import REV_IISS
+from iconservice.icon_constant import Revision
 from iconservice.icon_service_engine import IconServiceEngine
 from iconservice.iconscore.icon_score_context import IconScoreContextType, IconScoreContext
 
@@ -315,7 +315,7 @@ class IconServiceSyncer(object):
 
         precommit_data_manager: PrecommitDataManager = getattr(self._engine, '_precommit_data_manager')
         precommit_data: PrecommitData = precommit_data_manager.get(block.hash)
-        if precommit_data.revision < REV_IISS:
+        if precommit_data.revision < Revision.IISS.value():
             return False
 
         context = IconScoreContext(IconScoreContextType.DIRECT)
