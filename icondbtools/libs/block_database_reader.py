@@ -16,6 +16,7 @@
 import json
 import sys
 import time
+from pprint import pprint
 from typing import Optional
 
 import plyvel
@@ -133,7 +134,7 @@ def read_last_block(reader):
     start = time.time()
 
     block: dict = reader.get_last_block()
-    print(block)
+    pprint(block)
 
     end = time.time()
     print(f'elapsed time: {end - start}')

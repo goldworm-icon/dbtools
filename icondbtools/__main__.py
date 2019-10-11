@@ -15,6 +15,7 @@
 
 import argparse
 import sys
+from pprint import pprint
 
 from icondbtools.command.command_account import CommandAccount
 from icondbtools.command.command_block import CommandBlock
@@ -61,7 +62,7 @@ def main():
         return 1
 
     args = parser.parse_args()
-    print(args)
+    pprint(args)
 
     timer = Timer()
     timer.start()
