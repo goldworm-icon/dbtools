@@ -129,8 +129,8 @@ class IconServiceSyncer(object):
         Logger.debug(tag=self._TAG, msg="_run() start")
 
         word_detector = WordDetector(filename='iconservice.log',
-                                     block_word=r'CALCULATE(',
-                                     release_word=r'CALCULATE_DONE(')
+                                     block_word=r'CALCULATE\(',
+                                     release_word=r'CALCULATE_DONE\(')
         ret: int = 0
         self._block_reader.open(db_path)
 
