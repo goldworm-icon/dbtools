@@ -12,7 +12,6 @@ class WordDetector:
         self.block_word = re.compile(block_word)
         self.release_word = re.compile(release_word)
         self.hold = False
-        self.thread = ThreadPoolExecutor(1)
 
     def _find_word_from_latest_offset(self):
 
@@ -34,7 +33,7 @@ class WordDetector:
                         self.hold = True
                     elif len(self.release_word.findall(sentence)) > 0:
                         self.hold = False
-                        self.stop()
+                        return
 
                 offset = f.tell()
 
@@ -44,7 +43,5 @@ class WordDetector:
         return self.hold
 
     def start(self):
-        self.thread.submit(self._find_word_from_latest_offset)
-
-    def stop(self):
-        self.thread.shutdown()
+        thread = ThreadPoolExecutor(1)
+        thread.submit(self._find_word_from_latest_offset)
