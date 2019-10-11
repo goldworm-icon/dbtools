@@ -29,7 +29,7 @@ from iconservice.icon_config import default_icon_config
 from iconservice.icon_constant import Revision
 from iconservice.icon_service_engine import IconServiceEngine
 from iconservice.iconscore.icon_score_context import IconScoreContextType, IconScoreContext
-
+from iconservice.database.batch import TransactionBatchValue
 from icondbtools.utils.convert_type import object_to_str
 from icondbtools.utils.transaction import create_transaction_requests
 from icondbtools.word_detector import WordDetector
@@ -257,6 +257,16 @@ class IconServiceSyncer(object):
     @staticmethod
     def _check_event_logs(event_logs_in_db: list,
                           event_logs_in_tx_result: list):
+
+        if event_logs_in_db is None:
+            event_logs_in_db = []
+
+        if event_logs_in_tx_result is None:
+            event_logs_in_tx_result = []
+
+        if len(event_logs_in_db) != len(event_logs_in_tx_result):
+            return False
+
         for event_log, _tx_result_event_log in zip(event_logs_in_db, event_logs_in_tx_result):
             tx_result_event_log: dict = _tx_result_event_log.to_dict()
 
@@ -298,10 +308,13 @@ class IconServiceSyncer(object):
         filename = f'{block.height}-precommit-data.txt'
         with open(filename, 'wt') as f:
             for i, key in enumerate(block_batch):
-                value: bytes = block_batch[key]
+                value: 'TransactionBatchValue' = block_batch[key]
 
                 if value:
-                    line = f'{i}: {key.hex()} - {value.hex()}'
+                    hex_value = value.value.hex()
+                    include_state_root_hash = value.include_state_root_hash
+
+                    line = f'{i}: {key.hex()} - {hex_value}, {include_state_root_hash}'
                 else:
                     line = f'{i}: {key.hex()} - None'
 
