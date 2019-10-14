@@ -182,6 +182,7 @@ class IconServiceSyncer(object):
 
             if is_calculation_block:
                 word_detector.start()
+                time.sleep(0.5)
 
             if not no_commit:
                 while word_detector.get_hold():
