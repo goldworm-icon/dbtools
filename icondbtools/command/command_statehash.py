@@ -56,4 +56,4 @@ class CommandStateHash(Command):
         state_hash: 'StateHash' = reader.create_state_hash(prefix)
         reader.close()
 
-        pprint(state_hash)
+        print(state_hash)
