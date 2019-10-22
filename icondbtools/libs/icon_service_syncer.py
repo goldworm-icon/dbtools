@@ -339,7 +339,7 @@ class IconServiceSyncer(object):
             start_block = context.engine.iiss.get_start_block_of_calc(context)
             return start_block == block.height or start_block == block.height - 1
         else:
-            return context.engine.iiss._is_iiss_calc()
+            return context.engine.iiss._is_iiss_calc(precommit_data.precommit_flag)
 
     @staticmethod
     def _backup_state_db(block: 'Block', backup_period: int):
@@ -350,8 +350,7 @@ class IconServiceSyncer(object):
 
         if block.height % backup_period == 0:
             print(f"----------- Backup statedb: {block.height} ------------")
-            dirname: str = f"block-{block.height}"
-
+            dirname: str = f"block-{'%09d' % block.height}"
             for basename in (".score", ".statedb"):
                 try:
                     shutil.copytree(basename, f"{dirname}/{basename}/")
