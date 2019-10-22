@@ -66,6 +66,14 @@ class StateDatabaseReader(object):
 
         return account
 
+    def get_by_key(self, key):
+        value: bytes = self._db.get(key)
+
+        if value is None:
+            return None
+
+        return value
+
     def get_last_block(self) -> 'Block':
         """Read the last commited block from statedb
 
