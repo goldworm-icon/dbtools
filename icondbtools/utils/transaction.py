@@ -19,11 +19,11 @@ from iconservice.base.address import Address
 from iconservice.base.address import MalformedAddress
 from iconservice.base.exception import InvalidParamsException
 
-from icondbtools.libs.loopchain_block import LoopchainBlock2
+from icondbtools.libs.loopchain_block import LoopchainBlock
 from icondbtools.utils.convert_type import str_to_int
 
 
-def create_transaction_requests(loopchain_block: 'LoopchainBlock2') -> list:
+def create_transaction_requests(loopchain_block: 'LoopchainBlock') -> list:
     tx_requests = []
 
     if loopchain_block.height == 0:
@@ -38,7 +38,7 @@ def create_transaction_requests(loopchain_block: 'LoopchainBlock2') -> list:
     return tx_requests
 
 
-def convert_transaction_to_request(loopchain_block: 'LoopchainBlock2', tx_dict: dict):
+def convert_transaction_to_request(loopchain_block: 'LoopchainBlock', tx_dict: dict):
     params = {}
     request = {'method': 'icx_sendTransaction', 'params': params}
 
