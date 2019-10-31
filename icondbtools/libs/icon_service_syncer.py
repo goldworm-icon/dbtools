@@ -166,7 +166,8 @@ class IconServiceSyncer(object):
         prev_block: Optional['Block'] = None
         prev_loopchain_block: Optional['LoopchainBlock'] = None
         if start_height > 0:
-            prev_loopchain_block = self._block_reader.get_block_by_block_height(start_height - 1)
+            block_dict = self._block_reader.get_block_by_block_height(start_height - 1)
+            prev_loopchain_block = LoopchainBlock.from_dict(block_dict)
 
         for height in range(start_height, start_height + count):
             block_dict: dict = self._block_reader.get_block_by_block_height(height)
@@ -235,6 +236,7 @@ class IconServiceSyncer(object):
 
             self._backup_state_db(block, backup_period)
             prev_block = block
+            prev_loopchain_block = loopchain_block
 
         self._block_reader.close()
 

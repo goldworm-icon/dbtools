@@ -15,43 +15,8 @@
 
 from typing import Optional
 
-from iconservice.base.address import Address
-
 from icondbtools.utils.convert_type import convert_hex_str_to_int, convert_hex_str_to_bytes
-
-
-# class LoopchainBlock(Block):
-#
-#     def __init__(self,
-#                  height: int = -1,
-#                  hash: bytes = None,
-#                  timestamp: int = -1,
-#                  prev_hash: bytes = None,
-#                  cumulative_fee: int = 0,
-#                  transactions: list = None):
-#         super().__init__(height, hash, timestamp, prev_hash, cumulative_fee)
-#         self.transactions = transactions
-#
-#     @staticmethod
-#     def from_dict(block: dict) -> 'LoopchainBlock':
-#         version = block['version']
-#
-#         keynames = {
-#             'hash': {"0.3": "hash", "0.1a": "block_hash"},
-#             'timestamp': {"0.3": "timestamp", "0.1a": "time_stamp"},
-#             'prev_hash': {"0.3": "prevHash", "0.1a": "prev_block_hash"},
-#             'transactions': {"0.3": "transactions", "0.1a": "confirmed_transaction_list"}
-#         }
-#
-#         height = convert_hex_str_to_int(block['height'])
-#         hash = convert_hex_str_to_bytes(block[keynames['hash'][version]])
-#         timestamp = block[keynames['timestamp'][version]]
-#         if version == "0.3":
-#             timestamp = int(timestamp, 16)
-#         prev_hash = convert_hex_str_to_bytes(block[keynames['prev_hash'][version]])
-#         transactions = block[keynames['transactions'][version]]
-#
-#         return LoopchainBlock(height, hash, timestamp, prev_hash, transactions=transactions)
+from iconservice.base.address import Address
 
 
 class LoopchainBlock(object):
@@ -130,7 +95,7 @@ class LoopchainBlock(object):
     def _from_dict_v3(cls, block: dict) -> 'LoopchainBlock':
         version: str = block["version"]
 
-        height: int = convert_hex_str_to_bytes(block["height"])
+        height: int = convert_hex_str_to_int(block["height"])
         block_hash: bytes = convert_hex_str_to_bytes(block["hash"])
         prev_block_hash: bytes = convert_hex_str_to_bytes(block["prevHash"])
         leader = Address.from_string(block["leader"])
