@@ -114,3 +114,4 @@ def convert_genesis_transaction_to_request(tx_dict: dict):
         account['balance'] = int(account['balance'], 16)
 
     return request
+

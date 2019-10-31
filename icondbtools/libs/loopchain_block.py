@@ -13,40 +13,136 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from iconservice.base.block import Block
+from typing import Optional
+
+from iconservice.base.address import Address
 
 from icondbtools.utils.convert_type import convert_hex_str_to_int, convert_hex_str_to_bytes
 
 
-class LoopchainBlock(Block):
+# class LoopchainBlock(Block):
+#
+#     def __init__(self,
+#                  height: int = -1,
+#                  hash: bytes = None,
+#                  timestamp: int = -1,
+#                  prev_hash: bytes = None,
+#                  cumulative_fee: int = 0,
+#                  transactions: list = None):
+#         super().__init__(height, hash, timestamp, prev_hash, cumulative_fee)
+#         self.transactions = transactions
+#
+#     @staticmethod
+#     def from_dict(block: dict) -> 'LoopchainBlock':
+#         version = block['version']
+#
+#         keynames = {
+#             'hash': {"0.3": "hash", "0.1a": "block_hash"},
+#             'timestamp': {"0.3": "timestamp", "0.1a": "time_stamp"},
+#             'prev_hash': {"0.3": "prevHash", "0.1a": "prev_block_hash"},
+#             'transactions': {"0.3": "transactions", "0.1a": "confirmed_transaction_list"}
+#         }
+#
+#         height = convert_hex_str_to_int(block['height'])
+#         hash = convert_hex_str_to_bytes(block[keynames['hash'][version]])
+#         timestamp = block[keynames['timestamp'][version]]
+#         if version == "0.3":
+#             timestamp = int(timestamp, 16)
+#         prev_hash = convert_hex_str_to_bytes(block[keynames['prev_hash'][version]])
+#         transactions = block[keynames['transactions'][version]]
+#
+#         return LoopchainBlock(height, hash, timestamp, prev_hash, transactions=transactions)
+
+
+class LoopchainBlock(object):
 
     def __init__(self,
+                 version: str = None,
                  height: int = -1,
-                 hash: bytes = None,
                  timestamp: int = -1,
-                 prev_hash: bytes = None,
-                 cumulative_fee: int = 0,
+                 block_hash: bytes = None,
+                 prev_block_hash: bytes = None,
+                 leader: 'Address' = None,
+                 state_hash: bytes = None,
                  transactions: list = None):
-        super().__init__(height, hash, timestamp, prev_hash, cumulative_fee)
+        self.version = version
+        self.height = height
+        self.block_hash = block_hash
+        self.prev_block_hash = prev_block_hash
+        self.timestamp: int = timestamp
+        self.leader = leader
+        self.state_hash: bytes = state_hash
         self.transactions = transactions
 
-    @staticmethod
-    def from_dict(block: dict) -> 'LoopchainBlock':
-        version = block['version']
+    def __bool__(self):
+        return True
 
-        keynames = {
-            'hash': {"0.3": "hash", "0.1a": "block_hash"},
-            'timestamp': {"0.3": "timestamp", "0.1a": "time_stamp"},
-            'prev_hash': {"0.3": "prevHash", "0.1a": "prev_block_hash"},
-            'transactions': {"0.3": "transactions", "0.1a": "confirmed_transaction_list"}
+    @classmethod
+    def from_dict(cls, block: dict) -> 'LoopchainBlock':
+        version: str = block["version"]
+        handlers = {
+            "0.3": cls._from_dict_v3
         }
 
-        height = convert_hex_str_to_int(block['height'])
-        hash = convert_hex_str_to_bytes(block[keynames['hash'][version]])
-        timestamp = block[keynames['timestamp'][version]]
-        if version == "0.3":
-            timestamp = int(timestamp, 16)
-        prev_hash = convert_hex_str_to_bytes(block[keynames['prev_hash'][version]])
-        transactions = block[keynames['transactions'][version]]
+        handler = handlers.get(version, cls.from_dict_v1)
+        return handler(block)
 
-        return LoopchainBlock(height, hash, timestamp, prev_hash, transactions=transactions)
+    @classmethod
+    def from_dict_v1(cls, block: dict) -> 'LoopchainBlock':
+        version = block['version']
+        height: int = block["height"]
+        block_hash: bytes = convert_hex_str_to_bytes(block["block_hash"])
+        prev_block_hash: bytes = convert_hex_str_to_bytes(block["prev_block_hash"])
+
+        key: str = "timestamp" if "timestamp" in block else "time_stamp"
+        timestamp: int = block[key]
+
+        state_hash: bytes = cls._get_commit_state(block)
+        leader: 'Address' = cls._get_peer_id(block)
+
+        transactions: list = block['confirmed_transaction_list']
+
+        return LoopchainBlock(version=version,
+                              height=height,
+                              block_hash=block_hash,
+                              timestamp=timestamp,
+                              prev_block_hash=prev_block_hash,
+                              state_hash=state_hash,
+                              leader=leader,
+                              transactions=transactions)
+
+    @classmethod
+    def _get_commit_state(cls, block: dict) -> bytes:
+        try:
+            return convert_hex_str_to_bytes(block["commit_state"]["icon_dex"])
+        except BaseException:
+            return b""
+
+    @classmethod
+    def _get_peer_id(cls, block: dict) -> Optional['Address']:
+        peer_id = block['peer_id']
+        if peer_id:
+            return Address.from_string(peer_id)
+
+        return None
+
+    @classmethod
+    def _from_dict_v3(cls, block: dict) -> 'LoopchainBlock':
+        version: str = block["version"]
+
+        height: int = convert_hex_str_to_bytes(block["height"])
+        block_hash: bytes = convert_hex_str_to_bytes(block["hash"])
+        prev_block_hash: bytes = convert_hex_str_to_bytes(block["prevHash"])
+        leader = Address.from_string(block["leader"])
+        timestamp: int = convert_hex_str_to_int(block["timestamp"])
+        state_hash: bytes = convert_hex_str_to_bytes(block["stateHash"])
+        transactions: list = block["transactions"]
+
+        return LoopchainBlock(version=version,
+                              height=height,
+                              block_hash=block_hash,
+                              timestamp=timestamp,
+                              prev_block_hash=prev_block_hash,
+                              state_hash=state_hash,
+                              leader=leader,
+                              transactions=transactions)

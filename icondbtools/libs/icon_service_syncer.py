@@ -19,26 +19,53 @@ import logging
 import shutil
 import time
 from concurrent.futures import ThreadPoolExecutor
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, List
 
 from iconcommons.icon_config import IconConfig
 from iconcommons.logger import Logger
 from iconservice.base.address import Address
 from iconservice.base.block import Block
+from iconservice.database.batch import TransactionBatchValue
 from iconservice.icon_config import default_icon_config
 from iconservice.icon_constant import Revision
 from iconservice.icon_service_engine import IconServiceEngine
 from iconservice.iconscore.icon_score_context import IconScoreContextType, IconScoreContext
-from iconservice.database.batch import TransactionBatchValue
+
 from icondbtools.utils.convert_type import object_to_str
 from icondbtools.utils.transaction import create_transaction_requests
 from icondbtools.word_detector import WordDetector
 from .block_database_reader import BlockDatabaseReader
 from .loopchain_block import LoopchainBlock
+from .vote import Vote
 
 if TYPE_CHECKING:
     from iconservice.precommit_data_manager import PrecommitData, PrecommitDataManager
     from iconservice.database.batch import BlockBatch
+
+
+def _create_iconservice_block(loopchain_block: 'LoopchainBlock') -> 'Block':
+    return Block(
+        block_height=loopchain_block.height,
+        block_hash=loopchain_block.block_hash,
+        timestamp=loopchain_block.timestamp,
+        prev_hash=loopchain_block.prev_block_hash)
+
+
+def _create_block_validators(block_dict: dict, leader: Optional['Address']) -> Optional[List['Address']]:
+    if "prevVotes" not in block_dict:
+        return None
+
+    validators: List['Address'] = []
+
+    for item in block_dict["prevVotes"]:
+        if not isinstance(item, dict):
+            continue
+
+        vote = Vote.from_dict(item)
+        if leader != vote.rep:
+            validators.append(vote.rep)
+
+    return validators
 
 
 class IconServiceSyncer(object):
@@ -137,6 +164,9 @@ class IconServiceSyncer(object):
         print('block_height | commit_state | state_root_hash | tx_count')
 
         prev_block: Optional['Block'] = None
+        prev_loopchain_block: Optional['LoopchainBlock'] = None
+        if start_height > 0:
+            prev_loopchain_block = self._block_reader.get_block_by_block_height(start_height - 1)
 
         for height in range(start_height, start_height + count):
             block_dict: dict = self._block_reader.get_block_by_block_height(height)
@@ -145,14 +175,21 @@ class IconServiceSyncer(object):
                 print(f'last block: {height - 1}')
                 break
 
-            block: 'Block' = LoopchainBlock.from_dict(block_dict)
+            loopchain_block: 'LoopchainBlock' = LoopchainBlock.from_dict(block_dict)
+            block: 'Block' = _create_iconservice_block(loopchain_block)
 
-            tx_requests: list = create_transaction_requests(block)
+            tx_requests: list = create_transaction_requests(loopchain_block)
+            prev_block_generator: Optional['Address'] = \
+                prev_loopchain_block.leader if prev_loopchain_block else None
+            prev_block_validators: Optional[List['Address']] = \
+                _create_block_validators(block_dict, prev_block_generator)
+            Logger.info(tag=self._TAG, msg=f"prev_block_generator={prev_block_generator}")
+            Logger.info(tag=self._TAG, msg=f"prev_block_validators={prev_block_validators}")
 
             if prev_block is not None and prev_block.hash != block.prev_hash:
                 raise Exception()
 
-            invoke_result = self._engine.invoke(block, tx_requests)
+            invoke_result = self._engine.invoke(block, tx_requests, prev_block_generator, prev_block_validators)
             tx_results, state_root_hash = invoke_result[0], invoke_result[1]
 
             commit_state: bytes = self._block_reader.get_commit_state(block_dict, channel, b'')
@@ -191,7 +228,7 @@ class IconServiceSyncer(object):
                 if 'block' in inspect.signature(self._engine.commit).parameters:
                     self._engine.commit(block)
                 else:
-                    self._engine.commit(block.height, block.hash, None)
+                    self._engine.commit(block.height, block.hash, block.hash)
 
             while word_detector.get_hold():
                 time.sleep(0.5)

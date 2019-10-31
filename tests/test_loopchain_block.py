@@ -60,7 +60,10 @@ class TestLoopchainBlock(unittest.TestCase):
         }
 
         loopchain_block = LoopchainBlock.from_dict(block_dict)
-        self.assertEqual(prev_block_hash, loopchain_block.prev_hash)
+        self.assertEqual(prev_block_hash, loopchain_block.prev_block_hash)
         self.assertEqual(timestamp, loopchain_block.timestamp)
-        self.assertEqual(block_hash, loopchain_block.hash)
+        self.assertEqual(block_hash, loopchain_block.block_hash)
         self.assertEqual(height, loopchain_block.height)
+
+    def test_from_dict_with_block_v3(self):
+        pass
