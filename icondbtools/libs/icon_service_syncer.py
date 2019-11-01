@@ -19,10 +19,14 @@ import logging
 import shutil
 import time
 from concurrent.futures import ThreadPoolExecutor
-from typing import TYPE_CHECKING, Optional, List
+from typing import TYPE_CHECKING, Optional, List, Tuple, Dict
 
 from iconcommons.icon_config import IconConfig
 from iconcommons.logger import Logger
+
+from icondbtools.utils.convert_type import object_to_str
+from icondbtools.utils.transaction import create_transaction_requests
+from icondbtools.word_detector import WordDetector
 from iconservice.base.address import Address
 from iconservice.base.block import Block
 from iconservice.database.batch import TransactionBatchValue
@@ -30,17 +34,14 @@ from iconservice.icon_config import default_icon_config
 from iconservice.icon_constant import Revision
 from iconservice.icon_service_engine import IconServiceEngine
 from iconservice.iconscore.icon_score_context import IconScoreContextType, IconScoreContext
-
-from icondbtools.utils.convert_type import object_to_str
-from icondbtools.utils.transaction import create_transaction_requests
-from icondbtools.word_detector import WordDetector
 from .block_database_reader import BlockDatabaseReader
 from .loopchain_block import LoopchainBlock
 from .vote import Vote
+from ..data.node_container import NodeContainer
 
 if TYPE_CHECKING:
-    from iconservice.precommit_data_manager import PrecommitData, PrecommitDataManager
     from iconservice.database.batch import BlockBatch
+    from iconservice.precommit_data_manager import PrecommitData, PrecommitDataManager
 
 
 def _create_iconservice_block(loopchain_block: 'LoopchainBlock') -> 'Block':
@@ -66,6 +67,39 @@ def _create_block_validators(block_dict: dict, leader: Optional['Address']) -> O
             validators.append(vote.rep)
 
     return validators
+
+
+def _create_prev_block_votes(block_dict: dict,
+                             leader: Optional['Address'],
+                             main_preps: Optional['NodeContainer']) -> Optional[List[Tuple['Address', int]]]:
+    if "prevVotes" not in block_dict:
+        return None
+
+    if main_preps is None:
+        return None
+
+    ret: List[Tuple['Address', int]] = []
+    prev_votes = {}
+
+    # Parse prevVotes
+    for item in block_dict["prevVotes"]:
+        if not isinstance(item, dict):
+            continue
+
+        vote = Vote.from_dict(item)
+        prev_votes[vote.rep] = vote
+
+    for main_prep in main_preps:
+        address: 'Address' = main_prep.address
+
+        if address == leader:
+            # Skip it if address is a leader address
+            continue
+
+        vote_result = 1 if address in prev_votes else 0
+        ret.append((address, vote_result))
+
+    return ret
 
 
 class IconServiceSyncer(object):
@@ -169,6 +203,9 @@ class IconServiceSyncer(object):
             block_dict = self._block_reader.get_block_by_block_height(start_height - 1)
             prev_loopchain_block = LoopchainBlock.from_dict(block_dict)
 
+        main_preps: Optional['NodeContainer'] = None
+        next_main_preps: Optional['NodeContainer'] = None
+
         for height in range(start_height, start_height + count):
             block_dict: dict = self._block_reader.get_block_by_block_height(height)
 
@@ -184,14 +221,19 @@ class IconServiceSyncer(object):
                 prev_loopchain_block.leader if prev_loopchain_block else None
             prev_block_validators: Optional[List['Address']] = \
                 _create_block_validators(block_dict, prev_block_generator)
+            prev_block_votes: Optional[List[Tuple['Address', int]]] = \
+                _create_prev_block_votes(block_dict, prev_block_generator, main_preps)
+
             Logger.info(tag=self._TAG, msg=f"prev_block_generator={prev_block_generator}")
             Logger.info(tag=self._TAG, msg=f"prev_block_validators={prev_block_validators}")
+            Logger.info(tag=self._TAG, msg=f"prev_block_votes={prev_block_votes}")
 
             if prev_block is not None and prev_block.hash != block.prev_hash:
                 raise Exception()
 
-            invoke_result = self._engine.invoke(block, tx_requests, prev_block_generator, prev_block_validators)
+            invoke_result = self._engine.invoke(block, tx_requests, prev_block_generator, None, prev_block_votes)
             tx_results, state_root_hash = invoke_result[0], invoke_result[1]
+            main_preps_as_dict: Optional[Dict] = invoke_result[3]
 
             commit_state: bytes = self._block_reader.get_commit_state(block_dict, channel, b'')
 
@@ -234,9 +276,17 @@ class IconServiceSyncer(object):
             while word_detector.get_hold():
                 time.sleep(0.5)
 
+            # Prepare the next iteration
             self._backup_state_db(block, backup_period)
             prev_block = block
             prev_loopchain_block = loopchain_block
+
+            if next_main_preps:
+                main_preps = next_main_preps
+                next_main_preps = None
+
+            if main_preps_as_dict is not None:
+                next_main_preps = NodeContainer.from_dict(main_preps_as_dict)
 
         self._block_reader.close()
 
