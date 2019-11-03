@@ -30,6 +30,7 @@ from icondbtools.command.command_tps import CommandTps
 from icondbtools.command.command_txresult import CommandTxResult
 from icondbtools.command.command_dbinfo import CommandDbinfo
 from icondbtools.command.command_iiss_data import CommandIISSData
+from icondbtools.command.command_iiss_tx_data import CommandIISSTXData
 from icondbtools.libs.timer import Timer
 from icondbtools.utils import get_dbtools_version
 
@@ -50,6 +51,7 @@ def main():
         CommandInvalidTx,
         CommandDbinfo,
         CommandIISSData,
+        CommandIISSTXData,
     ]
 
     version = get_dbtools_version()

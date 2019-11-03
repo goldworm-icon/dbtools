@@ -13,11 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from icondbtools.command.command import Command
-from icondbtools.libs.iiss_data_reader import IISSDataReader, BPCountResult, TXCountResult
+from .command import Command
+from ..libs.iiss_data_reader import IISSDataReader, BPCountResult, TXCountResult
+from ..libs.block_database_reader import BlockDatabaseReader
 
 
 class CommandIISSData(Command):
+    """Extract the information from iiss_data_db (iiss_rc_db)
+     """
+
     def __init__(self, sub_parser, common_parser):
         self.add_parser(sub_parser, common_parser)
 
@@ -30,7 +34,7 @@ class CommandIISSData(Command):
         parser_iiss_data.set_defaults(func=self.run)
 
     def run(self, args):
-        """Print the account info of a given address
+        """Extract the information
 
         :param args:
         :return:
