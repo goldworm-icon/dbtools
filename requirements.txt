@@ -1,2 +1,3 @@
 plyvel
+iconcommons
 iconservice
