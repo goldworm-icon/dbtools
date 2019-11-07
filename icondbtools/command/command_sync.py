@@ -61,6 +61,7 @@ class CommandSync(Command):
             default='icon_dex', help='channel name used as a key of commit_state in block data')
         parser_sync.add_argument('--backup-period', type=int, default=0, help="Backup statedb every this period blocks")
         parser_sync.add_argument('--is-config', type=str, default="", help="iconservice_config.json filepath")
+        parser_sync.add_argument('--print-block-height', type=int, default=1, help="Print every this block height")
         parser_sync.set_defaults(func=self.run)
 
     def run(self, args):
@@ -79,6 +80,7 @@ class CommandSync(Command):
         channel: str = args.channel
         backup_period: int = args.backup_period
         iconservice_config_path: str = args.is_config
+        print_block_height: int = args.print_block_height
 
         reader = StateDatabaseReader()
 
@@ -108,6 +110,9 @@ class CommandSync(Command):
               f'deployerWhitelist: {deployer_whitelist}\n'
               f'scorePackageValidator: {score_package_validator}\n')
 
+        if print_block_height < 1:
+            raise ValueError(f'print block height should be more than 0')
+
         syncer = IconServiceSyncer()
         try:
             syncer.open(
@@ -121,6 +126,7 @@ class CommandSync(Command):
                 db_path, channel, start_height=start, count=count,
                 stop_on_error=stop_on_error, no_commit=no_commit,
                 write_precommit_data=write_precommit_data,
-                backup_period=backup_period)
+                backup_period=backup_period,
+                print_block_height=print_block_height)
         finally:
             syncer.close()
