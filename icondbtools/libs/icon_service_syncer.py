@@ -231,7 +231,8 @@ class IconServiceSyncer(object):
             if prev_block is not None and prev_block.hash != block.prev_hash:
                 raise Exception()
 
-            invoke_result = self._engine.invoke(block, tx_requests, prev_block_generator, None, prev_block_votes)
+            invoke_result = self._engine.invoke(block, tx_requests,
+                                                prev_block_generator, prev_block_validators, prev_block_votes)
             tx_results, state_root_hash = invoke_result[0], invoke_result[1]
             main_preps_as_dict: Optional[Dict] = invoke_result[3]
 
