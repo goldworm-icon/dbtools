@@ -27,7 +27,7 @@ def get_dbtools_version() -> str:
     :return: version of tbears.
     """
     try:
-        version = pkg_resources.get_distribution('preptools').version
+        version = pkg_resources.get_distribution('icondbtools').version
     except pkg_resources.DistributionNotFound:
         version_path = os.path.join(PROJECT_ROOT_PATH, 'VERSION')
         with open(version_path, mode='r') as version_file:
