@@ -23,10 +23,6 @@ from typing import TYPE_CHECKING, Optional, List, Tuple, Dict
 
 from iconcommons.icon_config import IconConfig
 from iconcommons.logger import Logger
-
-from icondbtools.utils.convert_type import object_to_str
-from icondbtools.utils.transaction import create_transaction_requests
-from icondbtools.word_detector import WordDetector
 from iconservice.base.address import Address
 from iconservice.base.block import Block
 from iconservice.database.batch import TransactionBatchValue
@@ -34,6 +30,10 @@ from iconservice.icon_config import default_icon_config
 from iconservice.icon_constant import Revision
 from iconservice.icon_service_engine import IconServiceEngine
 from iconservice.iconscore.icon_score_context import IconScoreContextType, IconScoreContext
+
+from icondbtools.utils.convert_type import object_to_str
+from icondbtools.utils.transaction import create_transaction_requests
+from icondbtools.word_detector import WordDetector
 from .block_database_reader import BlockDatabaseReader
 from .loopchain_block import LoopchainBlock
 from .vote import Vote
@@ -174,7 +174,8 @@ class IconServiceSyncer(object):
              stop_on_error: bool = True,
              no_commit: bool = False,
              backup_period: int = 0,
-             write_precommit_data: bool = False) -> int:
+             write_precommit_data: bool = False,
+             print_block_height: int = 1) -> int:
         """Begin to synchronize IconServiceEngine with blocks from loopchain db
 
         :param db_path: loopchain db path
@@ -185,6 +186,7 @@ class IconServiceSyncer(object):
         :param no_commit: Do not commit
         :param backup_period: state backup period in block
         :param write_precommit_data:
+        :param print_block_height: print every this block height
         :return: 0(success), otherwise(error)
         """
         Logger.debug(tag=self._TAG, msg="_run() start")
@@ -239,7 +241,8 @@ class IconServiceSyncer(object):
             commit_state: bytes = self._block_reader.get_commit_state(block_dict, channel, b'')
 
             # "commit_state" is the field name of state_root_hash in loopchain block
-            print(f'{height} | {commit_state.hex()[:6]} | {state_root_hash.hex()[:6]} | {len(tx_requests)}')
+            if (height - start_height) % print_block_height == 0:
+                print(f'{height} | {commit_state.hex()[:6]} | {state_root_hash.hex()[:6]} | {len(tx_requests)}')
 
             if write_precommit_data:
                 self._print_precommit_data(block)

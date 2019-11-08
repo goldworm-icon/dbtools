@@ -27,15 +27,21 @@
 
 ```bash
 (venv) $ icondbtools sync --help
-usage: icondbtools sync [-h] --db DB [-s START] [-c COUNT]
+usage: icondbtools sync [-h] --db DB [-s START] [--end END] [-c COUNT]
                         [-o BUILTIN_SCORE_OWNER] [--stop-on-error]
-                        [--no-commit] [--write-precommit-data]
+                        [--no-commit] [--write-precommit-data] [--no-fee]
+                        [--no-audit] [--deployer-whitelist]
+                        [--score-package-validator] [--channel CHANNEL]
+                        [--backup-period BACKUP_PERIOD]
+                        [--is-config IS_CONFIG]
+                        [--print-block-height PRINT_BLOCK_HEIGHT]
 
 optional arguments:
   -h, --help            show this help message and exit
   --db DB
   -s START, --start START
                         start height to sync
+  --end END             end height to sync, inclusive
   -c COUNT, --count COUNT
                         The number of blocks to sync
   -o BUILTIN_SCORE_OWNER, --owner BUILTIN_SCORE_OWNER
@@ -50,6 +56,14 @@ optional arguments:
   --deployer-whitelist  Enable deployer whitelist
   --score-package-validator
                         Enable score package validator
+  --channel CHANNEL     channel name used as a key of commit_state in block
+                        data
+  --backup-period BACKUP_PERIOD
+                        Backup statedb every this period blocks
+  --is-config IS_CONFIG
+                        iconservice_config.json filepath
+  --print-block-height PRINT_BLOCK_HEIGHT
+                        Print every this block height
 
 (venv) $ icondbtools sync --db ./db_13.125.135.114:7100_icon_dex --stop-on-error
 ```
