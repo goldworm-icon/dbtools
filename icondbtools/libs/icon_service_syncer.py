@@ -23,10 +23,6 @@ from typing import TYPE_CHECKING, Optional, List, Tuple, Dict
 
 from iconcommons.icon_config import IconConfig
 from iconcommons.logger import Logger
-
-from icondbtools.utils.convert_type import object_to_str
-from icondbtools.utils.transaction import create_transaction_requests
-from icondbtools.word_detector import WordDetector
 from iconservice.base.address import Address
 from iconservice.base.block import Block
 from iconservice.database.batch import TransactionBatchValue
@@ -34,6 +30,10 @@ from iconservice.icon_config import default_icon_config
 from iconservice.icon_constant import Revision
 from iconservice.icon_service_engine import IconServiceEngine
 from iconservice.iconscore.icon_score_context import IconScoreContextType, IconScoreContext
+
+from icondbtools.utils.convert_type import object_to_str
+from icondbtools.utils.transaction import create_transaction_requests
+from icondbtools.word_detector import WordDetector
 from .block_database_reader import BlockDatabaseReader
 from .loopchain_block import LoopchainBlock
 from .vote import Vote
@@ -241,7 +241,7 @@ class IconServiceSyncer(object):
             commit_state: bytes = self._block_reader.get_commit_state(block_dict, channel, b'')
 
             # "commit_state" is the field name of state_root_hash in loopchain block
-            if height % print_block_height == 0:
+            if (height - start_height) % print_block_height == 0:
                 print(f'{height} | {commit_state.hex()[:6]} | {state_root_hash.hex()[:6]} | {len(tx_requests)}')
 
             if write_precommit_data:
