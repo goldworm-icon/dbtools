@@ -1,5 +1,3 @@
-import json
-
 import plyvel
 
 from icondbtools.command.command import Command
@@ -50,7 +48,7 @@ class CommandCopy(Command):
                 if block is None:
                     break
 
-                block_hash: bytes = json.loads(block)["block_hash"].encode()
+                block_hash: bytes = block_reader.get_value_by_height(height)
                 wb.put(block_hash, block)
                 wb.put(block_height_key, block_hash)
 
