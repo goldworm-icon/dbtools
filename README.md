@@ -16,6 +16,7 @@
 * [account](#account)
 * [tps](#tps)
 * [token](#token)
+* [copy](#copy)
 
 ## sync
 
@@ -246,7 +247,7 @@ period: 71.3799 seconds, 71379900 microseconds
 * Write a new balance to StateDB for IRC2 Standard Token SCORE
 * Refer to [ICON Token Standard RI](https://github.com/icon-project/samples/tree/master/irc2_token)
 
-```
+```bash
 (venv) $ icondbtools token --help
 usage: icondbtools token [-h] --db DB --score SCORE --user USER
                          [--balance BALANCE]
@@ -277,3 +278,28 @@ elapsedTime: 0.019192934036254883 seconds
 token balance: 1234
 elapsedTime: 0.03488469123840332 seconds
 ```
+
+## copy
+
+- Copy LevelDB into the file path
+
+```bash
+(venv) $ icondbtools copy -help
+usage: icondbtools copy [-h] --db DB [-s START] [--end END] [--count COUNT]
+                        [--new-db NEW_DB]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --db DB
+  -s START, --start START
+                        start block height to be copied
+  --end END             end block height to be copied, inclusive
+  --count COUNT         block count to be copied
+  --new-db NEW_DB       new DB path for blocks to be copied
+  
+# Copy part of LevelDB from block height 0 to 100 into new DB path
+(venv) $ icondbtools copy --db ./db_13.125.135.114:7100_icon_dex --start 0 --end 100 --new-db ./newdb
+```
+
+
+
