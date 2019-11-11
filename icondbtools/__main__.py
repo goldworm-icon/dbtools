@@ -20,6 +20,10 @@ from pprint import pprint
 from icondbtools.command.command_account import CommandAccount
 from icondbtools.command.command_block import CommandBlock
 from icondbtools.command.command_clear import CommandClear
+from icondbtools.command.command_copy import CommandCopy
+from icondbtools.command.command_dbinfo import CommandDbinfo
+from icondbtools.command.command_iiss_data import CommandIISSData
+from icondbtools.command.command_iiss_tx_data import CommandIISSTXData
 from icondbtools.command.command_invalidtx import CommandInvalidTx
 from icondbtools.command.command_lastblock import CommandLastBlock
 from icondbtools.command.command_statehash import CommandStateHash
@@ -28,15 +32,11 @@ from icondbtools.command.command_sync import CommandSync
 from icondbtools.command.command_token import CommandToken
 from icondbtools.command.command_tps import CommandTps
 from icondbtools.command.command_txresult import CommandTxResult
-from icondbtools.command.command_dbinfo import CommandDbinfo
-from icondbtools.command.command_iiss_data import CommandIISSData
-from icondbtools.command.command_iiss_tx_data import CommandIISSTXData
 from icondbtools.libs.timer import Timer
 from icondbtools.utils import get_dbtools_version
 
 
 def main():
-
     arg_inits = [
         CommandSync,
         CommandLastBlock,
@@ -52,6 +52,7 @@ def main():
         CommandDbinfo,
         CommandIISSData,
         CommandIISSTXData,
+        CommandCopy
     ]
 
     version = get_dbtools_version()
@@ -80,7 +81,6 @@ def main():
 
 
 def create_common_parser() -> argparse.ArgumentParser:
-
     parent_parser = argparse.ArgumentParser(add_help=False)
     parent_parser.add_argument(
         "--db",
