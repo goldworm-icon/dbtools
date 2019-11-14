@@ -144,7 +144,6 @@ class IconServiceSyncer(object):
             asyncio.ensure_future(self._wait_for_complete(future, *args, **kwargs))
             loop.run_until_complete(future)
         finally:
-            self._engine.close()
             loop.close()
 
         ret = future.result()
@@ -157,9 +156,13 @@ class IconServiceSyncer(object):
 
         executor = ThreadPoolExecutor(max_workers=1)
         f = executor.submit(self._run, *args, **kwargs)
-        future = asyncio.wrap_future(f)
 
+        future = asyncio.wrap_future(f)
         await future
+
+        self._engine.close()
+        # Wait to stop ipc_server for 1s
+        await asyncio.sleep(1)
 
         Logger.debug(tag=self._TAG, msg="_wait_for_complete() end1")
         result_future.set_result(future.result())
