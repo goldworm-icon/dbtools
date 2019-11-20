@@ -17,6 +17,7 @@
 * [tps](#tps)
 * [token](#token)
 * [copy](#copy)
+* [term](#term)
 
 ## sync
 
@@ -284,7 +285,7 @@ elapsedTime: 0.03488469123840332 seconds
 - Copy LevelDB into the file path
 
 ```bash
-(venv) $ icondbtools copy -help
+(venv) $ icondbtools copy -h
 usage: icondbtools copy [-h] --db DB [-s START] [--end END] [--count COUNT]
                         [--new-db NEW_DB]
 
@@ -301,5 +302,37 @@ optional arguments:
 (venv) $ icondbtools copy --db ./db_13.125.135.114:7100_icon_dex --start 0 --end 100 --new-db ./newdb
 ```
 
+## term
 
+- Print information of the block and period the block belongs to 
+- It is only for MainNet
+
+```bash
+(venv) $ icondbtools term -h
+usage: icondbtools term [-h] [--height HEIGHT]
+
+optional arguments:
+  -h, --help       show this help message and exit
+  --height HEIGHT  target block height
+
+# Get general info about prevote and decentralization 
+(venv) $ icondbtools term
+Pre-vote
+- start BH: 7597282
+- end BH: 10362082
+- term period: 43200
+
+Decentralization
+- start BH: 10362083
+- term period: 43120
+
+# Get decentralization info of the block and period the block belongs to
+(venv) $ icondbtools term --height 10362083   
+Decentralization info of the block and period the block belongs to for only MainNet
+- seq: 1 (start at 1)
+- term period: 43120
+- start BH: 10362083
+- end BH: 10405202
+- 1 block from start BH-10362083
+```
 

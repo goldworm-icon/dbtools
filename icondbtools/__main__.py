@@ -29,6 +29,7 @@ from icondbtools.command.command_lastblock import CommandLastBlock
 from icondbtools.command.command_statehash import CommandStateHash
 from icondbtools.command.command_statelastblock import CommandStateLastBlock
 from icondbtools.command.command_sync import CommandSync
+from icondbtools.command.command_term import CommandTerm
 from icondbtools.command.command_token import CommandToken
 from icondbtools.command.command_tps import CommandTps
 from icondbtools.command.command_txresult import CommandTxResult
@@ -52,7 +53,8 @@ def main():
         CommandDbinfo,
         CommandIISSData,
         CommandIISSTXData,
-        CommandCopy
+        CommandCopy,
+        CommandTerm
     ]
 
     version = get_dbtools_version()
