@@ -155,8 +155,18 @@ class IconServiceSyncer(object):
         Logger.debug(tag=self._TAG, msg="_wait_for_complete() start")
 
         executor = ThreadPoolExecutor(max_workers=1)
-        f = executor.submit(self._run, *args, **kwargs)
 
+        # Wait for rc to be ready
+        future = self._engine.get_ready_future()
+        await future
+
+        # Call IconServiceEngine.hello()
+        f = executor.submit(self._hello)
+        future = asyncio.wrap_future(f)
+        await future
+
+        # Start to sync blocks
+        f = executor.submit(self._run, *args, **kwargs)
         future = asyncio.wrap_future(f)
         await future
 
@@ -168,6 +178,9 @@ class IconServiceSyncer(object):
         result_future.set_result(future.result())
 
         Logger.debug(tag=self._TAG, msg="_wait_for_complete() end2")
+
+    def _hello(self):
+        self._engine.hello()
 
     def _run(self,
              db_path: str,
@@ -210,6 +223,8 @@ class IconServiceSyncer(object):
 
         main_preps: Optional['NodeContainer'] = None
         next_main_preps: Optional['NodeContainer'] = None
+
+        end_height = start_height + count - 1
 
         for height in range(start_height, start_height + count):
             block_dict: dict = self._block_reader.get_block_by_block_height(height)
@@ -271,14 +286,13 @@ class IconServiceSyncer(object):
                 word_detector.start()
                 time.sleep(0.5)
 
-            if not no_commit:
+            # If no_commit is set to True, the config only affects to the last block to commit
+            if not no_commit or height < end_height:
                 while word_detector.get_hold():
                     time.sleep(0.5)
 
-                if 'block' in inspect.signature(self._engine.commit).parameters:
-                    self._engine.commit(block)
-                else:
-                    self._engine.commit(block.height, block.hash, block.hash)
+                # Call IconServiceEngine.commit() with a block
+                self._commit(block)
 
             while word_detector.get_hold():
                 time.sleep(0.5)
@@ -296,9 +310,16 @@ class IconServiceSyncer(object):
                 next_main_preps = NodeContainer.from_dict(main_preps_as_dict)
 
         self._block_reader.close()
+        word_detector.stop()
 
         Logger.debug(tag=self._TAG, msg=f"_run() end: {ret}")
         return ret
+
+    def _commit(self, block: 'Block'):
+        if 'block' in inspect.signature(self._engine.commit).parameters:
+            self._engine.commit(block)
+        else:
+            self._engine.commit(block.height, block.hash, block.hash)
 
     def _check_invoke_result(self, tx_results: list):
         """Compare the transaction results from IconServiceEngine

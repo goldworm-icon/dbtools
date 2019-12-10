@@ -12,11 +12,12 @@ class WordDetector:
         self.block_word = re.compile(block_word)
         self.release_word = re.compile(release_word)
         self.hold = False
+        self._running = False
 
     def _find_word_from_latest_offset(self):
 
         offset = 0
-        while True:
+        while self._running:
             with open(self.filename, mode='r', encoding='utf-8') as f:
                 if offset == 0:
                     f.seek(0, os.SEEK_END)
@@ -43,5 +44,10 @@ class WordDetector:
         return self.hold
 
     def start(self):
+        self._running = True
+
         thread = ThreadPoolExecutor(1)
         thread.submit(self._find_word_from_latest_offset)
+
+    def stop(self):
+        self._running = False
