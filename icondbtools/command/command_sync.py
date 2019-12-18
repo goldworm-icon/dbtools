@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from icondbtools.command.command import Command
 from icondbtools.libs.icon_service_syncer import IconServiceSyncer
@@ -62,6 +62,9 @@ class CommandSync(Command):
         parser_sync.add_argument('--backup-period', type=int, default=0, help="Backup statedb every this period blocks")
         parser_sync.add_argument('--is-config', type=str, default="", help="iconservice_config.json filepath")
         parser_sync.add_argument('--print-block-height', type=int, default=1, help="Print every this block height")
+        parser_sync.add_argument('--iiss-db-backup-path', dest="iiss_db_backup_path",  type=str,
+                                 help="Backup all IISS DBs to specified path. "
+                                      "If IISS DB is already exists on the path, overwrite it")
         parser_sync.set_defaults(func=self.run)
 
     def run(self, args):
@@ -81,6 +84,7 @@ class CommandSync(Command):
         backup_period: int = args.backup_period
         iconservice_config_path: str = args.is_config
         print_block_height: int = args.print_block_height
+        iiss_db_backup_path: Optional[str] = args.iiss_db_backup_path
 
         reader = StateDatabaseReader()
 
@@ -127,6 +131,7 @@ class CommandSync(Command):
                 stop_on_error=stop_on_error, no_commit=no_commit,
                 write_precommit_data=write_precommit_data,
                 backup_period=backup_period,
-                print_block_height=print_block_height)
+                print_block_height=print_block_height,
+                iiss_db_backup_path=iiss_db_backup_path)
         finally:
             syncer.close()
