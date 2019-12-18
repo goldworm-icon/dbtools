@@ -16,6 +16,7 @@
 import asyncio
 import inspect
 import logging
+import os
 import shutil
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -30,6 +31,7 @@ from iconservice.icon_config import default_icon_config
 from iconservice.icon_constant import Revision
 from iconservice.icon_service_engine import IconServiceEngine
 from iconservice.iconscore.icon_score_context import IconScoreContextType, IconScoreContext
+from iconservice.iiss.reward_calc.storage import Storage
 
 from icondbtools.utils.convert_type import object_to_str
 from icondbtools.utils.transaction import create_transaction_requests
@@ -191,7 +193,8 @@ class IconServiceSyncer(object):
              no_commit: bool = False,
              backup_period: int = 0,
              write_precommit_data: bool = False,
-             print_block_height: int = 1) -> int:
+             print_block_height: int = 1,
+             iiss_db_backup_path: Optional[str] = None) -> int:
         """Begin to synchronize IconServiceEngine with blocks from loopchain db
 
         :param db_path: loopchain db path
@@ -285,6 +288,8 @@ class IconServiceSyncer(object):
             if is_calculation_block:
                 word_detector.start()
                 time.sleep(0.5)
+                if iiss_db_backup_path is not None:
+                    self._backup_iiss_db(iiss_db_backup_path, block.height)
 
             # If no_commit is set to True, the config only affects to the last block to commit
             if not no_commit or height < end_height:
@@ -320,6 +325,18 @@ class IconServiceSyncer(object):
             self._engine.commit(block)
         else:
             self._engine.commit(block.height, block.hash, block.hash)
+
+    def _backup_iiss_db(self, iiss_db_backup_path: Optional[str], block_height: int):
+        iiss_db_path: str = os.path.join(self._engine._state_db_root_path, "iiss")
+
+        with os.scandir(iiss_db_path) as it:
+            for entry in it:
+                if entry.is_dir() and entry.name == Storage.CURRENT_IISS_DB_NAME:
+                    dst_path: str = os.path.join(iiss_db_backup_path, f"{Storage.IISS_RC_DB_NAME_PREFIX}{block_height - 1}")
+                    if os.path.exists(dst_path):
+                        shutil.rmtree(dst_path)
+                    shutil.copytree(entry.path, dst_path)
+                    break
 
     def _check_invoke_result(self, tx_results: list):
         """Compare the transaction results from IconServiceEngine
@@ -452,11 +469,8 @@ class IconServiceSyncer(object):
         context = IconScoreContext(IconScoreContextType.DIRECT)
         context.block = block
 
-        if hasattr(context.engine.iiss, 'get_start_block_of_calc'):
-            start_block = context.engine.iiss.get_start_block_of_calc(context)
-            return start_block == block.height or start_block == block.height - 1
-        else:
-            return context.engine.iiss._is_iiss_calc(precommit_data.precommit_flag)
+        start_block = context.engine.iiss.get_start_block_of_calc(context)
+        return start_block == block.height
 
     @staticmethod
     def _backup_state_db(block: 'Block', backup_period: int):
