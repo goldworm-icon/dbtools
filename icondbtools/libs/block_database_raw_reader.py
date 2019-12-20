@@ -1,6 +1,37 @@
-from typing import Optional
+import json
+from typing import Optional, Union
 
 import plyvel
+
+
+class TransactionGenerator:
+    def __init__(self, loopchain_db):
+        self._db = loopchain_db
+        self._transactions: Optional[list] = None
+
+    def close(self):
+        # Todo: should close?
+        if self._db:
+            self._db.close()
+            self._db = None
+
+    @property
+    def transactions(self):
+        return self._transactions
+
+    @transactions.setter
+    def transactions(self, transactions: list):
+        self._transactions = transactions
+
+    def _get_tx_by_hash(self, tx_hash: str):
+        tx_hash: bytes = tx_hash.encode(encoding="UTF-8")
+        tx = self._db.get(tx_hash)
+        return tx_hash, tx
+
+    def __iter__(self):
+        assert self._transactions is not None
+        for transaction in self._transactions:
+            yield self._get_tx_by_hash(transaction["txHash"])
 
 
 class BlockDatabaseRawReader(object):
@@ -16,6 +47,19 @@ class BlockDatabaseRawReader(object):
         if self._db:
             self._db.close()
             self._db = None
+
+    @property
+    def db(self):
+        return self._db
+
+    @staticmethod
+    def get_transactions_from_block(block: bytes) -> list:
+        block: dict = json.loads(block)
+        transactions = []
+        # Todo: check the means of duprecating "confirmed_transaction_list"
+        if block.get("confirmed_transaction_list") is None:
+            transactions = block["transactions"]
+        return transactions
 
     def get_last_block(self) -> Optional[bytes]:
         """Get last block in bytes
@@ -33,14 +77,14 @@ class BlockDatabaseRawReader(object):
         :param block_height: block height in integer
         :return: block in bytes
         """
-        block_hash: bytes = self.get_value_by_height(block_height)
+        block_hash: bytes = self.get_hash_by_height(block_height)
         if block_hash is None:
             return
         block: bytes = self._db.get(block_hash)
         return block
 
-    def get_value_by_height(self, block_height: int) -> Optional[bytes]:
-        """Get value in bytes by block height
+    def get_hash_by_height(self, block_height: int) -> Optional[bytes]:
+        """Get block hash in bytes by block height
 
         :param block_height: block height in integer
         :return: block hash

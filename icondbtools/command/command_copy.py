@@ -15,7 +15,7 @@
 import plyvel
 
 from icondbtools.command.command import Command
-from icondbtools.libs.block_database_raw_reader import BlockDatabaseRawReader
+from icondbtools.libs.block_database_raw_reader import BlockDatabaseRawReader, TransactionGenerator
 
 
 class CommandCopy(Command):
@@ -51,6 +51,7 @@ class CommandCopy(Command):
 
         block_reader = BlockDatabaseRawReader()
         block_reader.open(db_path)
+        tx_generator = TransactionGenerator(block_reader.db)
 
         new_db = plyvel.DB(new_db_path, create_if_missing=True)
 
@@ -62,7 +63,12 @@ class CommandCopy(Command):
                 if block is None:
                     break
 
-                block_hash: bytes = block_reader.get_value_by_height(height)
+                transactions: list = block_reader.get_transactions_from_block(block)
+                tx_generator.transactions = transactions
+                for tx_hash, transaction in tx_generator:
+                    wb.put(tx_hash, transaction)
+
+                block_hash: bytes = block_reader.get_hash_by_height(height)
                 wb.put(block_hash, block)
                 wb.put(block_height_key, block_hash)
 
