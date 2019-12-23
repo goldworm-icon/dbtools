@@ -4,13 +4,12 @@ from typing import Optional, Union
 import plyvel
 
 
-class TransactionGenerator:
+class TransactionParser:
     def __init__(self, loopchain_db):
         self._db = loopchain_db
         self._transactions: Optional[list] = None
 
     def close(self):
-        # Todo: should close?
         if self._db:
             self._db.close()
             self._db = None
@@ -23,15 +22,12 @@ class TransactionGenerator:
     def transactions(self, transactions: list):
         self._transactions = transactions
 
-    def _get_tx_by_hash(self, tx_hash: str):
-        tx_hash: bytes = tx_hash.encode(encoding="UTF-8")
-        tx = self._db.get(tx_hash)
-        return tx_hash, tx
-
     def __iter__(self):
         assert self._transactions is not None
         for transaction in self._transactions:
-            yield self._get_tx_by_hash(transaction["txHash"])
+            tx_hash: bytes = transaction["txHash"].encode(encoding="UTF-8")
+            tx = self._db.get(tx_hash)
+            yield tx_hash, tx
 
 
 class BlockDatabaseRawReader(object):
@@ -55,10 +51,14 @@ class BlockDatabaseRawReader(object):
     @staticmethod
     def get_transactions_from_block(block: bytes) -> list:
         block: dict = json.loads(block)
-        transactions = []
-        # Todo: check the means of duprecating "confirmed_transaction_list"
-        if block.get("confirmed_transaction_list") is None:
+        version: str = block["version"]
+        if version == "0.1a":
+            transactions = block["confirmed_transaction_list"]
+        elif version == "0.3":
             transactions = block["transactions"]
+        else:
+            raise ValueError(f"Not Considered block version. {version}")
+
         return transactions
 
     def get_last_block(self) -> Optional[bytes]:
