@@ -25,7 +25,15 @@ class TransactionParser:
     def __iter__(self):
         assert self._transactions is not None
         for transaction in self._transactions:
-            tx_hash: bytes = transaction["txHash"].encode(encoding="UTF-8")
+            version: Optional[str] = transaction.get("version")
+            if version is None:
+                # Incase of Genesis transaction
+                continue
+
+            if version == "0x3":
+                tx_hash: bytes = transaction["txHash"].encode(encoding="UTF-8")
+            elif version == "0x2":
+                tx_hash: bytes = transaction["tx_hash"].encode(encoding="UTF-8")
             tx = self._db.get(tx_hash)
             yield tx_hash, tx
 
@@ -54,7 +62,7 @@ class BlockDatabaseRawReader(object):
         version: str = block["version"]
         if version == "0.1a":
             transactions = block["confirmed_transaction_list"]
-        elif version == "0.3":
+        elif version == "0.3" or version == "0.4":
             transactions = block["transactions"]
         else:
             raise ValueError(f"Not Considered block version. {version}")
