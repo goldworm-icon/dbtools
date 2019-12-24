@@ -1,42 +1,28 @@
 import json
-from typing import Optional, Union
+from typing import Optional
 
 import plyvel
 
 
 class TransactionParser:
-    def __init__(self, loopchain_db):
-        self._db = loopchain_db
-        self._transactions: Optional[list] = None
+    @staticmethod
+    def get_tx_hash_from_transaction(transaction: dict) -> Optional[bytes]:
+        """
+        Parsing transaction which is recorded on the block and return tx_hash
+        :return: transaction hash. If genesis transaction, return None
+        """
+        tx_hash: Optional[bytes] = None
+        version: Optional[str] = transaction.get("version")
+        if version is None and transaction.get("tx_hash") is None:
+            # Incase of Genesis transaction
+            return tx_hash
 
-    def close(self):
-        if self._db:
-            self._db.close()
-            self._db = None
-
-    @property
-    def transactions(self):
-        return self._transactions
-
-    @transactions.setter
-    def transactions(self, transactions: list):
-        self._transactions = transactions
-
-    def __iter__(self):
-        assert self._transactions is not None
-        for transaction in self._transactions:
-            version: Optional[str] = transaction.get("version")
-            if version is None and transaction.get("tx_hash") is None:
-                # Incase of Genesis transaction
-                continue
-
-            if version == "0x3":
-                tx_hash: bytes = transaction["txHash"].encode(encoding="UTF-8")
-            elif version is None and transaction.get("tx_hash") is not None:
-                # Incase of tx v2
-                tx_hash: bytes = transaction["tx_hash"].encode(encoding="UTF-8")
-            tx = self._db.get(tx_hash)
-            yield tx_hash, tx
+        if version == "0x3":
+            tx_hash: bytes = transaction["txHash"].encode(encoding="UTF-8")
+        elif version is None and transaction.get("tx_hash") is not None:
+            # Incase of tx v2
+            tx_hash: bytes = transaction["tx_hash"].encode(encoding="UTF-8")
+        return tx_hash
 
 
 class BlockDatabaseRawReader(object):
@@ -56,6 +42,10 @@ class BlockDatabaseRawReader(object):
     @property
     def db(self):
         return self._db
+
+    def get_transaction_by_hash(self, tx_hash: bytes) -> bytes:
+        transaction: bytes = self._db.get(tx_hash)
+        return transaction
 
     @staticmethod
     def get_transactions_from_block(block: bytes) -> list:

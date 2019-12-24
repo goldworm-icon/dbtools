@@ -3,18 +3,7 @@ import unittest
 from icondbtools.libs.block_database_raw_reader import TransactionParser
 
 
-class MockDB(dict):
-    def put(self, key, value):
-        self.__setitem__(key, value)
-
-    def get(self, key):
-        return self.__getitem__(key)
-
-
 class TestTransactionParser(unittest.TestCase):
-    def setUp(self):
-        self.db = MockDB()
-
     def test_transaction_parsing_v3(self):
         # Transactions in testnet (BH 56)
         # Shorten the 'content' data (as it is too long)
@@ -26,13 +15,9 @@ class TestTransactionParser(unittest.TestCase):
                                   'signature': 'I9iNfiAO6Op0vn7ql3XUbtbk0FbH31bfD6w0cMCGmkBbB7b18aGrrPW5rH0D6jfPae6MSwh2J7iI6IVoFsj4UwA=',
                                   'txHash': 'ed7d1b12fecc6d7819c6e152590efefdc699d9e2c944c0c05f262cfa0a0bf59f'}]
         tx_v3_hash: bytes = b'ed7d1b12fecc6d7819c6e152590efefdc699d9e2c944c0c05f262cfa0a0bf59f'
-        tx_v3: bytes = b'v3_tx'
-        self.db.put(tx_v3_hash, tx_v3)
-        parser = TransactionParser(self.db)
-        parser.transactions = v3_transactions
-        for actual_txhash, actual_transaction in parser:
+        for transaction in v3_transactions:
+            actual_txhash: bytes = TransactionParser.get_tx_hash_from_transaction(transaction)
             self.assertEqual(tx_v3_hash, actual_txhash)
-            self.assertEqual(tx_v3, actual_transaction)
 
     def test_transaction_parsing_v2(self):
         # Transactions in Mainnet (BH 3900)
@@ -43,13 +28,9 @@ class TestTransactionParser(unittest.TestCase):
              'signature': 'QeJq3wjMnwJaz4MPCyPdjuV1xe5E5aZxU4PdoM5xfXkQhbwrk3A8sxhdjA2+YN6bKObBs8YSqEN3IpIbk7lRoAA=',
              'method': 'icx_sendTransaction'}]
         tx_v2_hash: bytes = b'f5fc9095f7fb14cd4f28ee164dc0a8e152ae3a2c8bf9b772a3ef7a4db431ebf9'
-        tx_v2: bytes = b'v2_tx'
-        self.db.put(tx_v2_hash, tx_v2)
-        parser = TransactionParser(self.db)
-        parser.transactions = v2_transactions
-        for actual_txhash, actual_transaction in parser:
+        for transaction in v2_transactions:
+            actual_txhash: bytes = TransactionParser.get_tx_hash_from_transaction(transaction)
             self.assertEqual(tx_v2_hash, actual_txhash)
-            self.assertEqual(tx_v2, actual_transaction)
 
     def test_transaction_parsing_genesis(self):
         # Success case: Incase of genesis transaction, do not parse transaction (as there is no tx hash)
@@ -60,10 +41,8 @@ class TestTransactionParser(unittest.TestCase):
              'balance': '0x2961fff8ca4a62327800000'},
             {'name': 'treasury', 'address': 'hx1000000000000000000000000000000000000000', 'balance': '0x0'}],
             'message': "Hyperconnect the world"}]
-
-        parser = TransactionParser(self.db)
-        parser.transactions = genesis_transactions
-        for _, _ in parser:
-            raise Exception
+        for transaction in genesis_transactions:
+            actual_txhash = TransactionParser.get_tx_hash_from_transaction(transaction)
+            self.assertIsNone(actual_txhash)
 
 
