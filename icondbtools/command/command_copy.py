@@ -63,6 +63,7 @@ class CommandCopy(Command):
                 if block is None:
                     break
 
+                # Get transaction data from the DB using transactions in block
                 transactions: list = block_reader.get_transactions_from_block(block)
                 tx_parser.transactions = transactions
                 for tx_hash, transaction in tx_parser:
