@@ -98,7 +98,6 @@ class BlockDatabaseRawReader(object):
         :param block_hash:
         :return: block in bytes
         """
-        block_hash: bytes = block_hash.hex().encode()
         block: bytes = self._db.get(block_hash)
         return block
 
