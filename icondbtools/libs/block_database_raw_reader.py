@@ -9,7 +9,7 @@ class TransactionParser:
     def get_tx_hash_from_transaction(transaction: dict) -> Optional[bytes]:
         """
         Parsing transaction which is recorded on the block and return tx_hash
-        :return: transaction hash. If genesis transaction, return None
+        :return: utf-8 encoded hex string transaction hash. If genesis transaction, return None
         """
         tx_hash: Optional[bytes] = None
         version: Optional[str] = transaction.get("version")
@@ -44,6 +44,12 @@ class BlockDatabaseRawReader(object):
         return self._db
 
     def get_transaction_by_hash(self, tx_hash: bytes) -> bytes:
+        """
+        :param tx_hash:
+         utf-8 encoded hex string transaction hash
+         ex) b'd7c3ebf769b4988cf83225240d2f2208efc21dd69650fd494906a3336291c9a0'
+        :return:
+        """
         transaction: bytes = self._db.get(tx_hash)
         return transaction
 
