@@ -39,10 +39,6 @@ class BlockDatabaseRawReader(object):
             self._db.close()
             self._db = None
 
-    @property
-    def db(self):
-        return self._db
-
     def get_transaction_by_hash(self, tx_hash: bytes) -> bytes:
         """
         :param tx_hash:
@@ -59,10 +55,11 @@ class BlockDatabaseRawReader(object):
         version: str = block["version"]
         if version == "0.1a":
             transactions = block["confirmed_transaction_list"]
-        elif version == "0.3" or version == "0.4":
-            transactions = block["transactions"]
         else:
-            raise ValueError(f"Not Considered block version. {version}")
+            transactions: Optional[list] = block.get("transactions")
+        if transactions is None:
+            raise ValueError(f"Cannot find transactions from the block."
+                             f" check the block version {version}")
 
         return transactions
 
