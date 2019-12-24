@@ -26,13 +26,14 @@ class TransactionParser:
         assert self._transactions is not None
         for transaction in self._transactions:
             version: Optional[str] = transaction.get("version")
-            if version is None:
+            if version is None and transaction.get("tx_hash") is None:
                 # Incase of Genesis transaction
                 continue
 
             if version == "0x3":
                 tx_hash: bytes = transaction["txHash"].encode(encoding="UTF-8")
-            elif version == "0x2":
+            elif version is None and transaction.get("tx_hash") is not None:
+                # Incase of tx v2
                 tx_hash: bytes = transaction["tx_hash"].encode(encoding="UTF-8")
             tx = self._db.get(tx_hash)
             yield tx_hash, tx
