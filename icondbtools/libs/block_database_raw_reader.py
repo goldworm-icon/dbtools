@@ -1,6 +1,28 @@
+import json
 from typing import Optional
 
 import plyvel
+
+
+class TransactionParser:
+    @staticmethod
+    def get_tx_hash_from_transaction(transaction: dict) -> Optional[bytes]:
+        """
+        Parsing transaction which is recorded on the block and return tx_hash
+        :return: utf-8 encoded hex string transaction hash. If genesis transaction, return None
+        """
+        tx_hash: Optional[bytes] = None
+        version: Optional[str] = transaction.get("version")
+        if version is None and transaction.get("tx_hash") is None:
+            # Incase of Genesis transaction
+            return tx_hash
+
+        if version == "0x3":
+            tx_hash: bytes = transaction["txHash"].encode(encoding="UTF-8")
+        elif version is None and transaction.get("tx_hash") is not None:
+            # Incase of tx v2
+            tx_hash: bytes = transaction["tx_hash"].encode(encoding="UTF-8")
+        return tx_hash
 
 
 class BlockDatabaseRawReader(object):
@@ -16,6 +38,30 @@ class BlockDatabaseRawReader(object):
         if self._db:
             self._db.close()
             self._db = None
+
+    def get_transaction_by_hash(self, tx_hash: bytes) -> bytes:
+        """
+        :param tx_hash:
+         utf-8 encoded hex string transaction hash
+         ex) b'd7c3ebf769b4988cf83225240d2f2208efc21dd69650fd494906a3336291c9a0'
+        :return:
+        """
+        transaction: bytes = self._db.get(tx_hash)
+        return transaction
+
+    @staticmethod
+    def get_transactions_from_block(block: bytes) -> list:
+        block: dict = json.loads(block)
+        version: str = block["version"]
+        if version == "0.1a":
+            transactions = block["confirmed_transaction_list"]
+        else:
+            transactions: Optional[list] = block.get("transactions")
+        if transactions is None:
+            raise ValueError(f"Cannot find transactions from the block."
+                             f" check the block version {version}")
+
+        return transactions
 
     def get_last_block(self) -> Optional[bytes]:
         """Get last block in bytes
@@ -33,14 +79,14 @@ class BlockDatabaseRawReader(object):
         :param block_height: block height in integer
         :return: block in bytes
         """
-        block_hash: bytes = self.get_value_by_height(block_height)
+        block_hash: bytes = self.get_hash_by_height(block_height)
         if block_hash is None:
             return
         block: bytes = self._db.get(block_hash)
         return block
 
-    def get_value_by_height(self, block_height: int) -> Optional[bytes]:
-        """Get value in bytes by block height
+    def get_hash_by_height(self, block_height: int) -> Optional[bytes]:
+        """Get block hash in bytes by block height
 
         :param block_height: block height in integer
         :return: block hash
@@ -55,7 +101,6 @@ class BlockDatabaseRawReader(object):
         :param block_hash:
         :return: block in bytes
         """
-        block_hash: bytes = block_hash.hex().encode()
         block: bytes = self._db.get(block_hash)
         return block
 

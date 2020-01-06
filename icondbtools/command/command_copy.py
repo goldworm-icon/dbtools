@@ -12,10 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from typing import Optional
+
 import plyvel
 
 from icondbtools.command.command import Command
-from icondbtools.libs.block_database_raw_reader import BlockDatabaseRawReader
+from icondbtools.libs.block_database_raw_reader import BlockDatabaseRawReader, TransactionParser
 
 
 class CommandCopy(Command):
@@ -51,7 +53,6 @@ class CommandCopy(Command):
 
         block_reader = BlockDatabaseRawReader()
         block_reader.open(db_path)
-
         new_db = plyvel.DB(new_db_path, create_if_missing=True)
 
         with new_db.write_batch() as wb:
@@ -62,7 +63,15 @@ class CommandCopy(Command):
                 if block is None:
                     break
 
-                block_hash: bytes = block_reader.get_value_by_height(height)
+                # Get transaction data from the DB using transactions in block
+                transactions: list = block_reader.get_transactions_from_block(block)
+                for transaction in transactions:
+                    tx_hash: Optional[bytes] = TransactionParser.get_tx_hash_from_transaction(transaction)
+                    if tx_hash is not None:
+                        full_transaction: bytes = block_reader.get_transaction_by_hash(tx_hash)
+                        wb.put(tx_hash, full_transaction)
+
+                block_hash: bytes = block_reader.get_hash_by_height(height)
                 wb.put(block_hash, block)
                 wb.put(block_height_key, block_hash)
 
