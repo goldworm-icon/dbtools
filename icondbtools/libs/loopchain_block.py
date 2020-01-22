@@ -46,7 +46,8 @@ class LoopchainBlock(object):
     def from_dict(cls, block: dict) -> 'LoopchainBlock':
         version: str = block["version"]
         handlers = {
-            "0.3": cls._from_dict_v3
+            "0.3": cls._from_dict_v3,
+            "0.4": cls._from_dict_v3
         }
 
         handler = handlers.get(version, cls.from_dict_v1)
@@ -111,3 +112,7 @@ class LoopchainBlock(object):
                               state_hash=state_hash,
                               leader=leader,
                               transactions=transactions)
+
+    def _from_dict_v4(cls, block: dict) -> 'LoopchainBlock':
+        print(block)
+        pass
