@@ -93,7 +93,7 @@ class LoopchainBlock(object):
 
     @classmethod
     def _from_dict_recent_v(cls, block: dict) -> 'LoopchainBlock':
-        # In case of version <= 0.3
+        # In case of version >= 0.3
         version: str = block["version"]
 
         height: int = convert_hex_str_to_int(block["height"])
