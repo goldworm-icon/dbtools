@@ -83,22 +83,23 @@ class BlockDatabaseReader(object):
         return tx_result
 
     def get_state_root_hash_by_block_height(
-            self, block_height: int) -> Optional[bytes]:
+            self, block_height: int) -> bytes:
         block: dict = self.get_block_by_block_height(block_height)
         return self.get_commit_state(block)
 
-    def get_state_root_hash_by_block_hash(self, block_hash: str) -> Optional[bytes]:
+    def get_state_root_hash_by_block_hash(self, block_hash: str) -> bytes:
         block: dict = self.get_block_by_block_hash(block_hash)
         return self.get_commit_state(block)
 
     @staticmethod
-    def get_commit_state(block: dict, channel: str = 'icon_dex', default_value: bytes = None) -> Optional[bytes]:
-        try:
-            version = block['version']
-            return convert_hex_str_to_bytes(
-                block['stateHash'] if version == '0.3' else block['commit_state'][channel])
-        except KeyError:
-            return default_value
+    def get_commit_state(block: dict, channel: str = 'icon_dex') -> bytes:
+        version = block['version']
+        if version == '0.1a':
+            state_hash: str = block['commit_state'][channel]
+        else:
+            # In case of version >= 0.3
+            state_hash: str = block['stateHash']
+        return convert_hex_str_to_bytes(state_hash)
 
 
 def main():

@@ -46,10 +46,10 @@ class LoopchainBlock(object):
     def from_dict(cls, block: dict) -> 'LoopchainBlock':
         version: str = block["version"]
         handlers = {
-            "0.3": cls._from_dict_v3
+            "0.1a": cls.from_dict_v1,
         }
 
-        handler = handlers.get(version, cls.from_dict_v1)
+        handler = handlers.get(version, cls._from_dict_recent_v)
         return handler(block)
 
     @classmethod
@@ -92,7 +92,8 @@ class LoopchainBlock(object):
         return None
 
     @classmethod
-    def _from_dict_v3(cls, block: dict) -> 'LoopchainBlock':
+    def _from_dict_recent_v(cls, block: dict) -> 'LoopchainBlock':
+        # In case of version >= 0.3
         version: str = block["version"]
 
         height: int = convert_hex_str_to_int(block["height"])

@@ -259,7 +259,7 @@ class IconServiceSyncer(object):
             tx_results, state_root_hash = invoke_result[0], invoke_result[1]
             main_preps_as_dict: Optional[Dict] = invoke_result[3]
 
-            commit_state: bytes = self._block_reader.get_commit_state(block_dict, channel, b'')
+            commit_state: bytes = self._block_reader.get_commit_state(block_dict, channel)
 
             # "commit_state" is the field name of state_root_hash in loopchain block
             if (height - start_height) % print_block_height == 0:
