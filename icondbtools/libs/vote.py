@@ -46,6 +46,8 @@ class Vote(object):
         height: int = convert_hex_str_to_int(data["blockHeight"])
         block_hash: bytes = convert_hex_str_to_bytes(data["blockHash"])
         timestamp: int = convert_hex_str_to_int(data["timestamp"])
-        round_: int = data["round_"]
 
+        # Block 0.4: round_
+        # Block 0.5: round
+        round_: int = data.get("round", data.get("round_"))
         return Vote(rep=rep, block_height=height, block_hash=block_hash, timestamp=timestamp, round=round_)

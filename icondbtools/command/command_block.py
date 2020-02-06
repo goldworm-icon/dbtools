@@ -30,7 +30,7 @@ class CommandBlock(Command):
 
         # create the parser for block
         parser_block = sub_parser.add_parser(name, parents=[common_parser], help=desc)
-        parser_block.add_argument('--height', type=int, default=0, help='start height to sync', required=False)
+        parser_block.add_argument('--height', type=int, default=0, help='Block height to print', required=False)
         parser_block.add_argument('--hash', type=str,
                                   help='blockHash without "0x"\n'
                                   "(ex: e9cad58aae99c1cae85c2545ad33ddb34e8dc4b5e5dd9f363a30cb55e809018e)",
