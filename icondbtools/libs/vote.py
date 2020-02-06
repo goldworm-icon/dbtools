@@ -49,5 +49,5 @@ class Vote(object):
 
         # Block 0.4: round_
         # Block 0.5: round
-        round_: int = data.get("round_", data.get("round"))
+        round_: int = data.get("round", data.get("round_"))
         return Vote(rep=rep, block_height=height, block_hash=block_hash, timestamp=timestamp, round=round_)
