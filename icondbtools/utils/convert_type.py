@@ -39,6 +39,17 @@ def object_to_str(value) -> str:
     return value
 
 
+def str_to_object(object_type: str, value: str) -> object:
+    if object_type == "Address":
+        return Address.from_string(value)
+    if object_type == "int":
+        return str_to_int(value)
+    if object_type == "str":
+        return value
+
+    raise TypeError(f"Unknown type: {object_type}")
+
+
 def remove_0x_prefix(value):
     if is_0x_prefixed(value):
         return value[2:]
