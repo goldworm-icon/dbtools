@@ -34,7 +34,7 @@ def object_to_str(value) -> str:
     elif isinstance(value, int):
         return hex(value)
     elif isinstance(value, bytes):
-        return f'0x{value.hex()}'
+        return bytes_to_str(value)
 
     return value
 
@@ -48,6 +48,10 @@ def str_to_object(object_type: str, value: str) -> object:
         return value
 
     raise TypeError(f"Unknown type: {object_type}")
+
+
+def bytes_to_str(value: bytes, prefix: str = "0x") -> str:
+    return f'{prefix}{value.hex()}'
 
 
 def remove_0x_prefix(value):
