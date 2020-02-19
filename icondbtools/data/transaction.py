@@ -14,10 +14,10 @@
 # limitations under the License.
 
 import base64
+import json
 from typing import Optional, Dict
 
 from iconservice.base.address import Address
-
 from ..utils.convert_type import convert_hex_str_to_int, convert_hex_str_to_bytes
 
 
@@ -129,6 +129,11 @@ class Transaction(object):
     @property
     def signature(self) -> bytes:
         return self._signature
+
+    @classmethod
+    def from_bytes(cls, data: bytes) -> 'Transaction':
+        data = json.loads(data)
+        return cls.from_dict(data)
 
     @classmethod
     def from_dict(cls, data: Dict[str, str]) -> 'Transaction':
