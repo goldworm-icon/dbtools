@@ -12,11 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import json
 from typing import Optional
 
 import plyvel
 
 from icondbtools.command.command import Command
+from icondbtools.libs import NID_KEY, TRANSACTION_COUNT_KEY, LAST_BLOCK_KEY, PREPS_KEY_PREFIX, ZERO_HASH, UTF8
 from icondbtools.libs.block_database_raw_reader import BlockDatabaseRawReader, TransactionParser
 
 
@@ -54,6 +56,7 @@ class CommandCopy(Command):
         block_reader = BlockDatabaseRawReader()
         block_reader.open(db_path)
         new_db = plyvel.DB(new_db_path, create_if_missing=True)
+        block: Optional[bytes] = None
 
         with new_db.write_batch() as wb:
             for height in range(start, start + count):
@@ -74,5 +77,21 @@ class CommandCopy(Command):
                 block_hash: bytes = block_reader.get_hash_by_height(height)
                 wb.put(block_hash, block)
                 wb.put(block_height_key, block_hash)
-
+                block_dict: dict = json.loads(block)
+                reps_hash = block_dict.get("repsHash", "0x")[2:]
+                reps_data = block_reader.get_reps(bytes.fromhex(reps_hash))
+                reps_data = reps_data.decode(UTF8)
+                wb.put(PREPS_KEY_PREFIX + reps_hash.encode(UTF8), json.dumps(reps_data).encode(UTF8))
+                next_reps_hash = block_dict.get("nextRepsHash")
+                if next_reps_hash != ZERO_HASH:
+                    next_reps_hash = bytes.fromhex(next_reps_hash[2:])
+                    reps_data = block_reader.get_reps(next_reps_hash)
+                    wb.put(PREPS_KEY_PREFIX + next_reps_hash, reps_data)
+            if block is not None:
+                wb.put(NID_KEY, block_reader.get_nid())
+                wb.put(TRANSACTION_COUNT_KEY, block_reader.get_transaction_count())
+                block: dict = json.loads(block)
+                last_block_hash = block.get('block_hash') if block.get('block_hash') \
+                    else block.get("hash")[2:]
+                wb.put(LAST_BLOCK_KEY, last_block_hash.encode(UTF8))
         block_reader.close()
