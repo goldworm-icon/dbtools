@@ -22,9 +22,16 @@ from ..utils.convert_type import convert_hex_str_to_int, convert_hex_str_to_byte
 
 
 class TransactionResult(object):
-    def __init__(self, tx_hash: bytes, status: int, tx_index: int,
-                 to: 'Address', block_height: int, block_hash: bytes,
-                 step_price: int, step_used: int, event_logs: List['EventLog']):
+    def __init__(self,
+                 tx_hash: bytes = None,
+                 status: int = 0,
+                 tx_index: int = -1,
+                 to: 'Address' = None,
+                 block_height: int = -1,
+                 block_hash: bytes = None,
+                 step_price: int = 0,
+                 step_used: int = -1,
+                 event_logs: List['EventLog'] = None):
         self._tx_hash: bytes = tx_hash
         self._tx_index: int = tx_index
         self._status = status
@@ -34,7 +41,7 @@ class TransactionResult(object):
         self._step_price = step_price
         self._step_used = step_used
         self._fee = step_price * step_used
-        self._event_logs: List['EventLog'] = event_logs
+        self._event_logs: List['EventLog'] = [] if event_logs is None else event_logs
 
     @property
     def tx_hash(self) -> bytes:

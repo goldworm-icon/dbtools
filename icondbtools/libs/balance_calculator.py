@@ -13,9 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import List, Dict
+from typing import List, Iterable, Tuple
+
+from iconservice.base.address import AddressPrefix, Address
 from ..data.transaction import Transaction
 from ..data.transaction_result import TransactionResult
+
+ICON_SERVICE_ADDRESS = Address.from_prefix_and_int(AddressPrefix.CONTRACT, 0)
 
 
 class BalanceCalculator(object):
@@ -40,17 +44,57 @@ class BalanceCalculator(object):
     def tx_results(self) -> List['TransactionResult']:
         return self._tx_results
 
-    def update(self, tx: 'Transaction', tx_result: 'TransactionResult'):
-        self._txs.append(tx)
-        self._tx_results.append(tx_result)
+    def run(self, it: Iterable[Tuple['Transaction', 'TransactionResult']], init_balance: int = 0) -> int:
+        self._txs.clear()
+        self._tx_results.clear()
 
-    def run(self, init_balance: int = 0) -> int:
         balance = init_balance
 
-        for tx, tx_result in zip(self._txs, self._tx_results):
-            if tx_result.status:
-                pass
-            else:
-                balance -= tx_result.fee
+        for tx, tx_result in it:
+            assert tx.tx_hash == tx_result.tx_hash
+
+            if self._address not in (tx.from_, tx.to):
+                continue
+
+            balance += self._calculate_balance_delta(tx, tx_result)
+            self._txs.append(tx)
+            self._tx_results.append(tx_result)
 
         return balance
+
+    def _calculate_balance_delta(self, tx: 'Transaction', tx_result: 'TransactionResult') -> int:
+        is_tx_owner = tx.from_ == self._address
+        balance_delta = 0
+
+        if tx_result.status == 1:
+            balance_delta += self._calc_balance_delta_with_value(tx, tx_result)
+            balance_delta += self._calc_balance_delta_in_iscore_claimed_event_log(tx_result)
+
+        if is_tx_owner:
+            balance_delta -= tx_result.fee
+
+        return balance_delta
+
+    def _calc_balance_delta_with_value(self, tx, tx_result) -> int:
+        assert tx_result.status == 1
+
+        delta = 0
+
+        if tx.from_ == self._address:
+            delta -= tx.value
+        if tx.to == self._address:
+            delta += tx.value
+
+        return delta
+
+    @staticmethod
+    def _calc_balance_delta_in_iscore_claimed_event_log(tx_result) -> int:
+        assert tx_result.status == 1
+
+        delta = 0
+
+        for event_log in tx_result.event_logs:
+            if event_log.score_address == ICON_SERVICE_ADDRESS and event_log.signature == "IScoreClaimed":
+                delta += event_log.data[1]
+
+        return delta
