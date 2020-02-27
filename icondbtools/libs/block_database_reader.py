@@ -21,6 +21,7 @@ from typing import Optional
 
 import plyvel
 
+from icondbtools.libs import BLOCK_HEIGHT_KEY_PREFIX, LAST_BLOCK_KEY
 from icondbtools.utils.convert_type import convert_hex_str_to_bytes
 
 
@@ -40,8 +41,7 @@ class BlockDatabaseReader(object):
             self._db = None
 
     def get_block_by_block_height(self, block_height: int) -> Optional[dict]:
-        key_prefix = b'block_height_key'
-        block_height_key = key_prefix + block_height.to_bytes(12, 'big')
+        block_height_key = BLOCK_HEIGHT_KEY_PREFIX + block_height.to_bytes(12, 'big')
 
         key: bytes = self._db.get(block_height_key)
         if key is None:
@@ -69,8 +69,7 @@ class BlockDatabaseReader(object):
         return block
 
     def get_last_block(self) -> Optional[dict]:
-        last_block_key = b'last_block_key'
-        key: bytes = self._db.get(last_block_key)
+        key: bytes = self._db.get(LAST_BLOCK_KEY)
         return self.get_block_by_key(key)
 
     def get_transaction_result_by_hash(self, tx_hash: str) -> Optional[dict]:

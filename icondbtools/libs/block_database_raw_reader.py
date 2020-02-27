@@ -3,6 +3,8 @@ from typing import Optional
 
 import plyvel
 
+from icondbtools.libs import TRANSACTION_COUNT_KEY, NID_KEY, LAST_BLOCK_KEY, PREPS_KEY_PREFIX, BLOCK_HEIGHT_KEY_PREFIX
+
 
 class TransactionParser:
     @staticmethod
@@ -68,10 +70,13 @@ class BlockDatabaseRawReader(object):
 
         :return: block in bytes
         """
-        last_block_key: bytes = b'last_block_key'
-        block_hash: bytes = self._db.get(last_block_key)
+        block_hash: bytes = self.get_last_block_hash()
         block: bytes = self._db.get(block_hash)
         return block
+
+    def get_last_block_hash(self) -> Optional[bytes]:
+        """Get last block hash in bytes"""
+        return self._db.get(LAST_BLOCK_KEY)
 
     def get_block_by_height(self, block_height: int) -> Optional[bytes]:
         """Get block in bytes by block height     
@@ -111,6 +116,20 @@ class BlockDatabaseRawReader(object):
         :param block_height: block height in integer
         :return: block height key
         """
-        prefix_block_height_key: bytes = b'block_height_key'
-        block_height_key: bytes = prefix_block_height_key + block_height.to_bytes(12, 'big')
+        block_height_key: bytes = BLOCK_HEIGHT_KEY_PREFIX + block_height.to_bytes(12, 'big')
         return block_height_key
+
+    def get_nid(self) -> Optional[bytes]:
+        """Get NID"""
+        return self._db.get(NID_KEY)
+
+    def get_transaction_count(self) -> Optional[bytes]:
+        """Get transaction count"""
+        return self._db.get(TRANSACTION_COUNT_KEY)
+
+    def get_reps(self, reps_hash: bytes):
+        key = PREPS_KEY_PREFIX + reps_hash
+        reps = self._db.get(key)
+        if reps is None:
+            return json.dumps("{}")
+        return reps
