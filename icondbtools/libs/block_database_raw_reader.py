@@ -51,6 +51,15 @@ class BlockDatabaseRawReader(object):
         transaction: bytes = self._db.get(tx_hash)
         return transaction
 
+    def get_transaction_result_by_hash(self, tx_hash: bytes) -> bytes:
+        if tx_hash.startswith('0x'):
+            tx_hash = tx_hash[2:]
+
+        key: bytes = tx_hash.encode()
+        value: bytes = self._db.get(key)
+        tx_result: dict = json.loads(value)
+        return tx_result
+
     @staticmethod
     def get_transactions_from_block(block: bytes) -> list:
         block: dict = json.loads(block)

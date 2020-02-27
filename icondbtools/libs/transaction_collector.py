@@ -17,13 +17,14 @@ from abc import ABCMeta, abstractmethod
 from typing import List
 
 from ..data.transaction import Transaction
+from ..data.transaction_result import TransactionResult
 from ..libs.block_database_raw_reader import BlockDatabaseRawReader
 from ..libs.loopchain_block import LoopchainBlock
 
 
 class TransactionFilter(metaclass=ABCMeta):
     @abstractmethod
-    def run(self, tx: 'Transaction') -> bool:
+    def run(self, tx: 'Transaction', tx_result: 'TransactionResult') -> bool:
         pass
 
 
@@ -78,6 +79,12 @@ class TransactionCollector(object):
         if size > 0:
             self._start_block_height = start_block_height
             self._end_block_height = self._start_block_height + len(self._transactions) - 1
+
+    def _get_transaction(self) -> 'Transaction':
+        pass
+
+    def _get_transaction_result(self, tx_hash: bytes) -> 'TransactionResult':
+        pass
 
     def close(self):
         self._reader.close()
