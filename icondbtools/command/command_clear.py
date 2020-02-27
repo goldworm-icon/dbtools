@@ -28,7 +28,7 @@ class CommandClear(Command):
         desc = 'Remove .score and .statedb'
 
         # create the parser for clear
-        parser_clear = sub_parser.add_parser(name, help= desc)
+        parser_clear = sub_parser.add_parser(name, help=desc)
         parser_clear.set_defaults(func=self.run)
 
     def run(self, args):
@@ -43,4 +43,3 @@ class CommandClear(Command):
                 shutil.rmtree(path)
             except FileNotFoundError:
                 pass
-
