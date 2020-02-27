@@ -13,18 +13,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
+from enum import IntEnum
 from typing import List, Dict
 
 from iconservice.base.address import Address
-
 from ..data.event_log import EventLog
 from ..utils.convert_type import convert_hex_str_to_int, convert_hex_str_to_bytes, str_to_int
 
 
 class TransactionResult(object):
+
+    class Status(IntEnum):
+        FAILURE = 0
+        SUCCESS = 1
+
     def __init__(self,
                  tx_hash: bytes = None,
-                 status: int = 0,
+                 status: Status = Status.FAILURE,
                  tx_index: int = -1,
                  to: 'Address' = None,
                  block_height: int = -1,
@@ -52,7 +58,7 @@ class TransactionResult(object):
         return self._tx_index
 
     @property
-    def status(self) -> int:
+    def status(self) -> Status:
         return self._status
 
     @property
@@ -84,10 +90,17 @@ class TransactionResult(object):
         return self._event_logs
 
     @classmethod
+    def from_bytes(cls, data: bytes) -> 'TransactionResult':
+        data_in_dict = json.loads(data)
+        return cls.from_dict(data_in_dict)
+
+    @classmethod
     def from_dict(cls, data: dict) -> 'TransactionResult':
+        data = data["result"]
+
         tx_hash: bytes = convert_hex_str_to_bytes(data["txHash"])
         tx_index: int = str_to_int(data["txIndex"])
-        status: int = convert_hex_str_to_int(data["status"])
+        status = TransactionResult.Status(convert_hex_str_to_int(data["status"]))
         to: 'Address' = Address.from_string(data["to"])
         block_height: int = convert_hex_str_to_int(data["blockHeight"])
         block_hash: bytes = convert_hex_str_to_bytes(data["blockHash"])

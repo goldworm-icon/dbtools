@@ -59,6 +59,7 @@ class BalanceCalculator(object):
             balance += self._calculate_balance_delta(tx, tx_result)
             self._txs.append(tx)
             self._tx_results.append(tx_result)
+            print(f"txs: {len(self._txs)}")
 
         return balance
 
@@ -76,7 +77,7 @@ class BalanceCalculator(object):
         return balance_delta
 
     def _calc_balance_delta_with_value(self, tx, tx_result) -> int:
-        assert tx_result.status == 1
+        assert tx_result.status == TransactionResult.Status.SUCCESS
 
         delta = 0
 
@@ -89,7 +90,7 @@ class BalanceCalculator(object):
 
     @staticmethod
     def _calc_balance_delta_in_iscore_claimed_event_log(tx_result) -> int:
-        assert tx_result.status == 1
+        assert tx_result.status == TransactionResult.Status.SUCCESS
 
         delta = 0
 

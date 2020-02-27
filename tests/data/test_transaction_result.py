@@ -18,7 +18,7 @@ import unittest
 from iconservice.base.address import Address
 
 from icondbtools.data.transaction_result import TransactionResult
-from icondbtools.utils.convert_type import convert_hex_str_to_bytes, bytes_to_str
+from icondbtools.utils.convert_type import convert_hex_str_to_bytes, bytes_to_hex
 
 
 class TestTransactionResult(unittest.TestCase):
@@ -33,9 +33,9 @@ class TestTransactionResult(unittest.TestCase):
         status = 0x1
 
         tx_result_data = {
-            "txHash": bytes_to_str(tx_hash),
+            "txHash": bytes_to_hex(tx_hash),
             "blockHeight": hex(block_height),
-            "blockHash": bytes_to_str(block_hash),
+            "blockHash": bytes_to_hex(block_hash),
             "txIndex": hex(tx_index),
             "to": str(to),
             "stepUsed": hex(step_used),
@@ -75,9 +75,9 @@ class TestTransactionResult(unittest.TestCase):
         icx = 0x53f415f8af514478a93
 
         tx_result_data = {
-            "txHash": bytes_to_str(tx_hash),
+            "txHash": bytes_to_hex(tx_hash),
             "blockHeight": hex(block_height),
-            "blockHash": bytes_to_str(block_hash),
+            "blockHash": bytes_to_hex(block_hash),
             "txIndex": hex(tx_index),
             "to": str(to),
             "stepUsed": hex(step_used),

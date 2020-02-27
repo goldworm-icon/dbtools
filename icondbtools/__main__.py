@@ -18,6 +18,7 @@ import sys
 from pprint import pprint
 
 from icondbtools.command.command_account import CommandAccount
+from icondbtools.command.command_balance import CommandBalance
 from icondbtools.command.command_block import CommandBlock
 from icondbtools.command.command_clear import CommandClear
 from icondbtools.command.command_copy import CommandCopy
@@ -38,7 +39,7 @@ from icondbtools.utils import get_dbtools_version
 
 
 def main():
-    arg_inits = [
+    commands = [
         CommandSync,
         CommandLastBlock,
         CommandBlock,
@@ -54,7 +55,8 @@ def main():
         CommandIISSData,
         CommandIISSTXData,
         CommandCopy,
-        CommandTerm
+        CommandTerm,
+        CommandBalance
     ]
 
     version = get_dbtools_version()
@@ -63,8 +65,8 @@ def main():
     sub_parser = parser.add_subparsers(title='subcommands')
     common_parser = create_common_parser()
 
-    for initializer in arg_inits:
-        initializer(sub_parser, common_parser)
+    for command in commands:
+        command(sub_parser, common_parser)
 
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)

@@ -14,12 +14,13 @@
 # limitations under the License.
 
 from abc import ABCMeta, abstractmethod
-from typing import List
+from typing import Iterable, Tuple
 
 from ..data.transaction import Transaction
 from ..data.transaction_result import TransactionResult
 from ..libs.block_database_raw_reader import BlockDatabaseRawReader
 from ..libs.loopchain_block import LoopchainBlock
+from ..utils.convert_type import bytes_to_hex
 
 
 class TransactionFilter(metaclass=ABCMeta):
@@ -38,16 +39,18 @@ class TransactionCollector(object):
 
         self._start_block_height = -1
         self._end_block_height = -1
-        self._transactions: List['Transaction'] = []
-
-    @property
-    def transactions(self) -> List['Transaction']:
-        return self._transactions
 
     def __str__(self) -> str:
-        return f"start_block_height: {self._start_block_height}\n" \
-            f"end_block_height: {self._end_block_height}\n" \
-            f"transactions: {len(self._transactions)}"
+        return f"start_block_height={self._start_block_height}" \
+            f"end_block_height={self._end_block_height}"
+
+    @property
+    def start_block_height(self) -> int:
+        return self._start_block_height
+
+    @property
+    def end_block_height(self) -> int:
+        return self._end_block_height
 
     def open(self, db_path: str):
         self.close()
@@ -55,36 +58,53 @@ class TransactionCollector(object):
         self._reader.open(db_path)
 
     def run(self,
-            start_block_height: int, end_block_height: int, tx_filter: 'TransactionFilter' = None):
+            start_block_height: int, end_block_height: int, tx_filter: 'TransactionFilter' = None) \
+            -> Iterable[Tuple['Transaction', 'TransactionResult']]:
+        """
+
+        :param start_block_height:
+        :param end_block_height: -1 means the last block
+        :param tx_filter:
+        :return:
+        """
         if start_block_height > end_block_height:
             raise ValueError(f"start_block_height({start_block_height}) > end_block_height({end_block_height})")
 
-        self._transactions.clear()
+        self._start_block_height = start_block_height
 
-        for block_height in range(start_block_height, end_block_height + 1):
+        block_height = start_block_height
+        while True:
+            if -1 < end_block_height < block_height:
+                break
+
             block_data: bytes = self._reader.get_block_by_height(block_height)
             if block_data is None:
                 break
 
+            print(f"BH-{block_height}")
             block = LoopchainBlock.from_bytes(block_data)
 
             for tx_data in block.transactions:
-                transaction = Transaction.from_bytes(tx_data)
+                # Skip coin issue transactions
+                if "from" not in tx_data:
+                    continue
 
-                ret = tx_filter.run(transaction) if tx_filter else True
+                tx = Transaction.from_dict(tx_data)
+                tx_result = self._get_transaction_result(tx.tx_hash)
+
+                ret = tx_filter.run(tx, tx_result) if tx_filter else True
                 if ret:
-                    self._transactions.append(transaction)
+                    yield tx, tx_result
 
-        size = len(self._transactions)
-        if size > 0:
-            self._start_block_height = start_block_height
-            self._end_block_height = self._start_block_height + len(self._transactions) - 1
+            block_height += 1
 
-    def _get_transaction(self) -> 'Transaction':
-        pass
+        self._end_block_height = block_height - 1
 
     def _get_transaction_result(self, tx_hash: bytes) -> 'TransactionResult':
-        pass
+        data: bytes = self._reader.get_transaction_result_by_hash(tx_hash)
+        assert isinstance(data, bytes)
+
+        return TransactionResult.from_bytes(data)
 
     def close(self):
         self._reader.close()
@@ -92,4 +112,3 @@ class TransactionCollector(object):
     def _clear(self):
         self._start_block_height = -1
         self._end_block_height = -1
-        self._transactions.clear()

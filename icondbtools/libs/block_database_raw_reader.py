@@ -3,7 +3,8 @@ from typing import Optional
 
 import plyvel
 
-from icondbtools.libs import TRANSACTION_COUNT_KEY, NID_KEY, LAST_BLOCK_KEY, PREPS_KEY_PREFIX, BLOCK_HEIGHT_KEY_PREFIX
+from ..libs import TRANSACTION_COUNT_KEY, NID_KEY, LAST_BLOCK_KEY, PREPS_KEY_PREFIX, BLOCK_HEIGHT_KEY_PREFIX
+from ..utils.convert_type import bytes_to_hex
 
 
 class TransactionParser:
@@ -52,13 +53,8 @@ class BlockDatabaseRawReader(object):
         return transaction
 
     def get_transaction_result_by_hash(self, tx_hash: bytes) -> bytes:
-        if tx_hash.startswith('0x'):
-            tx_hash = tx_hash[2:]
-
-        key: bytes = tx_hash.encode()
-        value: bytes = self._db.get(key)
-        tx_result: dict = json.loads(value)
-        return tx_result
+        key: bytes = bytes_to_hex(tx_hash, prefix="").encode("utf-8")
+        return self._db.get(key)
 
     @staticmethod
     def get_transactions_from_block(block: bytes) -> list:

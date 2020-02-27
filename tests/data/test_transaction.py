@@ -16,7 +16,7 @@
 import unittest
 
 from iconservice.base.address import Address
-from icondbtools.utils.convert_type import convert_hex_str_to_bytes, bytes_to_str
+from icondbtools.utils.convert_type import convert_hex_str_to_bytes, bytes_to_hex
 from icondbtools.data.transaction import Transaction
 
 
@@ -48,10 +48,10 @@ class TestTransaction(unittest.TestCase):
                 "params": {}
             },
             "signature": signature,
-            "txHash": bytes_to_str(tx_hash),
+            "txHash": bytes_to_hex(tx_hash),
             "txIndex": hex(tx_index),
             "blockHeight": hex(block_height),
-            "blockHash": bytes_to_str(block_hash)
+            "blockHash": bytes_to_hex(block_hash)
         }
 
         tx = Transaction.from_dict(tx_data)

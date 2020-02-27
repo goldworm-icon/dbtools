@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import Optional
 from iconservice.base.address import Address
 
 
@@ -34,7 +35,9 @@ def object_to_str(value) -> str:
     elif isinstance(value, int):
         return hex(value)
     elif isinstance(value, bytes):
-        return bytes_to_str(value)
+        return bytes_to_hex(value)
+    elif isinstance(value, bool):
+        return "0x1" if value else "0x0"
 
     return value
 
@@ -44,14 +47,25 @@ def str_to_object(object_type: str, value: str) -> object:
         return Address.from_string(value)
     if object_type == "int":
         return str_to_int(value)
+    if object_type == "bytes":
+        return convert_hex_str_to_bytes(value)
+    if object_type == "bool":
+        return bool(str_to_int(value))
     if object_type == "str":
         return value
 
     raise TypeError(f"Unknown type: {object_type}")
 
 
-def bytes_to_str(value: bytes, prefix: str = "0x") -> str:
+def bytes_to_hex(value: bytes, prefix: str = "0x") -> str:
     return f'{prefix}{value.hex()}'
+
+
+def hex_to_bytes(value: Optional[str]) -> Optional[bytes]:
+    if value is None:
+        return None
+
+    return bytes.fromhex(remove_0x_prefix(value))
 
 
 def remove_0x_prefix(value):

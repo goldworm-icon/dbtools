@@ -16,7 +16,6 @@
 from typing import List, Dict, Tuple, Union
 
 from iconservice.base.address import Address
-
 from ..utils.convert_type import str_to_object
 
 
@@ -67,6 +66,9 @@ class EventLog(object):
 
     @classmethod
     def parse_signature(cls, signature: str) -> Tuple[str, List[str]]:
+        if signature == "ICXBurned":
+            signature = "ICXBurned(int)"
+
         index = signature.index("(")
         name = signature[:index]
         params = signature[index + 1:-1].split(",")
