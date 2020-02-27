@@ -18,6 +18,7 @@ from typing import List, Iterable, Tuple
 from iconservice.base.address import AddressPrefix, Address
 from ..data.transaction import Transaction
 from ..data.transaction_result import TransactionResult
+from ..utils.convert_type import bytes_to_hex
 
 ICON_SERVICE_ADDRESS = Address.from_prefix_and_int(AddressPrefix.CONTRACT, 0)
 
@@ -59,7 +60,7 @@ class BalanceCalculator(object):
             balance += self._calculate_balance_delta(tx, tx_result)
             self._txs.append(tx)
             self._tx_results.append(tx_result)
-            print(f"txs: {len(self._txs)}")
+            print(f"TX-{len(self._txs)}: {bytes_to_hex(tx.tx_hash)}")
 
         return balance
 

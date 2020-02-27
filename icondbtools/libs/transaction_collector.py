@@ -20,7 +20,6 @@ from ..data.transaction import Transaction
 from ..data.transaction_result import TransactionResult
 from ..libs.block_database_raw_reader import BlockDatabaseRawReader
 from ..libs.loopchain_block import LoopchainBlock
-from ..utils.convert_type import bytes_to_hex
 
 
 class TransactionFilter(metaclass=ABCMeta):
@@ -73,6 +72,8 @@ class TransactionCollector(object):
         self._start_block_height = start_block_height
 
         block_height = start_block_height
+        print(f"BH-{block_height}")
+
         while True:
             if -1 < end_block_height < block_height:
                 break
@@ -81,11 +82,13 @@ class TransactionCollector(object):
             if block_data is None:
                 break
 
-            print(f"BH-{block_height}")
+            if block_height % 1000 == 0:
+                print(f"BH-{block_height}")
+
             block = LoopchainBlock.from_bytes(block_data)
 
             for tx_data in block.transactions:
-                # Skip coin issue transactions
+                # Skip base transactions
                 if "from" not in tx_data:
                     continue
 
