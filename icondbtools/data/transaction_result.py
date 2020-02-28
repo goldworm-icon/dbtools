@@ -19,7 +19,7 @@ from typing import List, Dict
 
 from iconservice.base.address import Address
 from ..data.event_log import EventLog
-from ..utils.convert_type import convert_hex_str_to_int, convert_hex_str_to_bytes, str_to_int
+from ..utils.convert_type import convert_hex_str_to_bytes, str_to_int
 
 
 class TransactionResult(object):
@@ -92,20 +92,20 @@ class TransactionResult(object):
     @classmethod
     def from_bytes(cls, data: bytes) -> 'TransactionResult':
         data_in_dict = json.loads(data)
-        return cls.from_dict(data_in_dict)
+
+        # The result of a transaction is nested with "result" key in the transaction data in loopchain db.
+        return cls.from_dict(data_in_dict["result"])
 
     @classmethod
     def from_dict(cls, data: dict) -> 'TransactionResult':
-        data = data["result"]
-
         tx_hash: bytes = convert_hex_str_to_bytes(data["txHash"])
         tx_index: int = str_to_int(data["txIndex"])
-        status = TransactionResult.Status(convert_hex_str_to_int(data["status"]))
+        status = TransactionResult.Status(str_to_int(data["status"]))
         to: 'Address' = Address.from_string(data["to"])
-        block_height: int = convert_hex_str_to_int(data["blockHeight"])
+        block_height: int = str_to_int(data["blockHeight"])
         block_hash: bytes = convert_hex_str_to_bytes(data["blockHash"])
-        step_price: int = convert_hex_str_to_int(data["stepPrice"])
-        step_used: int = convert_hex_str_to_int(data["stepUsed"])
+        step_price: int = str_to_int(data["stepPrice"])
+        step_used: int = str_to_int(data["stepUsed"])
         event_logs: List['EventLog'] = cls._parse_event_logs(data["eventLogs"])
 
         return TransactionResult(

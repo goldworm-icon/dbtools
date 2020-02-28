@@ -13,16 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import unittest
-
-from iconservice.base.address import Address
-from icondbtools.utils.convert_type import convert_hex_str_to_bytes, bytes_to_hex
 from icondbtools.data.transaction import Transaction
+from icondbtools.utils.convert_type import bytes_to_hex
+from iconservice.base.address import Address
+from iconservice.utils import icx_to_loop
 
 
-class TestTransaction(unittest.TestCase):
-    def test_from_dict(self):
-        from_ = Address.from_string("hx3aa778e1f00c77d3490e9e625f1f83ed26f90133")
+class TestTransaction(object):
+    def test_from_dict(self, address, block_hash, tx_hash):
+        from_ = address
         to = Address.from_string("cx0000000000000000000000000000000000000000")
         version = 0x3
         nid = 0x1
@@ -30,10 +29,12 @@ class TestTransaction(unittest.TestCase):
         timestamp = 0x59ddd22448390
         data_type = "call"
         signature = "Ot+ouYw5Fdb4XkfODSv+8X3q7Kn8Fse4D51nLmzY62cPgR/5HZ26JTMCxO6D44pbbCumy8vS6e70XdB+ddL/mwA="
-        tx_hash = convert_hex_str_to_bytes("0x5241633c13fefaa423148a43b703c5f5a2478d592a91ef0483845729c635c89c")
         tx_index = 0x1
         block_height = 0xde2cf7
-        block_hash = convert_hex_str_to_bytes("0xad934d67b8bd658dd2261a60afb3d7909cc329defd1ddb21c23d2947cceeb80c")
+        method = "setStake"
+        params = {
+            "value": hex(icx_to_loop(2))
+        }
 
         tx_data = {
             "version": hex(version),
@@ -44,8 +45,8 @@ class TestTransaction(unittest.TestCase):
             "timestamp": hex(timestamp),
             "dataType": data_type,
             "data": {
-                "method": "claimIScore",
-                "params": {}
+                "method": method,
+                "params": params
             },
             "signature": signature,
             "txHash": bytes_to_hex(tx_hash),
@@ -68,7 +69,6 @@ class TestTransaction(unittest.TestCase):
         assert tx.block_hash == block_hash
         assert tx.nonce is None
         assert tx.data_type == data_type
-
-
-if __name__ == '__main__':
-    unittest.main()
+        assert isinstance(tx.data, Transaction.CallData)
+        assert tx.data.method == method
+        assert tx.data.params == params

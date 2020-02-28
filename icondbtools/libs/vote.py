@@ -16,7 +16,7 @@
 from typing import Optional
 
 from iconservice.base.address import Address
-from icondbtools.utils.convert_type import convert_hex_str_to_int, convert_hex_str_to_bytes
+from icondbtools.utils.convert_type import str_to_int, convert_hex_str_to_bytes
 
 
 class Vote(object):
@@ -43,9 +43,9 @@ class Vote(object):
         :return:
         """
         rep: 'Address' = Address.from_string(data["rep"])
-        height: int = convert_hex_str_to_int(data["blockHeight"])
+        height: int = str_to_int(data["blockHeight"])
         block_hash: bytes = convert_hex_str_to_bytes(data["blockHash"])
-        timestamp: int = convert_hex_str_to_int(data["timestamp"])
+        timestamp: int = str_to_int(data["timestamp"])
 
         # Block 0.4: round_
         # Block 0.5: round

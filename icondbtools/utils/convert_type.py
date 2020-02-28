@@ -21,11 +21,7 @@ def str_to_int(value: str) -> int:
     if isinstance(value, int):
         return value
 
-    if value.startswith('0x') or value.startswith('-0x'):
-        base = 16
-    else:
-        base = 10
-
+    base = 16 if is_hex(value) else 10
     return int(value, base)
 
 
@@ -68,14 +64,14 @@ def hex_to_bytes(value: Optional[str]) -> Optional[bytes]:
     return bytes.fromhex(remove_0x_prefix(value))
 
 
-def remove_0x_prefix(value):
-    if is_0x_prefixed(value):
+def remove_0x_prefix(value: str) -> str:
+    if is_hex(value):
         return value[2:]
     return value
 
 
-def is_0x_prefixed(value):
-    return value.startswith('0x')
+def is_hex(value: str) -> bool:
+    return value.startswith('0x') or value.startswith('-0x')
 
 
 def convert_hex_str_to_bytes(value: str):
@@ -86,12 +82,3 @@ def convert_hex_str_to_bytes(value: str):
 def is_str(value):
     str_types = (str,)
     return isinstance(value, str_types)
-
-
-def convert_hex_str_to_int(value: str):
-    """Converts hex string prefixed with '0x' into int."""
-    if is_str(value):
-        return int(value, 16)
-    else:
-        return value
-

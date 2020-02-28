@@ -1,3 +1,4 @@
+pytest
 plyvel
 iconcommons
 iconservice

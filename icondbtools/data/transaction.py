@@ -15,15 +15,28 @@
 
 import base64
 import json
-from typing import Optional, Dict
+from typing import Optional, Dict, Union
 
 from iconservice.base.address import Address
-from ..utils.convert_type import convert_hex_str_to_int, bytes_to_hex, hex_to_bytes
+from ..utils.convert_type import str_to_int, bytes_to_hex, hex_to_bytes
 
 
 class Transaction(object):
     """Transaction class containing transaction information from
     """
+
+    class CallData(object):
+        def __init__(self, method: str, params: Union[None, Dict[str, str]]):
+            self._method = method
+            self._params = {} if params is None else params
+
+        @property
+        def method(self) -> str:
+            return self._method
+
+        @property
+        def params(self) -> Dict[str, str]:
+            return self._params
 
     def __init__(self,
                  from_: Optional['Address'],
@@ -40,6 +53,7 @@ class Transaction(object):
                  tx_index: int = -1,
                  value: int = 0,
                  data_type: Optional[str] = None,
+                 data: Union[None, 'CallData'] = None,
                  nonce: Optional[int] = None) -> None:
         """Transaction class for icon score context
         """
@@ -56,8 +70,9 @@ class Transaction(object):
         self._signature = signature
         self._block_height = block_height
         self._block_hash = block_hash
-        self._data_type = data_type
         self._nonce = nonce
+        self._data_type = data_type
+        self._data = data
 
     def __str__(self) -> str:
         items = (
@@ -166,6 +181,10 @@ class Transaction(object):
         return self._data_type
 
     @property
+    def data(self) -> Union[None, 'CallData']:
+        return self._data
+
+    @property
     def signature(self) -> bytes:
         return self._signature
 
@@ -176,30 +195,33 @@ class Transaction(object):
 
     @classmethod
     def from_dict(cls, data: Dict[str, str]) -> 'Transaction':
-        # version = convert_hex_str_to_int(data["version"])
-        # nid = convert_hex_str_to_int(data["nid"])
+        version = str_to_int(data.get("version", "0x2"))
+        nid = str_to_int(data.get("nid", "0x1"))
         from_ = Address.from_string(data["from"])
         to = Address.from_string(data["to"])
-        value = convert_hex_str_to_int(data.get("value", "0x0"))
+        value = str_to_int(data.get("value", "0x0"))
         tx_hash = cls._get_tx_hash(data)
-        timestamp = convert_hex_str_to_int(data["timestamp"])
+        timestamp = str_to_int(data["timestamp"])
         signature: bytes = base64.b64decode(data["signature"])
         data_type = data.get("dataType")
-        step_limit = convert_hex_str_to_int(data["stepLimit"]) if "stepLimit" in data else 0
-        tx_index = convert_hex_str_to_int(data["txIndex"]) if "txIndex" in data else -1
-        block_height = convert_hex_str_to_int(data["blockHeight"]) if "blockHeight" in data else -1
+        step_limit = str_to_int(data["stepLimit"]) if "stepLimit" in data else 0
+        tx_index = str_to_int(data["txIndex"]) if "txIndex" in data else -1
+        block_height = str_to_int(data["blockHeight"]) if "blockHeight" in data else -1
         block_hash = hex_to_bytes(data.get("blockHash"))
 
         if "nonce" in data:
-            nonce = convert_hex_str_to_int(data["nonce"])
+            nonce = str_to_int(data["nonce"])
         else:
             nonce = None
 
+        tx_data = cls._get_data(data_type, data.get("data"))
+
         # Only available in tx version 2
-        fee = convert_hex_str_to_int(data["fee"]) if "fee" in data else 0
+        fee = str_to_int(data["fee"]) if "fee" in data else 0
 
         return Transaction(
-            nonce=nonce,
+            version=version,
+            nid=nid,
             from_=from_,
             to=to,
             value=value,
@@ -211,7 +233,9 @@ class Transaction(object):
             step_limit=step_limit,
             fee=fee,
             timestamp=timestamp,
-            data_type=data_type)
+            data_type=data_type,
+            data=tx_data,
+            nonce=nonce)
 
     @classmethod
     def _get_tx_hash(cls, data: Dict[str, str]) -> bytes:
@@ -221,3 +245,8 @@ class Transaction(object):
                 break
 
         return hex_to_bytes(value)
+
+    @classmethod
+    def _get_data(cls, data_type: Optional[str], data: Union[None, str, Dict]) -> Union[None, 'CallData']:
+        if data_type == "call":
+            return Transaction.CallData(method=data["method"], params=data.get("params"))

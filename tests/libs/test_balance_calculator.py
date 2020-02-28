@@ -14,41 +14,30 @@
 # limitations under the License.
 
 import os
-import unittest
 from typing import Iterable, Tuple
-
-from iconservice.base.address import AddressPrefix, Address
-from iconservice.utils import icx_to_loop
 
 from icondbtools.data.event_log import EventLog
 from icondbtools.data.transaction import Transaction
 from icondbtools.data.transaction_result import TransactionResult
 from icondbtools.libs.balance_calculator import BalanceCalculator, ICON_SERVICE_ADDRESS
+from iconservice.utils import icx_to_loop
 
 
-class TestBalanceCalculator(unittest.TestCase):
-    def setUp(self) -> None:
-        self.addresses = []
-
-        for i in range(10):
-            address = Address.from_prefix_and_int(AddressPrefix.EOA, i)
-            self.addresses.append(address)
-
-    def test_run_icx_transfer(self):
-        body: bytes = os.urandom(20)
-        address = Address(AddressPrefix.EOA, body)
+class TestBalanceCalculator(object):
+    def test_run_on_icx_transfer(self, create_address, tx_hash, step_price):
+        from_ = create_address()
+        to = create_address()
         tx_hash: bytes = os.urandom(32)
         value = icx_to_loop(5)
         step_limit = 2_000_000
         step_used = step_limit
-        step_price = 10 ** 8
         init_balance = icx_to_loop(100)
 
         tx = Transaction(version=3,
                          nid=1,
                          tx_hash=tx_hash,
-                         from_=address,
-                         to=self.addresses[0],
+                         from_=from_,
+                         to=to,
                          value=value,
                          step_limit=step_limit)
 
@@ -61,27 +50,25 @@ class TestBalanceCalculator(unittest.TestCase):
         def func() -> Iterable[Tuple['Transaction', 'TransactionResult']]:
             yield tx, tx_result
 
-        calculator = BalanceCalculator(address)
+        calculator = BalanceCalculator(from_)
         balance: int = calculator.run(func(), init_balance=init_balance)
 
         expected_balance = init_balance - value - step_price * step_used
         assert balance == expected_balance
 
-    def test_run_icx_received(self):
-        body: bytes = os.urandom(20)
-        address = Address(AddressPrefix.EOA, body)
-        tx_hash: bytes = os.urandom(32)
+    def test_run_on_icx_received(self, create_address, tx_hash, step_price):
+        from_ = create_address()
+        to = create_address()
         value = icx_to_loop(5)
         step_limit = 2_000_000
         step_used = step_limit
-        step_price = 10 ** 8
         init_balance = icx_to_loop(100)
 
         tx = Transaction(version=3,
                          nid=1,
                          tx_hash=tx_hash,
-                         from_=self.addresses[0],
-                         to=address,
+                         from_=from_,
+                         to=to,
                          value=value,
                          step_limit=step_limit)
 
@@ -94,22 +81,20 @@ class TestBalanceCalculator(unittest.TestCase):
         def func() -> Iterable[Tuple['Transaction', 'TransactionResult']]:
             yield tx, tx_result
 
-        calculator = BalanceCalculator(address)
+        calculator = BalanceCalculator(to)
         balance: int = calculator.run(func(), init_balance=init_balance)
 
         expected_balance = init_balance + value
         assert balance == expected_balance
 
-    def test_run_iscore_claimed(self):
-        body: bytes = os.urandom(20)
-        address = Address(AddressPrefix.EOA, body)
+    def test_run_on_claim_iscore(self, address, tx_hash, step_price):
         score_address = ICON_SERVICE_ADDRESS
-        tx_hash: bytes = os.urandom(32)
         value = icx_to_loop(0)
         step_limit = 2_000_000
         step_used = step_limit
-        step_price = 10 ** 8
         init_balance = icx_to_loop(100)
+        data_type = "call"
+        data = Transaction.CallData("claimIScore", None)
 
         tx = Transaction(version=3,
                          nid=1,
@@ -117,7 +102,9 @@ class TestBalanceCalculator(unittest.TestCase):
                          from_=address,
                          to=score_address,
                          value=value,
-                         step_limit=step_limit)
+                         step_limit=step_limit,
+                         data_type=data_type,
+                         data=data)
 
         claimed_icx = icx_to_loop(6)
         claimed_iscore = claimed_icx * 1000
@@ -137,4 +124,39 @@ class TestBalanceCalculator(unittest.TestCase):
         balance: int = calculator.run(func(), init_balance=init_balance)
 
         expected_balance = init_balance - step_price * step_used + claimed_icx
+        assert balance == expected_balance
+
+    def test_run_on_set_stake(self, address, tx_hash, step_price):
+        score_address = ICON_SERVICE_ADDRESS
+        value = icx_to_loop(0)
+        step_limit = 2_000_000
+        step_used = step_limit
+        init_balance = icx_to_loop(200)
+        data_type = "call"
+        stake = icx_to_loop(100)
+        data = Transaction.CallData(method="setStake", params={"value": hex(stake)})
+
+        tx = Transaction(version=3,
+                         nid=1,
+                         tx_hash=tx_hash,
+                         from_=address,
+                         to=score_address,
+                         value=value,
+                         step_limit=step_limit,
+                         data_type=data_type,
+                         data=data)
+
+        tx_result = TransactionResult(tx_hash=tx_hash,
+                                      status=TransactionResult.Status.SUCCESS,
+                                      tx_index=0,
+                                      step_price=step_price,
+                                      step_used=step_used)
+
+        def func() -> Iterable[Tuple['Transaction', 'TransactionResult']]:
+            yield tx, tx_result
+
+        calculator = BalanceCalculator(address)
+        balance: int = calculator.run(func(), init_balance=init_balance)
+
+        expected_balance = init_balance - step_price * step_used - stake
         assert balance == expected_balance

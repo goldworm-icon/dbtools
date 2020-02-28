@@ -13,12 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import List, Iterable, Tuple
+from typing import List, Iterable, Tuple, Dict
 
 from iconservice.base.address import AddressPrefix, Address
 from ..data.transaction import Transaction
 from ..data.transaction_result import TransactionResult
-from ..utils.convert_type import bytes_to_hex
+from ..utils.convert_type import bytes_to_hex, str_to_int
 
 ICON_SERVICE_ADDRESS = Address.from_prefix_and_int(AddressPrefix.CONTRACT, 0)
 
@@ -68,9 +68,9 @@ class BalanceCalculator(object):
         is_tx_owner = tx.from_ == self._address
         balance_delta = 0
 
-        if tx_result.status == 1:
+        if tx_result.status == TransactionResult.Status.SUCCESS:
             balance_delta += self._calc_balance_delta_with_value(tx, tx_result)
-            balance_delta += self._calc_balance_delta_in_iscore_claimed_event_log(tx_result)
+            balance_delta += self._calc_balance_delta_in_call(tx, tx_result)
 
         if is_tx_owner:
             balance_delta -= tx_result.fee
@@ -89,8 +89,24 @@ class BalanceCalculator(object):
 
         return delta
 
+    def _calc_balance_delta_in_call(self, tx: 'Transaction', tx_result: 'TransactionResult') -> int:
+        assert tx_result.status == TransactionResult.Status.SUCCESS
+
+        delta = 0
+
+        if tx.data_type == "call":
+            call_data: 'Transaction.Data' = tx.data
+            method: str = call_data.method
+
+            if method == "setStake":
+                delta = self._calc_balance_delta_in_set_stake(call_data.params)
+            elif method == "claimIScore":
+                delta = self._calc_balance_delta_in_claim_iscore(tx_result)
+
+        return delta
+
     @staticmethod
-    def _calc_balance_delta_in_iscore_claimed_event_log(tx_result) -> int:
+    def _calc_balance_delta_in_claim_iscore(tx_result) -> int:
         assert tx_result.status == TransactionResult.Status.SUCCESS
 
         delta = 0
@@ -100,3 +116,7 @@ class BalanceCalculator(object):
                 delta += event_log.data[1]
 
         return delta
+
+    @staticmethod
+    def _calc_balance_delta_in_set_stake(params: Dict[str, str]) -> int:
+        return -str_to_int(params["value"]) if params else 0

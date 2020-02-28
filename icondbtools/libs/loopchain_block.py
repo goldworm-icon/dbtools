@@ -17,7 +17,7 @@ import json
 from typing import Optional
 
 from iconservice.base.address import Address
-from ..utils.convert_type import convert_hex_str_to_int, convert_hex_str_to_bytes
+from ..utils.convert_type import str_to_int, convert_hex_str_to_bytes
 
 
 class LoopchainBlock(object):
@@ -102,11 +102,11 @@ class LoopchainBlock(object):
         # In case of version >= 0.3
         version: str = block["version"]
 
-        height: int = convert_hex_str_to_int(block["height"])
+        height: int = str_to_int(block["height"])
         block_hash: bytes = convert_hex_str_to_bytes(block["hash"])
         prev_block_hash: bytes = convert_hex_str_to_bytes(block["prevHash"])
         leader = Address.from_string(block["leader"])
-        timestamp: int = convert_hex_str_to_int(block["timestamp"])
+        timestamp: int = str_to_int(block["timestamp"])
         state_hash: bytes = convert_hex_str_to_bytes(block["stateHash"])
         transactions: list = block["transactions"]
 

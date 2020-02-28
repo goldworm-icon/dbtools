@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import pytest
 import unittest
 from typing import TYPE_CHECKING
 
@@ -32,6 +33,7 @@ class TransactionFilterByAddress(TransactionFilter):
         return tx.from_ == self._address or tx.to == self._address
 
 
+@pytest.mark.skip
 class TestTransactionCollector(unittest.TestCase):
     def setUp(self) -> None:
         self.tx_collector = TransactionCollector()
