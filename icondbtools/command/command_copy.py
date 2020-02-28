@@ -69,14 +69,14 @@ class CommandCopy(Command):
                 # Get transaction data from the DB using transactions in block
                 transactions: list = block_reader.get_transactions_from_block(block)
                 for transaction in transactions:
-                    tx_hash: Optional[bytes] = TransactionParser.get_tx_hash_from_transaction(transaction)
+                    tx_hash: Optional[bytes] = TransactionParser.get_tx_hash_key_from_transaction(transaction)
                     if tx_hash is not None:
                         full_transaction: bytes = block_reader.get_transaction_by_hash(tx_hash)
                         wb.put(tx_hash, full_transaction)
 
-                block_hash: bytes = block_reader.get_hash_by_height(height)
-                wb.put(block_hash, block)
-                wb.put(block_height_key, block_hash)
+                block_hash_key: bytes = block_reader.get_block_hash_key_by_height(height)
+                wb.put(block_hash_key, block)
+                wb.put(block_height_key, block_hash_key)
                 block_dict: dict = json.loads(block)
                 reps_hash = block_dict.get("repsHash", "0x")[2:]
                 reps_data = block_reader.get_reps(bytes.fromhex(reps_hash))
@@ -91,7 +91,7 @@ class CommandCopy(Command):
                 wb.put(NID_KEY, block_reader.get_nid())
                 wb.put(TRANSACTION_COUNT_KEY, block_reader.get_transaction_count())
                 block: dict = json.loads(block)
-                last_block_hash = block.get('block_hash') if block.get('block_hash') \
+                last_block_hash: str = block.get('block_hash') if 'block_hash' in block \
                     else block.get("hash")[2:]
                 wb.put(LAST_BLOCK_KEY, last_block_hash.encode(UTF8))
         block_reader.close()

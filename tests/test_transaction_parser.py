@@ -16,7 +16,7 @@ class TestTransactionParser(unittest.TestCase):
                                   'txHash': 'ed7d1b12fecc6d7819c6e152590efefdc699d9e2c944c0c05f262cfa0a0bf59f'}]
         tx_v3_hash: bytes = b'ed7d1b12fecc6d7819c6e152590efefdc699d9e2c944c0c05f262cfa0a0bf59f'
         for transaction in v3_transactions:
-            actual_txhash: bytes = TransactionParser.get_tx_hash_from_transaction(transaction)
+            actual_txhash: bytes = TransactionParser.get_tx_hash_key_from_transaction(transaction)
             self.assertEqual(tx_v3_hash, actual_txhash)
 
     def test_transaction_parsing_v2(self):
@@ -29,7 +29,7 @@ class TestTransactionParser(unittest.TestCase):
              'method': 'icx_sendTransaction'}]
         tx_v2_hash: bytes = b'f5fc9095f7fb14cd4f28ee164dc0a8e152ae3a2c8bf9b772a3ef7a4db431ebf9'
         for transaction in v2_transactions:
-            actual_txhash: bytes = TransactionParser.get_tx_hash_from_transaction(transaction)
+            actual_txhash: bytes = TransactionParser.get_tx_hash_key_from_transaction(transaction)
             self.assertEqual(tx_v2_hash, actual_txhash)
 
     def test_transaction_parsing_genesis(self):
@@ -42,7 +42,7 @@ class TestTransactionParser(unittest.TestCase):
             {'name': 'treasury', 'address': 'hx1000000000000000000000000000000000000000', 'balance': '0x0'}],
             'message': "Hyperconnect the world"}]
         for transaction in genesis_transactions:
-            actual_txhash = TransactionParser.get_tx_hash_from_transaction(transaction)
+            actual_txhash = TransactionParser.get_tx_hash_key_from_transaction(transaction)
             self.assertIsNone(actual_txhash)
 
 
