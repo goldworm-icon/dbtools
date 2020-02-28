@@ -44,7 +44,7 @@ def str_to_object(object_type: str, value: str) -> object:
     if object_type == "int":
         return str_to_int(value)
     if object_type == "bytes":
-        return convert_hex_str_to_bytes(value)
+        return hex_to_bytes(value)
     if object_type == "bool":
         return bool(str_to_int(value))
     if object_type == "str":
