@@ -14,6 +14,7 @@
 # limitations under the License.
 
 from typing import Optional
+
 from iconservice.base.address import Address
 
 
@@ -25,6 +26,10 @@ def str_to_int(value: str) -> int:
     return int(value, base)
 
 
+def bool_to_hex(value: bool) -> str:
+    return "0x1" if value else "0x0"
+
+
 def object_to_str(value) -> str:
     if isinstance(value, Address):
         return str(value)
@@ -33,7 +38,7 @@ def object_to_str(value) -> str:
     elif isinstance(value, bytes):
         return bytes_to_hex(value)
     elif isinstance(value, bool):
-        return "0x1" if value else "0x0"
+        return bool_to_hex(value)
 
     return value
 
@@ -54,6 +59,9 @@ def str_to_object(object_type: str, value: str) -> object:
 
 
 def bytes_to_hex(value: bytes, prefix: str = "0x") -> str:
+    if value is None:
+        return "None"
+
     return f'{prefix}{value.hex()}'
 
 

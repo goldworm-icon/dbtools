@@ -109,9 +109,15 @@ class TransactionResult(object):
         event_logs: List['EventLog'] = cls._parse_event_logs(data["eventLogs"])
 
         return TransactionResult(
-            tx_hash=tx_hash, status=status, tx_index=tx_index,
-            to=to, block_height=block_height, block_hash=block_hash,
-            step_price=step_price, step_used=step_used, event_logs=event_logs)
+            status=status,
+            tx_hash=tx_hash,
+            tx_index=tx_index,
+            to=to,
+            block_height=block_height,
+            block_hash=block_hash,
+            step_price=step_price,
+            step_used=step_used,
+            event_logs=event_logs)
 
     @classmethod
     def _parse_event_logs(cls, event_logs: List[Dict[str, str]]) -> List['EventLog']:

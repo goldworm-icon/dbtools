@@ -51,7 +51,7 @@ class TestBalanceCalculator(object):
             yield tx, tx_result
 
         calculator = BalanceCalculator(from_)
-        balance: int = calculator.run(func(), init_balance=init_balance)
+        balance, _ = calculator.run(func(), init_balance=init_balance)
 
         expected_balance = init_balance - value - step_price * step_used
         assert balance == expected_balance
@@ -82,7 +82,7 @@ class TestBalanceCalculator(object):
             yield tx, tx_result
 
         calculator = BalanceCalculator(to)
-        balance: int = calculator.run(func(), init_balance=init_balance)
+        balance, _ = calculator.run(func(), init_balance=init_balance)
 
         expected_balance = init_balance + value
         assert balance == expected_balance
@@ -121,7 +121,7 @@ class TestBalanceCalculator(object):
             yield tx, tx_result
 
         calculator = BalanceCalculator(address)
-        balance: int = calculator.run(func(), init_balance=init_balance)
+        balance, _ = calculator.run(func(), init_balance=init_balance)
 
         expected_balance = init_balance - step_price * step_used + claimed_icx
         assert balance == expected_balance
@@ -156,7 +156,10 @@ class TestBalanceCalculator(object):
             yield tx, tx_result
 
         calculator = BalanceCalculator(address)
-        balance: int = calculator.run(func(), init_balance=init_balance)
+        balance, stake_info = calculator.run(func(), init_balance=init_balance)
 
-        expected_balance = init_balance - step_price * step_used - stake
+        expected_balance = init_balance - step_price * step_used
         assert balance == expected_balance
+        assert stake_info.stake == stake
+        assert stake_info.unstake == 0
+        assert stake_info.tx_hash == tx_hash

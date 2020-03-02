@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING, List
 
 from icondbtools.command.command import Command
 from iconservice.base.address import Address
-from ..libs.balance_calculator import BalanceCalculator
+from ..libs.balance_calculator import BalanceCalculator, StakeInfo
 from ..libs.transaction_collector import TransactionCollector
 
 if TYPE_CHECKING:
@@ -70,13 +70,14 @@ class CommandBalance(Command):
         it = transaction_collector.run(start, end)
 
         balance_calculator = BalanceCalculator(address)
-        balance: int = balance_calculator.run(it, init_balance=init_balance)
+        balance, stake_info = balance_calculator.run(it, init_balance=init_balance)
 
         transaction_collector.close()
 
         self._print(args.details,
                     address,
                     balance,
+                    stake_info,
                     transaction_collector.start_block_height,
                     transaction_collector.end_block_height,
                     balance_calculator.txs,
@@ -86,6 +87,7 @@ class CommandBalance(Command):
     def _print(details: bool,
                address: 'Address',
                balance: int,
+               stake_info: 'StakeInfo',
                start_height: int,
                end_height: int,
                txs: List['Transaction'],
@@ -94,9 +96,11 @@ class CommandBalance(Command):
 
         print(
             f'address: {address}\n'
-            f'balance: {balance}\n'
             f'start: {start_height}\n'
             f'end: {end_height}\n'
+            f'balance including stake: {balance}\n'
+            f'balance excluding stake: {balance - stake_info.stake}\n'
+            f'stake_info: {stake_info}\n'
             f'transactions: {len(txs)}\n')
 
         if details:
