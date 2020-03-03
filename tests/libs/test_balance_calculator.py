@@ -108,7 +108,7 @@ class TestBalanceCalculator(object):
 
         claimed_icx = icx_to_loop(6)
         claimed_iscore = claimed_icx * 1000
-        event_log = EventLog(score_address, indexed=["IScoreClaimed"], data=[claimed_iscore, claimed_icx])
+        event_log = EventLog(score_address, indexed=["IScoreClaimed(int,int)"], data=[claimed_iscore, claimed_icx])
 
         tx_result = TransactionResult(tx_hash=tx_hash,
                                       status=1,

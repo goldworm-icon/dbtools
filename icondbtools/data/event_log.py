@@ -25,6 +25,12 @@ class EventLog(object):
         self._indexed = indexed
         self._data = data
 
+    def __str__(self) -> str:
+        return \
+            f"score_address={self._score_address} " \
+            f"indexed={self._indexed} " \
+            f"data={self._data}"
+
     @property
     def signature(self) -> str:
         return self._indexed[0]

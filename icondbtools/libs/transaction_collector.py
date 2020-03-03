@@ -108,9 +108,10 @@ class TransactionCollector(object):
         with open(path, mode="r") as f:
             for line in f:
                 line: str = line.strip(" \t\n")
-                tx_hash = hex_to_bytes(line)
-                print(line)
+                if line.startswith("#"):
+                    continue
 
+                tx_hash = hex_to_bytes(line)
                 data: bytes = self._reader.get_transaction_by_hash(tx_hash)
                 if data is None:
                     break

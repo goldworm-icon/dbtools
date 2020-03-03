@@ -75,6 +75,7 @@ class BalanceCalculator(object):
         self._stake_info.stake = init_stake
         self._stake_info.unstake = init_unstake
 
+        i = 0
         for tx, tx_result in it:
             if self._address not in (tx.from_, tx.to):
                 continue
@@ -84,7 +85,9 @@ class BalanceCalculator(object):
 
             self._txs.append(tx)
             self._tx_results.append(tx_result)
-            print(f"TX-{len(self._txs)}: {bytes_to_hex(tx.tx_hash)} balance={balance} delta={delta}")
+
+            self._print_detail(i, balance, delta, tx, tx_result)
+            i += 1
 
         return balance, self._stake_info
 
@@ -136,7 +139,7 @@ class BalanceCalculator(object):
         delta = 0
 
         for event_log in tx_result.event_logs:
-            if event_log.score_address == ICON_SERVICE_ADDRESS and event_log.signature == "IScoreClaimed":
+            if event_log.score_address == ICON_SERVICE_ADDRESS and event_log.signature == "IScoreClaimed(int,int)":
                 delta += event_log.data[1]
 
         return delta
@@ -159,3 +162,18 @@ class BalanceCalculator(object):
         self._stake_info.tx_hash = tx_result.tx_hash
 
         return 0
+
+    @classmethod
+    def _print_detail(cls, i: int, balance: int, delta: int, tx: 'Transaction', tx_result: 'TransactionResult'):
+        print(
+            f'{i:04d} '
+            f'balance={balance} '
+            f'delta={delta} '
+            f'status={tx_result.status} '
+            f'from={tx.from_} '
+            f'to={tx.to} '
+            f'fee={tx_result.fee} '
+            f'value={tx.value} '
+            f'tx_hash={bytes_to_hex(tx.tx_hash)} '
+            f'data_type={tx.data_type} '
+            f'block_height={tx_result.block_height}')

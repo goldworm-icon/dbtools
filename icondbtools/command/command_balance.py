@@ -123,6 +123,7 @@ class CommandBalance(Command):
                 f'tx_hash={bytes_to_hex(tx.tx_hash)} '
                 f'from={tx.from_} '
                 f'to={tx.to} '
+                f'fee={tx_result.fee} '
                 f'value={tx.value} '
                 f'data_type={tx.data_type} '
                 f'block_height={tx_result.block_height} '
