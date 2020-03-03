@@ -106,15 +106,18 @@ class TransactionCollector(object):
 
     def run_with_file(self, path: str):
         with open(path, mode="r") as f:
-            line: str = f.readline().strip(" \t\n")
-            tx_hash = hex_to_bytes(line)
-            print(line)
+            for line in f:
+                line: str = line.strip(" \t\n")
+                tx_hash = hex_to_bytes(line)
+                print(line)
 
-            data: bytes = self._reader.get_transaction_by_hash(tx_hash)
-            tx = Transaction.from_bytes(data)
-            tx_result = TransactionResult.from_bytes(data)
+                data: bytes = self._reader.get_transaction_by_hash(tx_hash)
+                if data is None:
+                    break
 
-            yield tx, tx_result
+                tx = Transaction.from_bytes(data)
+                tx_result = TransactionResult.from_bytes(data)
+                yield tx, tx_result
 
     def _get_transaction_result(self, tx_hash: bytes) -> 'TransactionResult':
         data: bytes = self._reader.get_transaction_result_by_hash(tx_hash)

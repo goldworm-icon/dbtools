@@ -38,23 +38,21 @@ class TransactionFilterByAddress(TransactionFilter):
 class TestTransactionCollector(object):
     @pytest.fixture
     def tx_collector(self):
-        return TransactionCollector()
+        db_path = "/Users/goldworm/work/icon/db-data/mainnet/db/"
+
+        tx_collector = TransactionCollector()
+        tx_collector.open(db_path)
+        yield tx_collector
+        tx_collector.close()
 
     def test_run(self, tx_collector):
-        db_path = ""
         address = Address.from_prefix_and_int(AddressPrefix.EOA, 0)
         tx_filter = TransactionFilterByAddress(address)
 
-        tx_collector.open(db_path)
         tx_collector.run(start_block_height=0, end_block_height=10, tx_filter=tx_filter)
-        tx_collector.close()
 
         assert isinstance(tx_collector.transactions, list)
 
     def test_run_with_file(self, tx_collector):
         path = "/Users/goldworm/transactions.txt"
-        db_path = "/Users/goldworm/work/icon/db-data/mainnet/db/"
-
-        tx_collector.open(db_path)
         tx_collector.run_with_file(path)
-        tx_collector.close()

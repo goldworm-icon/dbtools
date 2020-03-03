@@ -20,17 +20,14 @@ from iconservice.utils import icx_to_loop
 
 
 class TestTransaction(object):
-    def test_from_dict(self, address, block_hash, tx_hash):
+    def test_from_dict(self, address, block_hash, tx_hash, timestamp):
         from_ = address
         to = Address.from_string("cx0000000000000000000000000000000000000000")
         version = 0x3
         nid = 0x1
         step_limit = 0x1a2c0
-        timestamp = 0x59ddd22448390
         data_type = "call"
         signature = "Ot+ouYw5Fdb4XkfODSv+8X3q7Kn8Fse4D51nLmzY62cPgR/5HZ26JTMCxO6D44pbbCumy8vS6e70XdB+ddL/mwA="
-        tx_index = 0x1
-        block_height = 0xde2cf7
         method = "setStake"
         params = {
             "value": hex(icx_to_loop(2))
@@ -49,10 +46,7 @@ class TestTransaction(object):
                 "params": params
             },
             "signature": signature,
-            "txHash": bytes_to_hex(tx_hash),
-            "txIndex": hex(tx_index),
-            "blockHeight": hex(block_height),
-            "blockHash": bytes_to_hex(block_hash)
+            "txHash": bytes_to_hex(tx_hash)
         }
 
         tx = Transaction.from_dict(tx_data)
@@ -63,10 +57,7 @@ class TestTransaction(object):
         assert tx.value == 0
         assert tx.timestamp == timestamp
         assert tx._step_limit == step_limit
-        assert tx.tx_index == tx_index
         assert tx.tx_hash == tx_hash
-        assert tx.block_height == block_height
-        assert tx.block_hash == block_hash
         assert tx.nonce is None
         assert tx.data_type == data_type
         assert isinstance(tx.data, Transaction.CallData)

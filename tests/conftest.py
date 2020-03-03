@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import os
+import time
 from typing import Callable
 
 import pytest
@@ -56,4 +57,9 @@ def create_address() -> Callable[[], 'Address']:
 
 @pytest.fixture
 def step_price() -> int:
-    return 10 ** 8
+    return 10 ** 10
+
+
+@pytest.fixture
+def timestamp() -> int:
+    return int(time.time() * 1_000_000)

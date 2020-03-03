@@ -101,6 +101,7 @@ class CommandBalance(Command):
         assert len(txs) == len(tx_results)
 
         print(
+            f'Result ------------------------------------------------\n'
             f'address: {address}\n'
             f'start: {start_height}\n'
             f'end: {end_height}\n'

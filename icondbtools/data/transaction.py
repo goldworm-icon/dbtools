@@ -22,7 +22,7 @@ from ..utils.convert_type import str_to_int, bytes_to_hex, hex_to_bytes
 
 
 class Transaction(object):
-    """Transaction class containing transaction information from
+    """Transaction information loaded from loopchain DB
     """
 
     class CallData(object):
@@ -44,13 +44,9 @@ class Transaction(object):
                  version: int = 3,
                  nid: int = 1,
                  step_limit: int = 0,
-                 fee: int = 0,
                  timestamp: int = 0,
                  signature: bytes = None,
-                 block_height: int = -1,
-                 block_hash: bytes = None,
                  tx_hash: bytes = None,
-                 tx_index: int = -1,
                  value: int = 0,
                  data_type: Optional[str] = None,
                  data: Union[None, 'CallData'] = None,
@@ -60,16 +56,12 @@ class Transaction(object):
         self._version = version
         self._nid = nid
         self._tx_hash = tx_hash
-        self._tx_index = tx_index
         self._from = from_
         self._to = to
         self._step_limit = step_limit
-        self._fee = fee
         self._value = value
         self._timestamp = timestamp
         self._signature = signature
-        self._block_height = block_height
-        self._block_hash = block_hash
         self._nonce = nonce
         self._data_type = data_type
         self._data = data
@@ -77,17 +69,15 @@ class Transaction(object):
     def __str__(self) -> str:
         items = (
             ("tx_hash", self._tx_hash),
-            ("tx_index", self._tx_index),
             ("from", self._from),
             ("to", self._to),
             ("value", self._value),
             ("step_limit", self._step_limit),
-            ("fee", self._fee),
-            ("block_height", self._block_height),
-            ("block_hash", self._block_hash),
             ("timestamp", self._timestamp),
             ("signature", self._signature),
-            ("nonce", self._nonce)
+            ("nonce", self._nonce),
+            ("version", self._version),
+            ("nid", self._nid)
         )
 
         def _func():
@@ -122,26 +112,11 @@ class Transaction(object):
         return self._to
 
     @property
-    def tx_index(self) -> int:
-        """
-        Transaction index in a block
-        """
-        return self._tx_index
-
-    @property
     def tx_hash(self) -> bytes:
         """
         Transaction hash
         """
         return self._tx_hash
-
-    @property
-    def block_height(self) -> int:
-        return self._block_height
-
-    @property
-    def block_hash(self) -> bytes:
-        return self._block_hash
 
     @property
     def timestamp(self) -> int:
@@ -165,14 +140,6 @@ class Transaction(object):
         return self._step_limit
 
     @property
-    def fee(self) -> int:
-        """Available in tx version 2
-
-        :return: fee in loop unit
-        """
-        return self._fee
-
-    @property
     def value(self) -> int:
         return self._value
 
@@ -190,8 +157,15 @@ class Transaction(object):
 
     @classmethod
     def from_bytes(cls, data: bytes) -> 'Transaction':
-        data = json.loads(data)
-        return cls.from_dict(data)
+        """
+
+        :param data: data loaded from loopchain DB
+        :return:
+        """
+        data_in_dict = json.loads(data)
+        data_in_dict["transaction"]["txHash"] = data_in_dict["result"]["txHash"]
+
+        return cls.from_dict(data_in_dict["transaction"])
 
     @classmethod
     def from_dict(cls, data: Dict[str, str]) -> 'Transaction':
@@ -205,9 +179,6 @@ class Transaction(object):
         signature: bytes = base64.b64decode(data["signature"])
         data_type = data.get("dataType")
         step_limit = str_to_int(data["stepLimit"]) if "stepLimit" in data else 0
-        tx_index = str_to_int(data["txIndex"]) if "txIndex" in data else -1
-        block_height = str_to_int(data["blockHeight"]) if "blockHeight" in data else -1
-        block_hash = hex_to_bytes(data.get("blockHash"))
 
         if "nonce" in data:
             nonce = str_to_int(data["nonce"])
@@ -216,22 +187,15 @@ class Transaction(object):
 
         tx_data = cls._get_data(data_type, data.get("data"))
 
-        # Only available in tx version 2
-        fee = str_to_int(data["fee"]) if "fee" in data else 0
-
         return Transaction(
             version=version,
             nid=nid,
             from_=from_,
             to=to,
             value=value,
-            tx_index=tx_index,
             tx_hash=tx_hash,
             signature=signature,
-            block_height=block_height,
-            block_hash=block_hash,
             step_limit=step_limit,
-            fee=fee,
             timestamp=timestamp,
             data_type=data_type,
             data=tx_data,
