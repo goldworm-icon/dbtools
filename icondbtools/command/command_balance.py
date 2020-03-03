@@ -19,6 +19,7 @@ from icondbtools.command.command import Command
 from iconservice.base.address import Address
 from ..libs.balance_calculator import BalanceCalculator, StakeInfo
 from ..libs.transaction_collector import TransactionCollector
+from ..utils.convert_type import bytes_to_hex
 
 if TYPE_CHECKING:
     from ..data.transaction import Transaction
@@ -89,8 +90,9 @@ class CommandBalance(Command):
                     balance_calculator.txs,
                     balance_calculator.tx_results)
 
-    @staticmethod
-    def _print(details: bool,
+    @classmethod
+    def _print(cls,
+               details: bool,
                address: 'Address',
                balance: int,
                stake_info: 'StakeInfo',
@@ -111,5 +113,17 @@ class CommandBalance(Command):
             f'transactions: {len(txs)}\n')
 
         if details:
-            for i, (tx, tx_result) in enumerate(zip(txs, tx_results)):
-                print(f'{i}: {tx} status={tx_result.status}')
+            cls._print_details(txs, tx_results)
+
+    @classmethod
+    def _print_details(cls, txs: List['Transaction'], tx_results: List['TransactionResult']):
+        for i, (tx, tx_result) in enumerate(zip(txs, tx_results)):
+            print(
+                f'{i}: '
+                f'tx_hash={bytes_to_hex(tx.tx_hash)} '
+                f'from={tx.from_} '
+                f'to={tx.to} '
+                f'value={tx.value} '
+                f'data_type={tx.data_type} '
+                f'block_height={tx_result.block_height} '
+                f'status={tx_result.status}')

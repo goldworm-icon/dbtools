@@ -79,10 +79,12 @@ class BalanceCalculator(object):
             if self._address not in (tx.from_, tx.to):
                 continue
 
-            balance += self._calculate_balance_delta(tx, tx_result)
+            delta = self._calculate_balance_delta(tx, tx_result)
+            balance += delta
+
             self._txs.append(tx)
             self._tx_results.append(tx_result)
-            # print(f"TX-{len(self._txs)}: {bytes_to_hex(tx.tx_hash)}")
+            print(f"TX-{len(self._txs)}: {bytes_to_hex(tx.tx_hash)} balance={balance} delta={delta}")
 
         return balance, self._stake_info
 
