@@ -47,6 +47,7 @@ class CommandBalance(Command):
         parser_balance.add_argument('-e', '--end', type=int, default=-1, help='end block height, inclusive')
         parser_balance.add_argument('--count', type=int, default=-1, help='How many blocks to inspect')
         parser_balance.add_argument('--init-balance', type=int, default=0, help='Initial balance in loop')
+        parser_balance.add_argument('--file', type=str, default='', help='file including transaction hashes')
         parser_balance.add_argument(
             '--details', action='store_true', default=False, help='Show the result in more detail')
 
@@ -57,6 +58,7 @@ class CommandBalance(Command):
         address = Address.from_string(args.address)
         init_balance: int = args.init_balance
         start: int = args.start
+        path: str = args.file
 
         if args.end > 0:
             end = args.end
@@ -67,7 +69,11 @@ class CommandBalance(Command):
 
         transaction_collector = TransactionCollector()
         transaction_collector.open(db_path)
-        it = transaction_collector.run(start, end)
+
+        if path:
+            it = transaction_collector.run_with_file(path)
+        else:
+            it = transaction_collector.run(start, end)
 
         balance_calculator = BalanceCalculator(address)
         balance, stake_info = balance_calculator.run(it, init_balance=init_balance)

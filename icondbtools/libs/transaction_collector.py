@@ -20,6 +20,7 @@ from ..data.transaction import Transaction
 from ..data.transaction_result import TransactionResult
 from ..libs.block_database_raw_reader import BlockDatabaseRawReader
 from ..libs.loopchain_block import LoopchainBlock
+from ..utils.convert_type import hex_to_bytes
 
 
 class TransactionFilter(metaclass=ABCMeta):
@@ -102,6 +103,18 @@ class TransactionCollector(object):
             block_height += 1
 
         self._end_block_height = block_height - 1
+
+    def run_with_file(self, path: str):
+        with open(path, mode="r") as f:
+            line: str = f.readline().strip(" \t\n")
+            tx_hash = hex_to_bytes(line)
+            print(line)
+
+            data: bytes = self._reader.get_transaction_by_hash(tx_hash)
+            tx = Transaction.from_bytes(data)
+            tx_result = TransactionResult.from_bytes(data)
+
+            yield tx, tx_result
 
     def _get_transaction_result(self, tx_hash: bytes) -> 'TransactionResult':
         data: bytes = self._reader.get_transaction_result_by_hash(tx_hash)

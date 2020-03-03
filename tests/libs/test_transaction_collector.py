@@ -13,15 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import pytest
-import unittest
 from typing import TYPE_CHECKING
+
+import pytest
 
 from icondbtools.libs.transaction_collector import TransactionCollector, TransactionFilter
 from iconservice.base.address import Address, AddressPrefix
 
 if TYPE_CHECKING:
     from icondbtools.data.transaction import Transaction
+    from icondbtools.data.transaction_result import TransactionResult
 
 
 class TransactionFilterByAddress(TransactionFilter):
@@ -29,19 +30,19 @@ class TransactionFilterByAddress(TransactionFilter):
         super().__init__()
         self._address = address
 
-    def run(self, tx: 'Transaction') -> bool:
+    def run(self, tx: 'Transaction', tx_result: 'TransactionResult') -> bool:
         return tx.from_ == self._address or tx.to == self._address
 
 
 @pytest.mark.skip
-class TestTransactionCollector(unittest.TestCase):
-    def setUp(self) -> None:
-        self.tx_collector = TransactionCollector()
+class TestTransactionCollector(object):
+    @pytest.fixture
+    def tx_collector(self):
+        return TransactionCollector()
 
-    def test_run(self):
+    def test_run(self, tx_collector):
         db_path = ""
         address = Address.from_prefix_and_int(AddressPrefix.EOA, 0)
-        tx_collector = self.tx_collector
         tx_filter = TransactionFilterByAddress(address)
 
         tx_collector.open(db_path)
@@ -50,6 +51,10 @@ class TestTransactionCollector(unittest.TestCase):
 
         assert isinstance(tx_collector.transactions, list)
 
+    def test_run_with_file(self, tx_collector):
+        path = "/Users/goldworm/transactions.txt"
+        db_path = "/Users/goldworm/work/icon/db-data/mainnet/db/"
 
-if __name__ == '__main__':
-    unittest.main()
+        tx_collector.open(db_path)
+        tx_collector.run_with_file(path)
+        tx_collector.close()
