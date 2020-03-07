@@ -69,16 +69,16 @@ class CommandCopy(Command):
                 # Get transaction data from the DB using transactions in block
                 transactions: list = block_reader.get_transactions_from_block(block)
                 for transaction in transactions:
-                    tx_hash: Optional[bytes] = TransactionParser.get_tx_hash_key_from_transaction(transaction)
-                    if tx_hash is not None:
-                        full_transaction: bytes = block_reader.get_transaction_by_hash(tx_hash)
-                        wb.put(tx_hash, full_transaction)
+                    tx_hash_key: Optional[bytes] = TransactionParser.get_tx_hash_key_from_transaction(transaction)
+                    if tx_hash_key is not None:
+                        full_transaction: bytes = block_reader.get_transaction_by_key(tx_hash_key)
+                        wb.put(tx_hash_key, full_transaction)
 
                 block_hash_key: bytes = block_reader.get_block_hash_key_by_height(height)
                 wb.put(block_hash_key, block)
                 wb.put(block_height_key, block_hash_key)
                 block_dict: dict = json.loads(block)
-                reps_hash = block_dict.get("repsHash", "0x")[2:]
+                reps_hash: str = block_dict.get("repsHash", "0x")[2:]
                 reps_data = block_reader.get_reps(bytes.fromhex(reps_hash))
                 reps_data = reps_data.decode(UTF8)
                 wb.put(PREPS_KEY_PREFIX + reps_hash.encode(UTF8), json.dumps(reps_data).encode(UTF8))
