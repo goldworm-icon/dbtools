@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from enum import IntEnum, auto
 from typing import List, Iterable, Tuple, Dict, Optional
 
 from iconservice.base.address import AddressPrefix, Address
@@ -39,6 +40,18 @@ class StakeInfo(object):
                f"tx_hash={bytes_to_hex(self.tx_hash)}"
 
 
+class TransactionType(IntEnum):
+    ICX_SEND = auto()
+    ICX_RECV = auto()
+    REGISTER_PREP = auto()
+    SET_PREP = auto()
+    UNREGISTER_PREP = auto()
+    SET_STAKE = auto()
+    SET_DELEGATION = auto()
+    CLAIM_ISCORE = auto()
+    CALL = auto()
+
+
 class BalanceCalculator(object):
     """Calculate the balance of a given address with transactions and transaction results
 
@@ -49,6 +62,15 @@ class BalanceCalculator(object):
         self._txs: List['Transaction'] = []
         self._tx_results: List['TransactionResult'] = []
         self._stake_info: Optional[StakeInfo] = None
+
+        self._method_to_tx_type = {
+            "registerPRep": TransactionType.REGISTER_PREP,
+            "setPRep": TransactionType.SET_PREP,
+            "unregisterPRep": TransactionType.UNREGISTER_PREP,
+            "setStake": TransactionType.SET_STAKE,
+            "setDelegation": TransactionType.SET_DELEGATION,
+            "claimIScore": TransactionType.CLAIM_ISCORE,
+        }
 
     @property
     def address(self) -> 'Address':
@@ -75,6 +97,8 @@ class BalanceCalculator(object):
         self._stake_info.stake = init_stake
         self._stake_info.unstake = init_unstake
 
+        self._print_title()
+
         i = 0
         for tx, tx_result in it:
             if self._address not in (tx.from_, tx.to):
@@ -86,7 +110,8 @@ class BalanceCalculator(object):
             self._txs.append(tx)
             self._tx_results.append(tx_result)
 
-            self._print_detail(i, balance, delta, tx, tx_result)
+            tx_type = self._get_tx_type(tx)
+            self._print_detail(i, tx_type, balance, delta, tx, tx_result)
             i += 1
 
         return balance, self._stake_info
@@ -163,17 +188,37 @@ class BalanceCalculator(object):
 
         return 0
 
+    def _get_tx_type(self, tx: 'Transaction') -> TransactionType:
+        if tx.to == self._address:
+            return TransactionType.ICX_RECV
+
+        tx_type = TransactionType.ICX_SEND
+
+        if tx.data_type == "call":
+            call_data: 'Transaction.CallData' = tx.data
+            method: str = call_data.method
+            tx_type = self._method_to_tx_type.get(method, TransactionType.CALL)
+
+        return tx_type
+
     @classmethod
-    def _print_detail(cls, i: int, balance: int, delta: int, tx: 'Transaction', tx_result: 'TransactionResult'):
+    def _print_title(cls):
+        print(
+            f"index | status | tx_type | BH | tx_hash | balance | delta | value | fee\n"
+            f"-----------------------------------------------------------------------"
+        )
+
+    @classmethod
+    def _print_detail(cls, i: int, tx_type: TransactionType,
+                      balance: int, delta: int, tx: 'Transaction', tx_result: 'TransactionResult'):
         print(
             f'{i:04d} '
-            f'balance={balance} '
-            f'delta={delta} '
-            f'status={tx_result.status} '
-            f'from={tx.from_} '
-            f'to={tx.to} '
-            f'fee={tx_result.fee} '
-            f'value={tx.value} '
-            f'tx_hash={bytes_to_hex(tx.tx_hash)} '
-            f'data_type={tx.data_type} '
-            f'block_height={tx_result.block_height}')
+            f'{tx_result.status.name} '
+            f'{tx_type.name:14s} '
+            f'{tx_result.block_height:010d} '
+            f'{bytes_to_hex(tx.tx_hash)} '
+            f'{balance} '
+            f'{delta} '
+            f'{tx.value} '
+            f'{tx_result.fee} '
+        )
