@@ -150,9 +150,9 @@ class BlockDatabaseRawReader(object):
         """Get transaction count"""
         return self.get_data_by_key(TRANSACTION_COUNT_KEY)
 
-    def get_reps(self, reps_hash: bytes):
+    def get_reps(self, reps_hash: bytes) -> Optional[bytes]:
         key = PREPS_KEY_PREFIX + reps_hash
         reps = self._db.get(key)
         if reps is None:
-            return json.dumps("{}")
+            return b"{}"
         return reps
