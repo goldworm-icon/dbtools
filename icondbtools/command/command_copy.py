@@ -98,8 +98,17 @@ class CommandCopy(Command):
                 last_block = block
 
             if last_block is not None:
-                wb.put(NID_KEY, block_reader.get_nid())
-                wb.put(TRANSACTION_COUNT_KEY, block_reader.get_transaction_count())
+                # Copy nid
+                nid_data: bytes = block_reader.get_nid()
+                if nid_data:
+                    wb.put(NID_KEY, nid_data)
+
+                # Copy transaction count
+                transaction_count_data: bytes = block_reader.get_transaction_count()
+                if transaction_count_data:
+                    wb.put(TRANSACTION_COUNT_KEY, transaction_count_data)
+
+                # Copy last_block_hash
                 block: dict = json.loads(last_block)
                 last_block_hash: str = block.get('block_hash') if 'block_hash' in block \
                     else block.get("hash")[2:]
