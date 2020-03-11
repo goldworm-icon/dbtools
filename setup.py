@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import os
+
 import setuptools
 
 with open("README.md", "r") as fh:
@@ -32,11 +33,14 @@ setuptools.setup(
     version=version,
     author="ICON Foundation",
     author_email="goldworm@icon.foundation",
-    description="icon db tools",
+    description="icondbtools",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/pypa/sampleproject",
-    packages=setuptools.find_packages(),
+    packages=setuptools.find_packages(exclude=['tests*']),
+    setup_requires=['pytest-runner'],
+    tests_require=['pytest'],
+    test_suite='tests',
     install_requires=requires,
     classifiers=[
         'Development Status :: 5 - Production/Stable',

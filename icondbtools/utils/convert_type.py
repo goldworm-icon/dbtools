@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import Optional
+
 from iconservice.base.address import Address
 
 
@@ -20,12 +22,12 @@ def str_to_int(value: str) -> int:
     if isinstance(value, int):
         return value
 
-    if value.startswith('0x') or value.startswith('-0x'):
-        base = 16
-    else:
-        base = 10
-
+    base = 16 if is_hex(value) else 10
     return int(value, base)
+
+
+def bool_to_hex(value: bool) -> str:
+    return "0x1" if value else "0x0"
 
 
 def object_to_str(value) -> str:
@@ -34,19 +36,50 @@ def object_to_str(value) -> str:
     elif isinstance(value, int):
         return hex(value)
     elif isinstance(value, bytes):
-        return f'0x{value.hex()}'
+        return bytes_to_hex(value)
+    elif isinstance(value, bool):
+        return bool_to_hex(value)
 
     return value
 
 
-def remove_0x_prefix(value):
-    if is_0x_prefixed(value):
+def str_to_object(object_type: str, value: str) -> object:
+    if object_type == "Address":
+        return Address.from_string(value)
+    if object_type == "int":
+        return str_to_int(value)
+    if object_type == "bytes":
+        return hex_to_bytes(value)
+    if object_type == "bool":
+        return bool(str_to_int(value))
+    if object_type == "str":
+        return value
+
+    raise TypeError(f"Unknown type: {object_type}")
+
+
+def bytes_to_hex(value: bytes, prefix: str = "0x") -> str:
+    if value is None:
+        return "None"
+
+    return f'{prefix}{value.hex()}'
+
+
+def hex_to_bytes(value: Optional[str]) -> Optional[bytes]:
+    if value is None:
+        return None
+
+    return bytes.fromhex(remove_0x_prefix(value))
+
+
+def remove_0x_prefix(value: str) -> str:
+    if is_hex(value):
         return value[2:]
     return value
 
 
-def is_0x_prefixed(value):
-    return value.startswith('0x')
+def is_hex(value: str) -> bool:
+    return value.startswith('0x') or value.startswith('-0x')
 
 
 def convert_hex_str_to_bytes(value: str):
@@ -57,12 +90,3 @@ def convert_hex_str_to_bytes(value: str):
 def is_str(value):
     str_types = (str,)
     return isinstance(value, str_types)
-
-
-def convert_hex_str_to_int(value: str):
-    """Converts hex string prefixed with '0x' into int."""
-    if is_str(value):
-        return int(value, 16)
-    else:
-        return value
-

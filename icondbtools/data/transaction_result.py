@@ -13,24 +13,78 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
+from enum import IntEnum
+from typing import List, Dict, Union
+
 from iconservice.base.address import Address
-from ..utils.convert_type import convert_hex_str_to_int, convert_hex_str_to_bytes
+from ..data.event_log import EventLog
+from ..utils.convert_type import hex_to_bytes, bytes_to_hex, str_to_int
 
 
 class TransactionResult(object):
-    def __init__(self, tx_hash: bytes, status: int, to: 'Address', block_height: int, block_hash: bytes):
+
+    class Status(IntEnum):
+        FAILURE = 0
+        SUCCESS = 1
+
+    def __init__(self,
+                 tx_hash: bytes = None,
+                 status: Status = Status.FAILURE,
+                 tx_index: int = -1,
+                 to: 'Address' = None,
+                 score_address: 'Address' = None,
+                 block_height: int = -1,
+                 block_hash: bytes = None,
+                 step_price: int = 0,
+                 step_used: int = -1,
+                 event_logs: List['EventLog'] = None):
         self._tx_hash: bytes = tx_hash
+        self._tx_index: int = tx_index
         self._status = status
         self._to: 'Address' = to
+        self._score_address = score_address
         self._block_height: int = block_height
         self._block_hash: bytes = block_hash
+        self._step_price = step_price
+        self._step_used = step_used
+        self._fee = step_price * step_used
+        self._event_logs: List['EventLog'] = [] if event_logs is None else event_logs
+
+    def __str__(self) -> str:
+        items = (
+            ("status", self._status),
+            ("to", self._to),
+            ("score_address", self._score_address),
+            ("block_height", self._block_height),
+            ("block_hash", self._block_hash),
+            ("tx_index", self._tx_index),
+            ("tx_hash", self._tx_hash),
+            ("step_used", self._step_used),
+            ("step_price", self._step_price),
+            ("fee", self._fee),
+            # ("event_logs", self._event_logs)
+        )
+
+        def _func():
+            for key, value in items:
+                if isinstance(value, bytes):
+                    value = bytes_to_hex(value)
+
+                yield f"{key}={value}"
+
+        return " ".join(_func())
 
     @property
     def tx_hash(self) -> bytes:
         return self._tx_hash
 
     @property
-    def status(self) -> int:
+    def tx_index(self) -> int:
+        return self._tx_index
+
+    @property
+    def status(self) -> Status:
         return self._status
 
     @property
@@ -45,14 +99,58 @@ class TransactionResult(object):
     def block_hash(self) -> bytes:
         return self._block_hash
 
+    @property
+    def step_price(self) -> int:
+        return self._step_price
+
+    @property
+    def step_used(self) -> int:
+        return self._step_used
+
+    @property
+    def fee(self) -> int:
+        return self._fee
+
+    @property
+    def event_logs(self) -> List['EventLog']:
+        return self._event_logs
+
     @classmethod
-    def from_dict(cls, data: dict) -> 'TransactionResult':
-        tx_hash: bytes = convert_hex_str_to_bytes(data["txHash"])
-        status: int = convert_hex_str_to_int(data["status"])
+    def from_bytes(cls, data: bytes) -> 'TransactionResult':
+        data_in_dict = json.loads(data)
+
+        # The result of a transaction is nested with "result" key in the transaction data in loopchain db.
+        return cls.from_dict(data_in_dict["result"])
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Union[str, List]]) -> 'TransactionResult':
+        status = TransactionResult.Status(str_to_int(data["status"]))
         to: 'Address' = Address.from_string(data["to"])
-        block_height: int = convert_hex_str_to_int(data["blockHeight"])
-        block_hash: bytes = convert_hex_str_to_bytes(data["blockHash"])
+        score_address: 'Address' = Address.from_string(data["scoreAddress"]) if "scoreAddress" in data else None
+        tx_hash: bytes = hex_to_bytes(data["txHash"])
+        tx_index: int = str_to_int(data["txIndex"])
+        block_height: int = str_to_int(data["blockHeight"])
+        block_hash: bytes = hex_to_bytes(data["blockHash"])
+        step_price: int = str_to_int(data["stepPrice"])
+        step_used: int = str_to_int(data["stepUsed"])
+        event_logs: List['EventLog'] = cls._parse_event_logs(data["eventLogs"])
 
         return TransactionResult(
-            tx_hash=tx_hash, status=status, to=to,
-            block_height=block_height, block_hash=block_hash)
+            status=status,
+            to=to,
+            score_address=score_address,
+            tx_hash=tx_hash,
+            tx_index=tx_index,
+            block_height=block_height,
+            block_hash=block_hash,
+            step_price=step_price,
+            step_used=step_used,
+            event_logs=event_logs)
+
+    @classmethod
+    def _parse_event_logs(cls, event_logs: List[Dict[str, str]]) -> List['EventLog']:
+        ret = []
+        for log in event_logs:
+            ret.append(EventLog.from_dict(log))
+
+        return ret

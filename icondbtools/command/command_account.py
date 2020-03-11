@@ -15,10 +15,9 @@
 
 from typing import TYPE_CHECKING
 
-from iconservice.base.address import Address
-
 from icondbtools.command.command import Command
 from icondbtools.libs.state_database_reader import StateDatabaseReader
+from iconservice.base.address import Address
 
 if TYPE_CHECKING:
     from iconservice.icx.icx_account import Account
@@ -62,4 +61,3 @@ class CommandAccount(Command):
                       f"stake: {account.stake}\n")
         finally:
             reader.close()
-

@@ -13,10 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 from typing import Optional
 
-from icondbtools.utils.convert_type import convert_hex_str_to_int, convert_hex_str_to_bytes
 from iconservice.base.address import Address
+from ..utils.convert_type import str_to_int, convert_hex_str_to_bytes
 
 
 class LoopchainBlock(object):
@@ -41,6 +42,11 @@ class LoopchainBlock(object):
 
     def __bool__(self):
         return True
+
+    @classmethod
+    def from_bytes(cls, data: bytes) -> 'LoopchainBlock':
+        block_dict: dict = json.loads(data)
+        return cls.from_dict(block_dict)
 
     @classmethod
     def from_dict(cls, block: dict) -> 'LoopchainBlock':
@@ -96,11 +102,11 @@ class LoopchainBlock(object):
         # In case of version >= 0.3
         version: str = block["version"]
 
-        height: int = convert_hex_str_to_int(block["height"])
+        height: int = str_to_int(block["height"])
         block_hash: bytes = convert_hex_str_to_bytes(block["hash"])
         prev_block_hash: bytes = convert_hex_str_to_bytes(block["prevHash"])
         leader = Address.from_string(block["leader"])
-        timestamp: int = convert_hex_str_to_int(block["timestamp"])
+        timestamp: int = str_to_int(block["timestamp"])
         state_hash: bytes = convert_hex_str_to_bytes(block["stateHash"])
         transactions: list = block["transactions"]
 
