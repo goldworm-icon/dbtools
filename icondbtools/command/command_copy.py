@@ -82,18 +82,19 @@ class CommandCopy(Command):
                 wb.put(block_hash_key, block)
                 wb.put(block_height_key, block_hash_key)
 
-                # Copy reps_data
                 block_dict: dict = json.loads(block)
-                reps_hash: str = block_dict.get("repsHash", "0x")[2:]
-                reps_data = block_reader.get_reps(bytes.fromhex(reps_hash))
-                wb.put(PREPS_KEY_PREFIX + reps_hash.encode(UTF8), reps_data)
+                if block_dict['version'] != "0.1a":
+                    # Copy reps_data
+                    reps_hash: str = block_dict.get("repsHash", "0x")[2:]
+                    reps_data = block_reader.get_reps(bytes.fromhex(reps_hash))
+                    wb.put(PREPS_KEY_PREFIX + reps_hash.encode(UTF8), reps_data)
 
-                # Copy next_reps_data
-                next_reps_hash = block_dict.get("nextRepsHash")
-                if next_reps_hash != ZERO_HASH:
-                    next_reps_hash = bytes.fromhex(next_reps_hash[2:])
-                    reps_data = block_reader.get_reps(next_reps_hash)
-                    wb.put(PREPS_KEY_PREFIX + next_reps_hash, reps_data)
+                    # Copy next_reps_data
+                    next_reps_hash = block_dict.get("nextRepsHash")
+                    if next_reps_hash != ZERO_HASH:
+                        next_reps_hash = bytes.fromhex(next_reps_hash[2:])
+                        reps_data = block_reader.get_reps(next_reps_hash)
+                        wb.put(PREPS_KEY_PREFIX + next_reps_hash, reps_data)
 
                 last_block = block
 
