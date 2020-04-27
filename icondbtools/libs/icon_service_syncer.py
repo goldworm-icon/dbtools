@@ -19,7 +19,7 @@ import logging
 import os
 import shutil
 import time
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import TYPE_CHECKING, Optional, List, Tuple, Dict
 
 from iconcommons.icon_config import IconConfig
@@ -146,6 +146,8 @@ class IconServiceSyncer(object):
             asyncio.ensure_future(self._wait_for_complete(future, *args, **kwargs))
             loop.run_until_complete(future)
         finally:
+            for task in asyncio.Task.all_tasks():
+                task.cancel()
             loop.close()
 
         ret = future.result()
@@ -156,30 +158,33 @@ class IconServiceSyncer(object):
     async def _wait_for_complete(self, result_future: asyncio.Future, *args, **kwargs):
         Logger.debug(tag=self._TAG, msg="_wait_for_complete() start")
 
-        executor = ThreadPoolExecutor(max_workers=1)
-
         # Wait for rc to be ready
         future = self._engine.get_ready_future()
         await future
 
-        # Call IconServiceEngine.hello()
-        f = executor.submit(self._hello)
-        future = asyncio.wrap_future(f)
-        await future
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            # Call IconServiceEngine.hello()
+            f = executor.submit(self._hello)
+            future = asyncio.wrap_future(f)
+            await future
 
-        # Start to sync blocks
-        f = executor.submit(self._run, *args, **kwargs)
-        future = asyncio.wrap_future(f)
-        await future
-
-        self._engine.close()
-        # Wait to stop ipc_server for 1s
-        await asyncio.sleep(1)
-
-        Logger.debug(tag=self._TAG, msg="_wait_for_complete() end1")
-        result_future.set_result(future.result())
-
-        Logger.debug(tag=self._TAG, msg="_wait_for_complete() end2")
+            # Start to sync blocks
+            f = executor.submit(self._run, *args, **kwargs)
+            for fut in as_completed([f]):
+                try:
+                    fut.result()
+                except Exception as exc:
+                    self._engine.close()
+                    # Wait to stop ipc_server for 1s
+                    await asyncio.sleep(1)
+                    result_future.set_exception(exc)
+                else:
+                    self._engine.close()
+                    # Wait to stop ipc_server for 1s
+                    await asyncio.sleep(1)
+                    Logger.debug(tag=self._TAG, msg="_wait_for_complete() end1")
+                    result_future.set_result(fut.result())
+                    Logger.debug(tag=self._TAG, msg="_wait_for_complete() end2")
 
     def _hello(self):
         self._engine.hello()
@@ -301,7 +306,6 @@ class IconServiceSyncer(object):
 
             while word_detector.get_hold():
                 time.sleep(0.5)
-
             # Prepare the next iteration
             self._backup_state_db(block, backup_period)
             prev_block = block
@@ -332,7 +336,8 @@ class IconServiceSyncer(object):
         with os.scandir(iiss_db_path) as it:
             for entry in it:
                 if entry.is_dir() and entry.name == Storage.CURRENT_IISS_DB_NAME:
-                    dst_path: str = os.path.join(iiss_db_backup_path, f"{Storage.IISS_RC_DB_NAME_PREFIX}{block_height - 1}")
+                    dst_path: str = os.path.join(iiss_db_backup_path,
+                                                 f"{Storage.IISS_RC_DB_NAME_PREFIX}{block_height - 1}")
                     if os.path.exists(dst_path):
                         shutil.rmtree(dst_path)
                     shutil.copytree(entry.path, dst_path)
