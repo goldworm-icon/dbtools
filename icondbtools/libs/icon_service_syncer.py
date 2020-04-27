@@ -170,9 +170,10 @@ class IconServiceSyncer(object):
 
             # Start to sync blocks
             f = executor.submit(self._run, *args, **kwargs)
-            for fut in as_completed([f]):
+            f = asyncio.wrap_future(f)
+            for fut in asyncio.as_completed([f]):
                 try:
-                    fut.result()
+                    ret = await fut
                 except Exception as exc:
                     self._engine.close()
                     # Wait to stop ipc_server for 1s
@@ -183,7 +184,7 @@ class IconServiceSyncer(object):
                     # Wait to stop ipc_server for 1s
                     await asyncio.sleep(1)
                     Logger.debug(tag=self._TAG, msg="_wait_for_complete() end1")
-                    result_future.set_result(fut.result())
+                    result_future.set_result(ret)
                     Logger.debug(tag=self._TAG, msg="_wait_for_complete() end2")
 
     def _hello(self):
@@ -240,7 +241,6 @@ class IconServiceSyncer(object):
             if block_dict is None:
                 print(f'last block: {height - 1}')
                 break
-
             loopchain_block: 'LoopchainBlock' = LoopchainBlock.from_dict(block_dict)
             block: 'Block' = _create_iconservice_block(loopchain_block)
 
