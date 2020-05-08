@@ -353,7 +353,7 @@ class IconServiceSyncer(object):
         :return: True(same) False(different)
         """
 
-        for tx_result in tx_results:
+        for i, tx_result in enumerate(tx_results):
             tx_info_in_db: dict = \
                 self._block_reader.get_transaction_result_by_hash(
                     tx_result.tx_hash.hex())
@@ -372,24 +372,30 @@ class IconServiceSyncer(object):
             step: int = step_used * step_price
 
             if tx_hash != tx_result.tx_hash:
-                print(f'tx_hash: {tx_hash.hex()} != {tx_result.tx_hash.hex()}')
+                print(f'tx_hash: {tx_hash.hex()} != {tx_result.tx_hash.hex()} \n'
+                      f'tx index: {i}')
                 return False
             if status != tx_result.status:
-                print(f'status: {status} != {tx_result.status}')
+                print(f'status: {status} != {tx_result.status} \n'
+                      f'tx index: {i}')
                 return False
             if step_used != tx_result.step_used:
-                print(f'step_used: {step_used} != {tx_result.step_used}')
+                print(f'step_used: {step_used} != {tx_result.step_used} \n'
+                      f'tx index: {i}')
                 return False
 
             tx_result_step: int = tx_result.step_used * tx_result.step_price
             if step != tx_result_step:
-                print(f'step: {step} != {tx_result_step}')
+                print(f'step: {step} != {tx_result_step} \n'
+                      f'tx index: {i}')
                 return False
             if step_price != tx_result.step_price:
-                print(f'step_price: {step_price} != {tx_result.step_price}')
+                print(f'step_price: {step_price} != {tx_result.step_price} \n'
+                      f'tx index: {i}')
                 return False
 
             if not self._check_event_logs(event_logs, tx_result.event_logs):
+                print(f'tx index: {i}')
                 return False
 
         return True
