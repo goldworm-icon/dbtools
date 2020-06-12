@@ -26,7 +26,7 @@ from iconcommons.icon_config import IconConfig
 from iconcommons.logger import Logger
 from iconservice.base.address import Address
 from iconservice.base.block import Block
-from iconservice.database.batch import TransactionBatchValue
+from iconservice.database.batch import TransactionBatchValue, BlockBatchValue
 from iconservice.icon_config import default_icon_config
 from iconservice.icon_constant import Revision
 from iconservice.icon_service_engine import IconServiceEngine
@@ -454,10 +454,10 @@ class IconServiceSyncer(object):
         filename = f'{block.height}-precommit-data.txt'
         with open(filename, 'wt') as f:
             for i, key in enumerate(block_batch):
-                value: 'TransactionBatchValue' = block_batch[key]
+                value: 'BlockBatchValue' = block_batch[key]
 
                 if value:
-                    hex_value = value.value.hex()
+                    hex_value = value.value.hex() if value is not None else None
                     include_state_root_hash = value.include_state_root_hash
 
                     line = f'{i}: {key.hex()} - {hex_value}, {include_state_root_hash}'
