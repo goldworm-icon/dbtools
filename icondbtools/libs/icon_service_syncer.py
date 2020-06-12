@@ -457,7 +457,7 @@ class IconServiceSyncer(object):
                 value: 'BlockBatchValue' = block_batch[key]
 
                 if value:
-                    hex_value = value.value.hex() if value is not None else None
+                    hex_value = value.value.hex() if value.value is not None else None
                     include_state_root_hash = value.include_state_root_hash
 
                     line = f'{i}: {key.hex()} - {hex_value}, {include_state_root_hash}'
