@@ -87,7 +87,7 @@ class CommandCopy(Command):
                     # Copy reps_data
                     reps_hash: str = block_dict.get("repsHash", "0x")[2:]
                     reps_data = block_reader.get_reps(bytes.fromhex(reps_hash))
-                    wb.put(PREPS_KEY_PREFIX + reps_hash.encode(UTF8), reps_data)
+                    wb.put(PREPS_KEY_PREFIX + bytes.fromhex(reps_hash), reps_data)
 
                     # Copy next_reps_data
                     next_reps_hash = block_dict.get("nextRepsHash")
