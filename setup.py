@@ -19,6 +19,16 @@ import setuptools
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
+extra_requires = {
+    "test": [
+        "hypothesis>=4.0.0",
+        "pytest>=3.6",
+        "pytest-cov>=2.5.1",
+        "iconsdk"
+    ]
+}
+test_requires = extra_requires['test']
+
 version = os.environ.get('VERSION')
 if version is None:
     with open(os.path.join('.', 'VERSION')) as version_file:
@@ -49,5 +59,8 @@ setuptools.setup(
         'console_scripts': [
             'icondbtools=icondbtools.__main__:main'
         ]
-    }
+    },
+    setup_requires=['pytest-runner'],
+    test_suite='tests',
+    tests_require=test_requires
 )
