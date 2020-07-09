@@ -36,7 +36,7 @@ setuptools.setup(
     description="icondbtools",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/pypa/sampleproject",
+    url="https://github.com/goldworm-icon/dbtools",
     packages=setuptools.find_packages(exclude=['tests*']),
     setup_requires=['pytest-runner'],
     tests_require=['pytest'],

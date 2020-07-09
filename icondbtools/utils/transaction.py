@@ -39,8 +39,14 @@ def create_transaction_requests(loopchain_block: 'LoopchainBlock') -> list:
 
 
 def convert_transaction_to_request(loopchain_block: 'LoopchainBlock', tx_dict: dict):
+    return {
+        'method': 'icx_sendTransaction',
+        'params': tx_dict_to_params(tx_dict, loopchain_block.timestamp),
+    }
+
+
+def tx_dict_to_params(tx_dict: dict, block_timestamp: int) -> dict:
     params = {}
-    request = {'method': 'icx_sendTransaction', 'params': params}
 
     if "from" in tx_dict:
         params['from'] = Address.from_string(tx_dict['from'])
@@ -55,7 +61,7 @@ def convert_transaction_to_request(loopchain_block: 'LoopchainBlock', tx_dict: d
     if 'timestamp' in tx_dict:
         params['timestamp'] = str_to_int(tx_dict['timestamp'])
     else:
-        params['timestamp'] = loopchain_block.timestamp
+        params['timestamp'] = block_timestamp
 
     int_keys = ['version', 'fee', 'nid', 'value', 'nonce', 'stepLimit']
     for key in int_keys:
@@ -71,7 +77,7 @@ def convert_transaction_to_request(loopchain_block: 'LoopchainBlock', tx_dict: d
     if data_type == "base":
         params["data"] = convert_base_transaction(tx_dict["data"])
 
-    return request
+    return params
 
 
 def convert_base_transaction(data: dict) -> dict:
