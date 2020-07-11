@@ -28,6 +28,16 @@ if version is None:
 with open("requirements.txt") as requirements:
     requires = list(requirements)
 
+extras_require = {
+    "test": [
+        "hypothesis",
+        "coverage",
+        "pytest",
+    ]
+}
+
+tests_require = extras_require["test"]
+
 setuptools.setup(
     name="icondbtools",
     version=version,
@@ -38,8 +48,9 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/goldworm-icon/dbtools",
     packages=setuptools.find_packages(exclude=["tests*"]),
+    extras_require=extras_require,
     setup_requires=["pytest-runner"],
-    tests_require=["pytest"],
+    tests_require=tests_require,
     test_suite="tests",
     install_requires=requires,
     classifiers=[
