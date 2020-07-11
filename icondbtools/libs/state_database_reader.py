@@ -22,21 +22,25 @@ from iconservice.icx.icx_account import Account
 
 
 class StateHash(object):
-    def __init__(self,
-                 hash_data: bytes=None,
-                 rows: int=0,
-                 total_key_size: int=0,
-                 total_value_size: int=0):
+    def __init__(
+        self,
+        hash_data: bytes = None,
+        rows: int = 0,
+        total_key_size: int = 0,
+        total_value_size: int = 0,
+    ):
         self.hash_data = hash_data
         self.rows = rows
         self.total_key_size = total_key_size
         self.total_value_size = total_value_size
 
     def __str__(self):
-        return f'hash: {self.hash_data.hex()}\n' \
-            f'rows: {self.rows}\n' \
-            f'total_key_size: {self.total_key_size}\n' \
-            f'total_value_size: {self.total_value_size}'
+        return (
+            f"hash: {self.hash_data.hex()}\n"
+            f"rows: {self.rows}\n"
+            f"total_key_size: {self.total_key_size}\n"
+            f"total_value_size: {self.total_value_size}"
+        )
 
 
 class StateDatabaseReader(object):
@@ -51,7 +55,7 @@ class StateDatabaseReader(object):
             self._db.close()
             self._db = None
 
-    def get_account(self, address: 'Address') -> 'Account':
+    def get_account(self, address: "Address") -> "Account":
         """Read the account from statedb
 
         :param address:
@@ -74,18 +78,18 @@ class StateDatabaseReader(object):
 
         return value
 
-    def get_last_block(self) -> 'Block':
+    def get_last_block(self) -> "Block":
         """Read the last commited block from statedb
 
         :return: last block
         """
-        value: bytes = self._db.get(b'last_block')
+        value: bytes = self._db.get(b"last_block")
         if value is None:
             return None
 
         return Block.from_bytes(value)
 
-    def create_state_hash(self, prefix: bytes=None) -> 'StateHash':
+    def create_state_hash(self, prefix: bytes = None) -> "StateHash":
         """Read key and value from state db and create sha3 hash value from them
 
         :return: StateHash object

@@ -5,7 +5,6 @@ from concurrent.futures import ThreadPoolExecutor
 
 
 class WordDetector:
-
     def __init__(self, filename, block_word, release_word):
 
         self.filename = filename
@@ -18,7 +17,7 @@ class WordDetector:
 
         offset = 0
         while self._running:
-            with open(self.filename, mode='r', encoding='utf-8') as f:
+            with open(self.filename, mode="r", encoding="utf-8") as f:
                 if offset == 0:
                     f.seek(0, os.SEEK_END)
                     start_offset = max(0, f.tell() - 500)

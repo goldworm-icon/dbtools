@@ -23,12 +23,13 @@ from icondbtools.libs.loopchain_block import LoopchainBlock
 from icondbtools.utils.convert_type import str_to_int
 
 
-def create_transaction_requests(loopchain_block: 'LoopchainBlock') -> list:
+def create_transaction_requests(loopchain_block: "LoopchainBlock") -> list:
     tx_requests = []
 
     if loopchain_block.height == 0:
         request = convert_genesis_transaction_to_request(
-            loopchain_block.transactions[0])
+            loopchain_block.transactions[0]
+        )
         tx_requests.append(request)
     else:
         for tx_dict in loopchain_block.transactions:
@@ -38,10 +39,10 @@ def create_transaction_requests(loopchain_block: 'LoopchainBlock') -> list:
     return tx_requests
 
 
-def convert_transaction_to_request(loopchain_block: 'LoopchainBlock', tx_dict: dict):
+def convert_transaction_to_request(loopchain_block: "LoopchainBlock", tx_dict: dict):
     return {
-        'method': 'icx_sendTransaction',
-        'params': tx_dict_to_params(tx_dict, loopchain_block.timestamp),
+        "method": "icx_sendTransaction",
+        "params": tx_dict_to_params(tx_dict, loopchain_block.timestamp),
     }
 
 
@@ -49,26 +50,26 @@ def tx_dict_to_params(tx_dict: dict, block_timestamp: int) -> dict:
     params = {}
 
     if "from" in tx_dict:
-        params['from'] = Address.from_string(tx_dict['from'])
+        params["from"] = Address.from_string(tx_dict["from"])
     if "to" in tx_dict:
-        params['to'] = convert_to_address(tx_dict['to'])
+        params["to"] = convert_to_address(tx_dict["to"])
 
-    if 'tx_hash' in tx_dict:
-        params['txHash'] = bytes.fromhex(tx_dict['tx_hash'])
+    if "tx_hash" in tx_dict:
+        params["txHash"] = bytes.fromhex(tx_dict["tx_hash"])
     else:
-        params['txHash'] = bytes.fromhex(tx_dict['txHash'])
+        params["txHash"] = bytes.fromhex(tx_dict["txHash"])
 
-    if 'timestamp' in tx_dict:
-        params['timestamp'] = str_to_int(tx_dict['timestamp'])
+    if "timestamp" in tx_dict:
+        params["timestamp"] = str_to_int(tx_dict["timestamp"])
     else:
-        params['timestamp'] = block_timestamp
+        params["timestamp"] = block_timestamp
 
-    int_keys = ['version', 'fee', 'nid', 'value', 'nonce', 'stepLimit']
+    int_keys = ["version", "fee", "nid", "value", "nonce", "stepLimit"]
     for key in int_keys:
         if key in tx_dict:
             params[key] = int(tx_dict[key], 16)
 
-    object_keys = ['dataType', 'data', 'signature']
+    object_keys = ["dataType", "data", "signature"]
     for key in object_keys:
         if key in tx_dict:
             params[key] = tx_dict[key]
@@ -81,10 +82,7 @@ def tx_dict_to_params(tx_dict: dict, block_timestamp: int) -> dict:
 
 
 def convert_base_transaction(data: dict) -> dict:
-    ret = {
-        "prep": {},
-        "result": {}
-    }
+    ret = {"prep": {}, "result": {}}
     prep = data["prep"]
     for key in prep:
         ret["prep"][key] = int(prep[key], 16)
@@ -96,7 +94,7 @@ def convert_base_transaction(data: dict) -> dict:
     return ret
 
 
-def convert_to_address(to: str) -> Union['Address', 'MalformedAddress']:
+def convert_to_address(to: str) -> Union["Address", "MalformedAddress"]:
     try:
         address = Address.from_string(to)
     except InvalidParamsException:
@@ -106,17 +104,19 @@ def convert_to_address(to: str) -> Union['Address', 'MalformedAddress']:
 
 
 def convert_genesis_transaction_to_request(tx_dict: dict):
-    accounts = tx_dict['accounts']
+    accounts = tx_dict["accounts"]
     request = {
-        'method': 'icx_sendTransaction',
-        'params': {
-            'txHash': bytes.fromhex('692f49cde2fe90aa8d04541c2f794e5bf8dcb51c777037909d676d6dd52be1dc')
+        "method": "icx_sendTransaction",
+        "params": {
+            "txHash": bytes.fromhex(
+                "692f49cde2fe90aa8d04541c2f794e5bf8dcb51c777037909d676d6dd52be1dc"
+            )
         },
-        'genesisData': {'accounts': accounts}
+        "genesisData": {"accounts": accounts},
     }
 
     for account in accounts:
-        account['address'] = Address.from_string(account['address'])
-        account['balance'] = int(account['balance'], 16)
+        account["address"] = Address.from_string(account["address"])
+        account["balance"] = int(account["balance"], 16)
 
     return request

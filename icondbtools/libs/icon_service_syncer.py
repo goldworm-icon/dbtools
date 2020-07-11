@@ -19,7 +19,7 @@ import logging
 import os
 import shutil
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor
 from typing import TYPE_CHECKING, Optional, List, Tuple, Dict
 
 from iconcommons.icon_config import IconConfig
@@ -30,7 +30,10 @@ from iconservice.database.batch import TransactionBatchValue
 from iconservice.icon_config import default_icon_config
 from iconservice.icon_constant import Revision
 from iconservice.icon_service_engine import IconServiceEngine
-from iconservice.iconscore.icon_score_context import IconScoreContextType, IconScoreContext
+from iconservice.iconscore.icon_score_context import (
+    IconScoreContextType,
+    IconScoreContext,
+)
 from iconservice.iiss.reward_calc.storage import Storage
 
 from icondbtools.utils.convert_type import object_to_str
@@ -46,19 +49,22 @@ if TYPE_CHECKING:
     from iconservice.precommit_data_manager import PrecommitData, PrecommitDataManager
 
 
-def _create_iconservice_block(loopchain_block: 'LoopchainBlock') -> 'Block':
+def _create_iconservice_block(loopchain_block: "LoopchainBlock") -> "Block":
     return Block(
         block_height=loopchain_block.height,
         block_hash=loopchain_block.block_hash,
         timestamp=loopchain_block.timestamp,
-        prev_hash=loopchain_block.prev_block_hash)
+        prev_hash=loopchain_block.prev_block_hash,
+    )
 
 
-def _create_block_validators(block_dict: dict, leader: Optional['Address']) -> Optional[List['Address']]:
+def _create_block_validators(
+    block_dict: dict, leader: Optional["Address"]
+) -> Optional[List["Address"]]:
     if "prevVotes" not in block_dict:
         return None
 
-    validators: List['Address'] = []
+    validators: List["Address"] = []
 
     for item in block_dict["prevVotes"]:
         if not isinstance(item, dict):
@@ -71,16 +77,16 @@ def _create_block_validators(block_dict: dict, leader: Optional['Address']) -> O
     return validators
 
 
-def _create_prev_block_votes(block_dict: dict,
-                             leader: Optional['Address'],
-                             main_preps: Optional['NodeContainer']) -> Optional[List[Tuple['Address', int]]]:
+def _create_prev_block_votes(
+    block_dict: dict, leader: Optional["Address"], main_preps: Optional["NodeContainer"]
+) -> Optional[List[Tuple["Address", int]]]:
     if "prevVotes" not in block_dict:
         return None
 
     if main_preps is None:
         return None
 
-    ret: List[Tuple['Address', int]] = []
+    ret: List[Tuple["Address", int]] = []
     prev_votes = {}
 
     # Parse prevVotes
@@ -92,7 +98,7 @@ def _create_prev_block_votes(block_dict: dict,
         prev_votes[vote.rep] = vote
 
     for main_prep in main_preps:
-        address: 'Address' = main_prep.address
+        address: "Address" = main_prep.address
 
         if address == leader:
             # Skip it if address is a leader address
@@ -111,27 +117,31 @@ class IconServiceSyncer(object):
         self._block_reader = BlockDatabaseReader()
         self._engine = IconServiceEngine()
 
-    def open(self,
-             config_path: str,
-             fee: bool = True,
-             audit: bool = True,
-             deployer_whitelist: bool = False,
-             score_package_validator: bool = False,
-             builtin_score_owner: str = ''):
+    def open(
+        self,
+        config_path: str,
+        fee: bool = True,
+        audit: bool = True,
+        deployer_whitelist: bool = False,
+        score_package_validator: bool = False,
+        builtin_score_owner: str = "",
+    ):
         conf = IconConfig("", default_icon_config)
 
         if config_path != "":
             conf.load(config_path)
 
-        conf.update_conf({
-            "builtinScoreOwner": builtin_score_owner,
-            "service": {
-                "fee": fee,
-                "audit": audit,
-                "scorePackageValidator": score_package_validator,
-                "deployerWhiteList": deployer_whitelist
+        conf.update_conf(
+            {
+                "builtinScoreOwner": builtin_score_owner,
+                "service": {
+                    "fee": fee,
+                    "audit": audit,
+                    "scorePackageValidator": score_package_validator,
+                    "deployerWhiteList": deployer_whitelist,
+                },
             }
-        })
+        )
 
         Logger.load_config(conf)
         self._engine.open(conf)
@@ -190,17 +200,19 @@ class IconServiceSyncer(object):
     def _hello(self):
         self._engine.hello()
 
-    def _run(self,
-             db_path: str,
-             channel: str,
-             start_height: int = 0,
-             count: int = 99999999,
-             stop_on_error: bool = True,
-             no_commit: bool = False,
-             backup_period: int = 0,
-             write_precommit_data: bool = False,
-             print_block_height: int = 1,
-             iiss_db_backup_path: Optional[str] = None) -> int:
+    def _run(
+        self,
+        db_path: str,
+        channel: str,
+        start_height: int = 0,
+        count: int = 99999999,
+        stop_on_error: bool = True,
+        no_commit: bool = False,
+        backup_period: int = 0,
+        write_precommit_data: bool = False,
+        print_block_height: int = 1,
+        iiss_db_backup_path: Optional[str] = None,
+    ) -> int:
         """Begin to synchronize IconServiceEngine with blocks from loopchain db
 
         :param db_path: loopchain db path
@@ -216,22 +228,24 @@ class IconServiceSyncer(object):
         """
         Logger.debug(tag=self._TAG, msg="_run() start")
 
-        word_detector = WordDetector(filename='iconservice.log',
-                                     block_word=r'CALCULATE\(',
-                                     release_word=r'CALCULATE_DONE\(')
+        word_detector = WordDetector(
+            filename="iconservice.log",
+            block_word=r"CALCULATE\(",
+            release_word=r"CALCULATE_DONE\(",
+        )
         ret: int = 0
         self._block_reader.open(db_path)
 
-        print('block_height | commit_state | state_root_hash | tx_count')
+        print("block_height | commit_state | state_root_hash | tx_count")
 
-        prev_block: Optional['Block'] = None
-        prev_loopchain_block: Optional['LoopchainBlock'] = None
+        prev_block: Optional["Block"] = None
+        prev_loopchain_block: Optional["LoopchainBlock"] = None
         if start_height > 0:
             block_dict = self._block_reader.get_block_by_block_height(start_height - 1)
             prev_loopchain_block = LoopchainBlock.from_dict(block_dict)
 
-        main_preps: Optional['NodeContainer'] = None
-        next_main_preps: Optional['NodeContainer'] = None
+        main_preps: Optional["NodeContainer"] = None
+        next_main_preps: Optional["NodeContainer"] = None
 
         end_height = start_height + count - 1
 
@@ -239,7 +253,7 @@ class IconServiceSyncer(object):
             block_dict: dict = self._block_reader.get_block_by_block_height(height)
 
             if block_dict is None:
-                print(f'last block: {height - 1}')
+                print(f"last block: {height - 1}")
                 break
 
             if main_preps is None:
@@ -250,30 +264,46 @@ class IconServiceSyncer(object):
             block: 'Block' = _create_iconservice_block(loopchain_block)
 
             tx_requests: list = create_transaction_requests(loopchain_block)
-            prev_block_generator: Optional['Address'] = \
-                prev_loopchain_block.leader if prev_loopchain_block else None
-            prev_block_validators: Optional[List['Address']] = \
-                _create_block_validators(block_dict, prev_block_generator)
-            prev_block_votes: Optional[List[Tuple['Address', int]]] = \
-                _create_prev_block_votes(block_dict, prev_block_generator, main_preps)
+            prev_block_generator: Optional[
+                "Address"
+            ] = prev_loopchain_block.leader if prev_loopchain_block else None
+            prev_block_validators: Optional[List["Address"]] = _create_block_validators(
+                block_dict, prev_block_generator
+            )
+            prev_block_votes: Optional[
+                List[Tuple["Address", int]]
+            ] = _create_prev_block_votes(block_dict, prev_block_generator, main_preps)
 
-            Logger.info(tag=self._TAG, msg=f"prev_block_generator={prev_block_generator}")
-            Logger.info(tag=self._TAG, msg=f"prev_block_validators={prev_block_validators}")
+            Logger.info(
+                tag=self._TAG, msg=f"prev_block_generator={prev_block_generator}"
+            )
+            Logger.info(
+                tag=self._TAG, msg=f"prev_block_validators={prev_block_validators}"
+            )
             Logger.info(tag=self._TAG, msg=f"prev_block_votes={prev_block_votes}")
 
             if prev_block is not None and prev_block.hash != block.prev_hash:
                 raise Exception()
 
-            invoke_result = self._engine.invoke(block, tx_requests,
-                                                prev_block_generator, prev_block_validators, prev_block_votes)
+            invoke_result = self._engine.invoke(
+                block,
+                tx_requests,
+                prev_block_generator,
+                prev_block_validators,
+                prev_block_votes,
+            )
             tx_results, state_root_hash = invoke_result[0], invoke_result[1]
             main_preps_as_dict: Optional[Dict] = invoke_result[3]
 
-            commit_state: bytes = self._block_reader.get_commit_state(block_dict, channel)
+            commit_state: bytes = self._block_reader.get_commit_state(
+                block_dict, channel
+            )
 
             # "commit_state" is the field name of state_root_hash in loopchain block
             if (height - start_height) % print_block_height == 0:
-                print(f'{height} | {commit_state.hex()[:6]} | {state_root_hash.hex()[:6]} | {len(tx_requests)}')
+                print(
+                    f"{height} | {commit_state.hex()[:6]} | {state_root_hash.hex()[:6]} | {len(tx_requests)}"
+                )
 
             if write_precommit_data:
                 self._print_precommit_data(block)
@@ -329,8 +359,8 @@ class IconServiceSyncer(object):
         Logger.debug(tag=self._TAG, msg=f"_run() end: {ret}")
         return ret
 
-    def _commit(self, block: 'Block'):
-        if 'block' in inspect.signature(self._engine.commit).parameters:
+    def _commit(self, block: "Block"):
+        if "block" in inspect.signature(self._engine.commit).parameters:
             self._engine.commit(block)
         else:
             self._engine.commit(block.height, block.hash, block.hash)
@@ -341,8 +371,10 @@ class IconServiceSyncer(object):
         with os.scandir(iiss_db_path) as it:
             for entry in it:
                 if entry.is_dir() and entry.name == Storage.CURRENT_IISS_DB_NAME:
-                    dst_path: str = os.path.join(iiss_db_backup_path,
-                                                 f"{Storage.IISS_RC_DB_NAME_PREFIX}{block_height - 1}")
+                    dst_path: str = os.path.join(
+                        iiss_db_backup_path,
+                        f"{Storage.IISS_RC_DB_NAME_PREFIX}{block_height - 1}",
+                    )
                     if os.path.exists(dst_path):
                         shutil.rmtree(dst_path)
                     shutil.copytree(entry.path, dst_path)
@@ -359,39 +391,39 @@ class IconServiceSyncer(object):
         """
 
         for tx_result in tx_results:
-            tx_info_in_db: dict = \
-                self._block_reader.get_transaction_result_by_hash(
-                    tx_result.tx_hash.hex())
-            tx_result_in_db = tx_info_in_db['result']
+            tx_info_in_db: dict = self._block_reader.get_transaction_result_by_hash(
+                tx_result.tx_hash.hex()
+            )
+            tx_result_in_db = tx_info_in_db["result"]
 
             # tx_v2 dose not have transaction result_v3
-            if 'status' not in tx_result_in_db:
+            if "status" not in tx_result_in_db:
                 continue
 
             # information extracted from db
-            status: int = int(tx_result_in_db['status'], 16)
-            tx_hash: bytes = bytes.fromhex(tx_result_in_db['txHash'])
-            step_used: int = int(tx_result_in_db['stepUsed'], 16)
-            step_price: int = int(tx_result_in_db['stepPrice'], 16)
-            event_logs: list = tx_result_in_db['eventLogs']
+            status: int = int(tx_result_in_db["status"], 16)
+            tx_hash: bytes = bytes.fromhex(tx_result_in_db["txHash"])
+            step_used: int = int(tx_result_in_db["stepUsed"], 16)
+            step_price: int = int(tx_result_in_db["stepPrice"], 16)
+            event_logs: list = tx_result_in_db["eventLogs"]
             step: int = step_used * step_price
 
             if tx_hash != tx_result.tx_hash:
-                print(f'tx_hash: {tx_hash.hex()} != {tx_result.tx_hash.hex()}')
+                print(f"tx_hash: {tx_hash.hex()} != {tx_result.tx_hash.hex()}")
                 return False
             if status != tx_result.status:
-                print(f'status: {status} != {tx_result.status}')
+                print(f"status: {status} != {tx_result.status}")
                 return False
             if step_used != tx_result.step_used:
-                print(f'step_used: {step_used} != {tx_result.step_used}')
+                print(f"step_used: {step_used} != {tx_result.step_used}")
                 return False
 
             tx_result_step: int = tx_result.step_used * tx_result.step_price
             if step != tx_result_step:
-                print(f'step: {step} != {tx_result_step}')
+                print(f"step: {step} != {tx_result_step}")
                 return False
             if step_price != tx_result.step_price:
-                print(f'step_price: {step_price} != {tx_result.step_price}')
+                print(f"step_price: {step_price} != {tx_result.step_price}")
                 return False
 
             if not self._check_event_logs(event_logs, tx_result.event_logs):
@@ -400,8 +432,7 @@ class IconServiceSyncer(object):
         return True
 
     @staticmethod
-    def _check_event_logs(event_logs_in_db: list,
-                          event_logs_in_tx_result: list):
+    def _check_event_logs(event_logs_in_db: list, event_logs_in_tx_result: list):
 
         if event_logs_in_db is None:
             event_logs_in_db = []
@@ -412,66 +443,71 @@ class IconServiceSyncer(object):
         if len(event_logs_in_db) != len(event_logs_in_tx_result):
             return False
 
-        for event_log, _tx_result_event_log in zip(event_logs_in_db, event_logs_in_tx_result):
+        for event_log, _tx_result_event_log in zip(
+            event_logs_in_db, event_logs_in_tx_result
+        ):
             tx_result_event_log: dict = _tx_result_event_log.to_dict()
 
             # convert Address to str
-            if 'score_address' in tx_result_event_log:
-                score_address: 'Address' = tx_result_event_log['score_address']
-                del tx_result_event_log['score_address']
-                tx_result_event_log['scoreAddress'] = str(score_address)
+            if "score_address" in tx_result_event_log:
+                score_address: "Address" = tx_result_event_log["score_address"]
+                del tx_result_event_log["score_address"]
+                tx_result_event_log["scoreAddress"] = str(score_address)
 
             # convert Address objects to str objects in 'indexes'
-            indexed: list = tx_result_event_log['indexed']
+            indexed: list = tx_result_event_log["indexed"]
             for i in range(len(indexed)):
                 value = indexed[i]
                 indexed[i] = object_to_str(value)
 
-            data: list = tx_result_event_log['data']
+            data: list = tx_result_event_log["data"]
             for i in range(len(data)):
                 value = data[i]
                 data[i] = object_to_str(value)
 
             if event_log != tx_result_event_log:
-                print(f'{event_log} != {tx_result_event_log}')
+                print(f"{event_log} != {tx_result_event_log}")
                 return False
 
         return True
 
-    def _print_precommit_data(self, block: 'Block'):
+    def _print_precommit_data(self, block: "Block"):
         """Print the latest updated states stored in IconServiceEngine
 
         :return:
         """
-        precommit_data_manager: PrecommitDataManager = \
-            getattr(self._engine, '_precommit_data_manager')
+        precommit_data_manager: PrecommitDataManager = getattr(
+            self._engine, "_precommit_data_manager"
+        )
 
         precommit_data: PrecommitData = precommit_data_manager.get(block.hash)
         block_batch: BlockBatch = precommit_data.block_batch
         state_root_hash: bytes = block_batch.digest()
 
-        filename = f'{block.height}-precommit-data.txt'
-        with open(filename, 'wt') as f:
+        filename = f"{block.height}-precommit-data.txt"
+        with open(filename, "wt") as f:
             for i, key in enumerate(block_batch):
-                value: 'TransactionBatchValue' = block_batch[key]
+                value: "TransactionBatchValue" = block_batch[key]
 
                 if value:
                     hex_value = value.value.hex() if value.value is not None else None
                     include_state_root_hash = value.include_state_root_hash
 
-                    line = f'{i}: {key.hex()} - {hex_value}, {include_state_root_hash}'
+                    line = f"{i}: {key.hex()} - {hex_value}, {include_state_root_hash}"
                 else:
-                    line = f'{i}: {key.hex()} - None'
+                    line = f"{i}: {key.hex()} - None"
 
                 print(line)
-                f.write(f'{line}\n')
+                f.write(f"{line}\n")
 
-            f.write(f'state_root_hash: {state_root_hash.hex()}\n')
+            f.write(f"state_root_hash: {state_root_hash.hex()}\n")
 
-    def _check_calculation_block(self, block: 'Block') -> bool:
+    def _check_calculation_block(self, block: "Block") -> bool:
         """check calculation block"""
 
-        precommit_data_manager: PrecommitDataManager = getattr(self._engine, '_precommit_data_manager')
+        precommit_data_manager: PrecommitDataManager = getattr(
+            self._engine, "_precommit_data_manager"
+        )
         precommit_data: PrecommitData = precommit_data_manager.get(block.hash)
         if precommit_data.revision < Revision.IISS.value:
             return False
@@ -483,7 +519,7 @@ class IconServiceSyncer(object):
         return start_block == block.height
 
     @staticmethod
-    def _backup_state_db(block: 'Block', backup_period: int):
+    def _backup_state_db(block: "Block", backup_period: int):
         if backup_period <= 0:
             return
         if block.height == 0:

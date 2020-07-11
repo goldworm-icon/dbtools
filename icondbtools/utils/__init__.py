@@ -18,7 +18,7 @@ import os
 import pkg_resources
 
 DIR_PATH = os.path.abspath(os.path.dirname(__file__))
-PROJECT_ROOT_PATH = os.path.abspath(os.path.join(DIR_PATH, '..', '..'))
+PROJECT_ROOT_PATH = os.path.abspath(os.path.join(DIR_PATH, "..", ".."))
 
 
 def get_dbtools_version() -> str:
@@ -27,11 +27,11 @@ def get_dbtools_version() -> str:
     :return: version of tbears.
     """
     try:
-        version = pkg_resources.get_distribution('icondbtools').version
+        version = pkg_resources.get_distribution("icondbtools").version
     except pkg_resources.DistributionNotFound:
-        version_path = os.path.join(PROJECT_ROOT_PATH, 'VERSION')
-        with open(version_path, mode='r') as version_file:
+        version_path = os.path.join(PROJECT_ROOT_PATH, "VERSION")
+        with open(version_path, mode="r") as version_file:
             version = version_file.read()
     except:
-        version = 'unknown'
+        version = "unknown"
     return version

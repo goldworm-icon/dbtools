@@ -26,11 +26,13 @@ class CommandIISSData(Command):
         self.add_parser(sub_parser, common_parser)
 
     def add_parser(self, sub_parser, common_parser):
-        name = 'iissdata'
-        desc = 'Print the number of TXData and BPData from iiss data db'
+        name = "iissdata"
+        desc = "Print the number of TXData and BPData from iiss data db"
 
         # create the parser for account
-        parser_iiss_data = sub_parser.add_parser(name, parents=[common_parser], help=desc)
+        parser_iiss_data = sub_parser.add_parser(
+            name, parents=[common_parser], help=desc
+        )
         parser_iiss_data.set_defaults(func=self.run)
 
     def run(self, args):

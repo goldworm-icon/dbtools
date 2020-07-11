@@ -17,7 +17,10 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from icondbtools.libs.transaction_collector import TransactionCollector, TransactionFilter
+from icondbtools.libs.transaction_collector import (
+    TransactionCollector,
+    TransactionFilter,
+)
 from iconservice.base.address import Address, AddressPrefix
 
 if TYPE_CHECKING:
@@ -26,11 +29,11 @@ if TYPE_CHECKING:
 
 
 class TransactionFilterByAddress(TransactionFilter):
-    def __init__(self, address: 'Address'):
+    def __init__(self, address: "Address"):
         super().__init__()
         self._address = address
 
-    def run(self, tx: 'Transaction', tx_result: 'TransactionResult') -> bool:
+    def run(self, tx: "Transaction", tx_result: "TransactionResult") -> bool:
         return tx.from_ == self._address or tx.to == self._address
 
 

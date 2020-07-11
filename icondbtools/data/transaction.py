@@ -38,19 +38,21 @@ class Transaction(object):
         def params(self) -> Dict[str, str]:
             return self._params
 
-    def __init__(self,
-                 from_: Optional['Address'],
-                 to: Optional['Address'],
-                 version: int = 3,
-                 nid: int = 1,
-                 step_limit: int = 0,
-                 timestamp: int = 0,
-                 signature: bytes = None,
-                 tx_hash: bytes = None,
-                 value: int = 0,
-                 data_type: Optional[str] = None,
-                 data: Union[None, 'CallData'] = None,
-                 nonce: Optional[int] = None) -> None:
+    def __init__(
+        self,
+        from_: Optional["Address"],
+        to: Optional["Address"],
+        version: int = 3,
+        nid: int = 1,
+        step_limit: int = 0,
+        timestamp: int = 0,
+        signature: bytes = None,
+        tx_hash: bytes = None,
+        value: int = 0,
+        data_type: Optional[str] = None,
+        data: Union[None, "CallData"] = None,
+        nonce: Optional[int] = None,
+    ) -> None:
         """Transaction class for icon score context
         """
         self._version = version
@@ -77,7 +79,7 @@ class Transaction(object):
             ("signature", self._signature),
             ("nonce", self._nonce),
             ("version", self._version),
-            ("nid", self._nid)
+            ("nid", self._nid),
         )
 
         def _func():
@@ -98,14 +100,14 @@ class Transaction(object):
         return self._nid
 
     @property
-    def from_(self) -> 'Address':
+    def from_(self) -> "Address":
         """
         The account who created the transaction.
         """
         return self._from
 
     @property
-    def to(self) -> 'Address':
+    def to(self) -> "Address":
         """
         The account of tx to.
         """
@@ -148,7 +150,7 @@ class Transaction(object):
         return self._data_type
 
     @property
-    def data(self) -> Union[None, 'CallData']:
+    def data(self) -> Union[None, "CallData"]:
         return self._data
 
     @property
@@ -156,7 +158,7 @@ class Transaction(object):
         return self._signature
 
     @classmethod
-    def from_bytes(cls, data: bytes) -> 'Transaction':
+    def from_bytes(cls, data: bytes) -> "Transaction":
         """
 
         :param data: data loaded from loopchain DB
@@ -168,7 +170,7 @@ class Transaction(object):
         return cls.from_dict(data_in_dict["transaction"])
 
     @classmethod
-    def from_dict(cls, data: Dict[str, str]) -> 'Transaction':
+    def from_dict(cls, data: Dict[str, str]) -> "Transaction":
         version = str_to_int(data.get("version", "0x2"))
         nid = str_to_int(data.get("nid", "0x1"))
         from_ = Address.from_string(data["from"])
@@ -199,7 +201,8 @@ class Transaction(object):
             timestamp=timestamp,
             data_type=data_type,
             data=tx_data,
-            nonce=nonce)
+            nonce=nonce,
+        )
 
     @classmethod
     def _get_tx_hash(cls, data: Dict[str, str]) -> bytes:
@@ -211,6 +214,10 @@ class Transaction(object):
         return hex_to_bytes(value)
 
     @classmethod
-    def _get_data(cls, data_type: Optional[str], data: Union[None, str, Dict]) -> Union[None, 'CallData']:
+    def _get_data(
+        cls, data_type: Optional[str], data: Union[None, str, Dict]
+    ) -> Union[None, "CallData"]:
         if data_type == "call":
-            return Transaction.CallData(method=data["method"], params=data.get("params"))
+            return Transaction.CallData(
+                method=data["method"], params=data.get("params")
+            )

@@ -20,7 +20,14 @@ from icondbtools.utils.convert_type import str_to_int, convert_hex_str_to_bytes
 
 
 class Vote(object):
-    def __init__(self, rep: 'Address', block_height: int, block_hash: bytes, timestamp: int, round: int):
+    def __init__(
+        self,
+        rep: "Address",
+        block_height: int,
+        block_hash: bytes,
+        timestamp: int,
+        round: int,
+    ):
         self.rep = rep
         self.height = block_height
         self.block_hash = block_hash
@@ -28,7 +35,7 @@ class Vote(object):
         self.round = round
 
     @classmethod
-    def from_dict(cls, data: Optional[dict]) -> 'Vote':
+    def from_dict(cls, data: Optional[dict]) -> "Vote":
         """
             {
                 "blockHash’: ‘0xd5cc6d2d6998dd6d6f9c544232956bcf1108003b5253e8383d7628a10939913a’,
@@ -42,7 +49,7 @@ class Vote(object):
         :param data:
         :return:
         """
-        rep: 'Address' = Address.from_string(data["rep"])
+        rep: "Address" = Address.from_string(data["rep"])
         height: int = str_to_int(data["blockHeight"])
         block_hash: bytes = convert_hex_str_to_bytes(data["blockHash"])
         timestamp: int = str_to_int(data["timestamp"])
@@ -50,4 +57,10 @@ class Vote(object):
         # Block 0.4: round_
         # Block 0.5: round
         round_: int = data.get("round", data.get("round_"))
-        return Vote(rep=rep, block_height=height, block_hash=block_hash, timestamp=timestamp, round=round_)
+        return Vote(
+            rep=rep,
+            block_height=height,
+            block_hash=block_hash,
+            timestamp=timestamp,
+            round=round_,
+        )

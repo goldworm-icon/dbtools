@@ -18,18 +18,19 @@ from icondbtools.libs.tps_calculator import TPSCalculator
 
 
 class CommandTps(Command):
-
     def __init__(self, sub_parser, common_parser):
         self.add_parser(sub_parser, common_parser)
 
     def add_parser(self, sub_parser, common_parser):
-        name = 'tps'
-        desc = 'Calculate tps based on confirmed transactions that a specific range of blocks contain.'
+        name = "tps"
+        desc = "Calculate tps based on confirmed transactions that a specific range of blocks contain."
 
         parser = sub_parser.add_parser(name, parents=[common_parser], help=desc)
-        parser.add_argument('--start', type=int, default=0, required=False)
-        parser.add_argument('--end', type=int, default=-1, required=False)
-        parser.add_argument('--span', type=int, default=-1, required=False, help="unit: second")
+        parser.add_argument("--start", type=int, default=0, required=False)
+        parser.add_argument("--end", type=int, default=-1, required=False)
+        parser.add_argument(
+            "--span", type=int, default=-1, required=False, help="unit: second"
+        )
         parser.set_defaults(func=self.run)
 
     def run(self, args):
@@ -50,4 +51,3 @@ class CommandTps(Command):
             calculator.run(start, end, span_us)
         finally:
             calculator.close()
-

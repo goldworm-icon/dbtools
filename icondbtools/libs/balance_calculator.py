@@ -33,11 +33,13 @@ class StakeInfo(object):
         self.tx_hash: Optional[bytes] = None
 
     def __str__(self) -> str:
-        return f"stake={self.stake} " \
-               f"unstake={self.unstake} " \
-               f"block_height={self.block_height} " \
-               f"block_hash={bytes_to_hex(self.block_hash)} " \
-               f"tx_hash={bytes_to_hex(self.tx_hash)}"
+        return (
+            f"stake={self.stake} "
+            f"unstake={self.unstake} "
+            f"block_height={self.block_height} "
+            f"block_hash={bytes_to_hex(self.block_hash)} "
+            f"tx_hash={bytes_to_hex(self.tx_hash)}"
+        )
 
 
 class TransactionType(IntEnum):
@@ -57,10 +59,10 @@ class BalanceCalculator(object):
 
     """
 
-    def __init__(self, address: 'Address'):
+    def __init__(self, address: "Address"):
         self._address = address
-        self._txs: List['Transaction'] = []
-        self._tx_results: List['TransactionResult'] = []
+        self._txs: List["Transaction"] = []
+        self._tx_results: List["TransactionResult"] = []
         self._stake_info: Optional[StakeInfo] = None
 
         self._method_to_tx_type = {
@@ -73,22 +75,24 @@ class BalanceCalculator(object):
         }
 
     @property
-    def address(self) -> 'Address':
+    def address(self) -> "Address":
         return self._address
 
     @property
-    def txs(self) -> List['Transaction']:
+    def txs(self) -> List["Transaction"]:
         return self._txs
 
     @property
-    def tx_results(self) -> List['TransactionResult']:
+    def tx_results(self) -> List["TransactionResult"]:
         return self._tx_results
 
-    def run(self,
-            it: Iterable[Tuple['Transaction', 'TransactionResult']],
-            init_balance: int = 0,
-            init_stake: int = 0,
-            init_unstake: int = 0) -> Tuple[int, StakeInfo]:
+    def run(
+        self,
+        it: Iterable[Tuple["Transaction", "TransactionResult"]],
+        init_balance: int = 0,
+        init_stake: int = 0,
+        init_unstake: int = 0,
+    ) -> Tuple[int, StakeInfo]:
         self._txs.clear()
         self._tx_results.clear()
         self._stake_info = StakeInfo()
@@ -116,7 +120,9 @@ class BalanceCalculator(object):
 
         return balance, self._stake_info
 
-    def _calculate_balance_delta(self, tx: 'Transaction', tx_result: 'TransactionResult') -> int:
+    def _calculate_balance_delta(
+        self, tx: "Transaction", tx_result: "TransactionResult"
+    ) -> int:
         is_tx_owner = tx.from_ == self._address
         balance_delta = 0
 
@@ -141,17 +147,21 @@ class BalanceCalculator(object):
 
         return delta
 
-    def _calc_balance_delta_in_call(self, tx: 'Transaction', tx_result: 'TransactionResult') -> int:
+    def _calc_balance_delta_in_call(
+        self, tx: "Transaction", tx_result: "TransactionResult"
+    ) -> int:
         assert tx_result.status == TransactionResult.Status.SUCCESS
 
         delta = 0
 
         if tx.data_type == "call":
-            call_data: 'Transaction.CallData' = tx.data
+            call_data: "Transaction.CallData" = tx.data
             method: str = call_data.method
 
             if method == "setStake":
-                delta = self._calc_balance_delta_in_set_stake(call_data.params, tx_result)
+                delta = self._calc_balance_delta_in_set_stake(
+                    call_data.params, tx_result
+                )
             elif method == "claimIScore":
                 delta = self._calc_balance_delta_in_claim_iscore(tx_result)
 
@@ -164,12 +174,17 @@ class BalanceCalculator(object):
         delta = 0
 
         for event_log in tx_result.event_logs:
-            if event_log.score_address == ICON_SERVICE_ADDRESS and event_log.signature == "IScoreClaimed(int,int)":
+            if (
+                event_log.score_address == ICON_SERVICE_ADDRESS
+                and event_log.signature == "IScoreClaimed(int,int)"
+            ):
                 delta += event_log.data[1]
 
         return delta
 
-    def _calc_balance_delta_in_set_stake(self, params: Dict[str, str], tx_result: 'TransactionResult') -> int:
+    def _calc_balance_delta_in_set_stake(
+        self, params: Dict[str, str], tx_result: "TransactionResult"
+    ) -> int:
         assert tx_result.status == TransactionResult.Status.SUCCESS
 
         old_stake = self._stake_info.stake
@@ -188,14 +203,14 @@ class BalanceCalculator(object):
 
         return 0
 
-    def _get_tx_type(self, tx: 'Transaction') -> TransactionType:
+    def _get_tx_type(self, tx: "Transaction") -> TransactionType:
         if tx.to == self._address:
             return TransactionType.ICX_RECV
 
         tx_type = TransactionType.ICX_SEND
 
         if tx.data_type == "call":
-            call_data: 'Transaction.CallData' = tx.data
+            call_data: "Transaction.CallData" = tx.data
             method: str = call_data.method
             tx_type = self._method_to_tx_type.get(method, TransactionType.CALL)
 
@@ -209,16 +224,23 @@ class BalanceCalculator(object):
         )
 
     @classmethod
-    def _print_detail(cls, i: int, tx_type: TransactionType,
-                      balance: int, delta: int, tx: 'Transaction', tx_result: 'TransactionResult'):
+    def _print_detail(
+        cls,
+        i: int,
+        tx_type: TransactionType,
+        balance: int,
+        delta: int,
+        tx: "Transaction",
+        tx_result: "TransactionResult",
+    ):
         print(
-            f'{i:04d} '
-            f'{tx_result.status.name} '
-            f'{tx_type.name:14s} '
-            f'{tx_result.block_height:010d} '
-            f'{bytes_to_hex(tx.tx_hash)} '
-            f'{balance} '
-            f'{delta} '
-            f'{tx.value} '
-            f'{tx_result.fee} '
+            f"{i:04d} "
+            f"{tx_result.status.name} "
+            f"{tx_type.name:14s} "
+            f"{tx_result.block_height:010d} "
+            f"{bytes_to_hex(tx.tx_hash)} "
+            f"{balance} "
+            f"{delta} "
+            f"{tx.value} "
+            f"{tx_result.fee} "
         )

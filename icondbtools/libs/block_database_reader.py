@@ -41,7 +41,7 @@ class BlockDatabaseReader(object):
             self._db = None
 
     def get_block_by_block_height(self, block_height: int) -> Optional[dict]:
-        block_height_key = BLOCK_HEIGHT_KEY_PREFIX + block_height.to_bytes(12, 'big')
+        block_height_key = BLOCK_HEIGHT_KEY_PREFIX + block_height.to_bytes(12, "big")
 
         key: bytes = self._db.get(block_height_key)
         if key is None:
@@ -86,7 +86,7 @@ class BlockDatabaseReader(object):
         return self.get_block_by_key(key)
 
     def get_transaction_result_by_hash(self, tx_hash: str) -> Optional[dict]:
-        if tx_hash.startswith('0x'):
+        if tx_hash.startswith("0x"):
             tx_hash = tx_hash[2:]
 
         key: bytes = tx_hash.encode()
@@ -94,8 +94,7 @@ class BlockDatabaseReader(object):
         tx_result: dict = json.loads(value)
         return tx_result
 
-    def get_state_root_hash_by_block_height(
-            self, block_height: int) -> bytes:
+    def get_state_root_hash_by_block_height(self, block_height: int) -> bytes:
         block: dict = self.get_block_by_block_height(block_height)
         return self.get_commit_state(block)
 
@@ -104,19 +103,19 @@ class BlockDatabaseReader(object):
         return self.get_commit_state(block)
 
     @staticmethod
-    def get_commit_state(block: dict, channel: str = 'icon_dex') -> bytes:
-        version = block['version']
-        if version == '0.1a':
-            state_hash: str = block['commit_state'][channel]
+    def get_commit_state(block: dict, channel: str = "icon_dex") -> bytes:
+        version = block["version"]
+        if version == "0.1a":
+            state_hash: str = block["commit_state"][channel]
         else:
             # In case of version >= 0.3
-            state_hash: str = block['stateHash']
+            state_hash: str = block["stateHash"]
         return convert_hex_str_to_bytes(state_hash)
 
 
 def main():
     reader = BlockDatabaseReader()
-    reader.open('/home/goldworm/work/icon/db_data/testnet_db')
+    reader.open("/home/goldworm/work/icon/db_data/testnet_db")
 
     start_height = int(sys.argv[1])
     read_blocks(reader, start_height=start_height, count=1)
@@ -127,20 +126,20 @@ def main():
 def read_blocks(reader, start_height: int, count: int):
     start_time = time.time()
 
-    with open('blocks.txt', 'wt') as f:
+    with open("blocks.txt", "wt") as f:
         for i in range(start_height, start_height + count):
             block: dict = reader.get_block_by_block_height(i)
             if block is None:
-                print(f'last block: {i - 1}')
+                print(f"last block: {i - 1}")
                 break
 
             if i % 100 == 0:
-                print(f'block: {i}')
+                print(f"block: {i}")
 
-            f.write(f'{block}\n')
+            f.write(f"{block}\n")
 
     end_time = time.time()
-    print(f'elapsed time: {end_time - start_time}')
+    print(f"elapsed time: {end_time - start_time}")
 
 
 def read_last_block(reader):
@@ -150,8 +149,8 @@ def read_last_block(reader):
     pprint(block)
 
     end = time.time()
-    print(f'elapsed time: {end - start}')
+    print(f"elapsed time: {end - start}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

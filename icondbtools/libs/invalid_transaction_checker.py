@@ -20,6 +20,7 @@ class InvalidTransactionChecker(object):
     """Check whether the transactions which are processed without charged fee are present or not
 
     """
+
     def __init__(self):
         self._block_reader = BlockDatabaseReader()
 
@@ -31,33 +32,37 @@ class InvalidTransactionChecker(object):
 
         if end < 0:
             last_block: dict = self._block_reader.get_last_block()
-            end: int = last_block['height']
+            end: int = last_block["height"]
 
         for height in range(start, end + 1):
             block: dict = self._block_reader.get_block_by_block_height(height)
 
-            tx_list: list = block['confirmed_transaction_list']
+            tx_list: list = block["confirmed_transaction_list"]
             for tx in tx_list:
-                tx_hash: str = tx.get('txHash')
+                tx_hash: str = tx.get("txHash")
                 if tx_hash is None:
-                    tx_hash: str = tx['tx_hash']
+                    tx_hash: str = tx["tx_hash"]
 
                 self._check_invalid_tx_result(height, tx_hash)
                 tx_count += 1
 
-        print(f'The number of transactions: {tx_count}')
+        print(f"The number of transactions: {tx_count}")
 
     def _check_invalid_tx_result(self, height: int, tx_hash: str):
-        tx_result: dict = self._block_reader.get_transaction_result_by_hash(tx_hash)['result']
+        tx_result: dict = self._block_reader.get_transaction_result_by_hash(tx_hash)[
+            "result"
+        ]
 
         # information extracted from db
-        status: int = int(tx_result['status'], 16)
-        step_used: int = int(tx_result['stepUsed'], 16)
-        step_price: int = int(tx_result['stepPrice'], 16)
+        status: int = int(tx_result["status"], 16)
+        step_used: int = int(tx_result["stepUsed"], 16)
+        step_price: int = int(tx_result["stepPrice"], 16)
         step = step_used * step_price
 
         if status == 1 and step == 0:
-            print(f'{height}: txHash({tx_hash}) stepUsed({step_used}) stepPrice({step_price})')
+            print(
+                f"{height}: txHash({tx_hash}) stepUsed({step_used}) stepPrice({step_price})"
+            )
 
     def close(self):
         self._block_reader.close()

@@ -20,7 +20,9 @@ import plyvel
 
 
 class BPCountResult(object):
-    def __init__(self, count: int, start_height: int, end_height: int, dropped_heights: List[int]):
+    def __init__(
+        self, count: int, start_height: int, end_height: int, dropped_heights: List[int]
+    ):
         self._count = count
         self._start_height = start_height
         self._end_height = end_height
@@ -43,14 +45,18 @@ class BPCountResult(object):
         return self._dropped_heights
 
     def __str__(self) -> str:
-        return f"count: {self._count}\n" \
-               f"start_height: {self._start_height}\n" \
-               f"end_height: {self._end_height}\n" \
-               f"dropped: {len(self._dropped_heights)} {self._dropped_heights}"
+        return (
+            f"count: {self._count}\n"
+            f"start_height: {self._start_height}\n"
+            f"end_height: {self._end_height}\n"
+            f"dropped: {len(self._dropped_heights)} {self._dropped_heights}"
+        )
 
 
 class TXCountResult(object):
-    def __init__(self, count: int, start_index: int, end_index: int, dropped_indices: List[int]):
+    def __init__(
+        self, count: int, start_index: int, end_index: int, dropped_indices: List[int]
+    ):
         self._count = count
         self._start_index = start_index
         self._end_index = end_index
@@ -73,10 +79,12 @@ class TXCountResult(object):
         return self._dropped_indices
 
     def __str__(self) -> str:
-        return f"count: {self._count}\n" \
-               f"start_index: {self._start_index}\n" \
-               f"end_index: {self._end_index}\n" \
-               f"dropped: {len(self._dropped_indices)} {self._dropped_indices}"
+        return (
+            f"count: {self._count}\n"
+            f"start_index: {self._start_index}\n"
+            f"end_index: {self._end_index}\n"
+            f"dropped: {len(self._dropped_indices)} {self._dropped_indices}"
+        )
 
 
 class IISSDataReader(object):
@@ -91,7 +99,7 @@ class IISSDataReader(object):
             self._db.close()
             self._db = None
 
-    def count_bp(self) -> 'BPCountResult':
+    def count_bp(self) -> "BPCountResult":
         prefix = b"BP"
         start_height = -1
         end_height = -1
@@ -99,7 +107,7 @@ class IISSDataReader(object):
         count = 0
 
         for key, value in self._db.iterator(prefix=prefix):
-            height: int = int.from_bytes(key[len(prefix):], "big", signed=False)
+            height: int = int.from_bytes(key[len(prefix) :], "big", signed=False)
 
             if start_height < 0:
                 start_height = height
@@ -112,7 +120,7 @@ class IISSDataReader(object):
 
         return BPCountResult(count, start_height, end_height, dropped_heights)
 
-    def count_tx(self) -> 'TXCountResult':
+    def count_tx(self) -> "TXCountResult":
         prefix = b"TX"
         start_index = -1
         end_index = -1
@@ -120,7 +128,7 @@ class IISSDataReader(object):
         count = 0
 
         for key, value in self._db.iterator(prefix=prefix):
-            index: int = int.from_bytes(key[len(prefix):], "big", signed=False)
+            index: int = int.from_bytes(key[len(prefix) :], "big", signed=False)
 
             if start_index < 0:
                 start_index = index
