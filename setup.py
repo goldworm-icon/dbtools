@@ -17,13 +17,14 @@ import os
 
 import setuptools
 
-with open("README.md", "r") as fh:
-    long_description = fh.read()
+here = os.path.abspath(os.path.dirname(__file__))
 
-version = os.environ.get("VERSION")
-if version is None:
-    with open(os.path.join(".", "VERSION")) as version_file:
-        version = version_file.read().strip()
+about = {}
+with open(os.path.join(here, "icondbtools", "__about__.py"), "r") as f:
+    exec(f.read(), about)
+
+with open("README.md", "r") as f:
+    long_description = f.read()
 
 with open("requirements.txt") as requirements:
     requires = list(requirements)
@@ -39,14 +40,14 @@ extras_require = {
 tests_require = extras_require["test"]
 
 setuptools.setup(
-    name="icondbtools",
-    version=version,
-    author="ICON Foundation",
-    author_email="goldworm@icon.foundation",
-    description="icondbtools",
+    name=about["name"],
+    version=about["version"],
+    author=about["author"],
+    author_email=about["author_email"],
+    description=about["description"],
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/goldworm-icon/dbtools",
+    url=about["url"],
     packages=setuptools.find_packages(exclude=["tests*"]),
     extras_require=extras_require,
     setup_requires=["pytest-runner"],
@@ -57,7 +58,7 @@ setuptools.setup(
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
         "Natural Language :: English",
-        "License :: OSI Approved :: Apache Software License",
+        "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3",
     ],
     entry_points={"console_scripts": ["icondbtools=icondbtools.__main__:main"]},
