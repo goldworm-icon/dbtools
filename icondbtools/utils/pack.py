@@ -23,11 +23,12 @@ def decode(data: bytes) -> object:
 
 def default(obj) -> msgpack.ExtType:
     if isinstance(obj, Address):
-        code = ExtType.MalformedAddress if isinstance(obj, MalformedAddress) else ExtType.ADDRESS
-        return msgpack.ExtType(
-            code.value,
-            obj.to_bytes_including_prefix()
+        code = (
+            ExtType.MalformedAddress
+            if isinstance(obj, MalformedAddress)
+            else ExtType.ADDRESS
         )
+        return msgpack.ExtType(code.value, obj.to_bytes_including_prefix())
 
     raise TypeError(f"Unknown type: {repr(obj)}")
 

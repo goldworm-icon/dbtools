@@ -10,25 +10,25 @@ if TYPE_CHECKING:
 
 
 class NodeContainer(object):
-    def __init__(self, state: 'PRepResultState', nodes: Dict['Address', 'Node']):
-        self._state: 'PRepResultState' = state
-        self._nodes: Dict['Address', 'Node'] = nodes
+    def __init__(self, state: "PRepResultState", nodes: Dict["Address", "Node"]):
+        self._state: "PRepResultState" = state
+        self._nodes: Dict["Address", "Node"] = nodes
 
-    def __contains__(self, address: 'Address') -> bool:
+    def __contains__(self, address: "Address") -> bool:
         return address in self._nodes
 
-    def __iter__(self) -> Iterable['Node']:
+    def __iter__(self) -> Iterable["Node"]:
         for node in self._nodes.values():
             yield node
 
     @property
-    def state(self) -> 'PRepResultState':
+    def state(self) -> "PRepResultState":
         return self._state
 
     @classmethod
     def from_dict(cls, data: dict):
-        state: 'PRepResultState' = PRepResultState(data["state"])
-        nodes: Dict['Address', 'Node'] = {}
+        state: "PRepResultState" = PRepResultState(data["state"])
+        nodes: Dict["Address", "Node"] = {}
 
         preps: List = data["preps"]
         for prep in preps:

@@ -20,35 +20,36 @@ from ..utils.convert_type import str_to_object
 
 
 class EventLog(object):
-    def __init__(self, score_address: 'Address', indexed: List, data: List):
-        self._score_address: 'Address' = score_address
+    def __init__(self, score_address: "Address", indexed: List, data: List):
+        self._score_address: "Address" = score_address
         self._indexed = indexed
         self._data = data
 
     def __str__(self) -> str:
-        return \
-            f"score_address={self._score_address} " \
-            f"indexed={self._indexed} " \
+        return (
+            f"score_address={self._score_address} "
+            f"indexed={self._indexed} "
             f"data={self._data}"
+        )
 
     @property
     def signature(self) -> str:
         return self._indexed[0]
 
     @property
-    def score_address(self) -> 'Address':
+    def score_address(self) -> "Address":
         return self._score_address
 
     @property
-    def indexed(self) -> List[Union['Address', int, str]]:
+    def indexed(self) -> List[Union["Address", int, str]]:
         return self._indexed
 
     @property
-    def data(self) -> List[Union['Address', int, str]]:
+    def data(self) -> List[Union["Address", int, str]]:
         return self._data
 
     @classmethod
-    def from_dict(cls, event_log: Dict) -> 'EventLog':
+    def from_dict(cls, event_log: Dict) -> "EventLog":
         score_address = Address.from_string(event_log["scoreAddress"])
         indexed = event_log["indexed"]
         data = event_log["data"]
@@ -77,6 +78,6 @@ class EventLog(object):
 
         index = signature.index("(")
         name = signature[:index]
-        params = signature[index + 1:-1].split(",")
+        params = signature[index + 1 : -1].split(",")
 
         return name, params

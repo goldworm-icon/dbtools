@@ -21,15 +21,17 @@ class Block(object):
         STATE_HASH = auto()
         TXS = auto()
 
-    def __init__(self,
-                 version: str = None,
-                 height: int = -1,
-                 timestamp: int = -1,
-                 block_hash: bytes = None,
-                 prev_block_hash: bytes = None,
-                 leader: 'Address' = None,
-                 state_hash: bytes = None,
-                 transactions: List[Dict[str, Any]] = None):
+    def __init__(
+        self,
+        version: str = None,
+        height: int = -1,
+        timestamp: int = -1,
+        block_hash: bytes = None,
+        prev_block_hash: bytes = None,
+        leader: "Address" = None,
+        state_hash: bytes = None,
+        transactions: List[Dict[str, Any]] = None,
+    ):
         self.version = version
         self.height = height
         self.timestamp: int = timestamp
@@ -55,11 +57,11 @@ class Block(object):
             prev_block_hash=obj[cls.Index.PREV_BLOCK_HASH],
             leader=obj[cls.Index.LEADER],
             state_hash=obj[cls.Index.STATE_HASH],
-            transactions=obj[cls.Index.TXS]
+            transactions=obj[cls.Index.TXS],
         )
 
     @classmethod
-    def from_loopchain_block(cls, loopchain_block: LoopchainBlock) -> 'Block':
+    def from_loopchain_block(cls, loopchain_block: LoopchainBlock) -> "Block":
         transactions = [
             tx_dict_to_params(tx_dict, loopchain_block.timestamp)
             for tx_dict in loopchain_block.transactions
@@ -73,7 +75,7 @@ class Block(object):
             prev_block_hash=loopchain_block.prev_block_hash,
             leader=loopchain_block.leader,
             state_hash=loopchain_block.state_hash,
-            transactions=transactions
+            transactions=transactions,
         )
 
     def to_bytes(self) -> bytes:

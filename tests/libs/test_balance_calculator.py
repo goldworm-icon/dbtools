@@ -33,21 +33,25 @@ class TestBalanceCalculator(object):
         step_used = step_limit
         init_balance = icx_to_loop(100)
 
-        tx = Transaction(version=3,
-                         nid=1,
-                         tx_hash=tx_hash,
-                         from_=from_,
-                         to=to,
-                         value=value,
-                         step_limit=step_limit)
+        tx = Transaction(
+            version=3,
+            nid=1,
+            tx_hash=tx_hash,
+            from_=from_,
+            to=to,
+            value=value,
+            step_limit=step_limit,
+        )
 
-        tx_result = TransactionResult(tx_hash=tx_hash,
-                                      status=1,
-                                      tx_index=0,
-                                      step_price=step_price,
-                                      step_used=step_used)
+        tx_result = TransactionResult(
+            tx_hash=tx_hash,
+            status=1,
+            tx_index=0,
+            step_price=step_price,
+            step_used=step_used,
+        )
 
-        def func() -> Iterable[Tuple['Transaction', 'TransactionResult']]:
+        def func() -> Iterable[Tuple["Transaction", "TransactionResult"]]:
             yield tx, tx_result
 
         calculator = BalanceCalculator(from_)
@@ -64,21 +68,25 @@ class TestBalanceCalculator(object):
         step_used = step_limit
         init_balance = icx_to_loop(100)
 
-        tx = Transaction(version=3,
-                         nid=1,
-                         tx_hash=tx_hash,
-                         from_=from_,
-                         to=to,
-                         value=value,
-                         step_limit=step_limit)
+        tx = Transaction(
+            version=3,
+            nid=1,
+            tx_hash=tx_hash,
+            from_=from_,
+            to=to,
+            value=value,
+            step_limit=step_limit,
+        )
 
-        tx_result = TransactionResult(tx_hash=tx_hash,
-                                      status=1,
-                                      tx_index=0,
-                                      step_price=step_price,
-                                      step_used=step_used)
+        tx_result = TransactionResult(
+            tx_hash=tx_hash,
+            status=1,
+            tx_index=0,
+            step_price=step_price,
+            step_used=step_used,
+        )
 
-        def func() -> Iterable[Tuple['Transaction', 'TransactionResult']]:
+        def func() -> Iterable[Tuple["Transaction", "TransactionResult"]]:
             yield tx, tx_result
 
         calculator = BalanceCalculator(to)
@@ -96,28 +104,36 @@ class TestBalanceCalculator(object):
         data_type = "call"
         data = Transaction.CallData("claimIScore", None)
 
-        tx = Transaction(version=3,
-                         nid=1,
-                         tx_hash=tx_hash,
-                         from_=address,
-                         to=score_address,
-                         value=value,
-                         step_limit=step_limit,
-                         data_type=data_type,
-                         data=data)
+        tx = Transaction(
+            version=3,
+            nid=1,
+            tx_hash=tx_hash,
+            from_=address,
+            to=score_address,
+            value=value,
+            step_limit=step_limit,
+            data_type=data_type,
+            data=data,
+        )
 
         claimed_icx = icx_to_loop(6)
         claimed_iscore = claimed_icx * 1000
-        event_log = EventLog(score_address, indexed=["IScoreClaimed(int,int)"], data=[claimed_iscore, claimed_icx])
+        event_log = EventLog(
+            score_address,
+            indexed=["IScoreClaimed(int,int)"],
+            data=[claimed_iscore, claimed_icx],
+        )
 
-        tx_result = TransactionResult(tx_hash=tx_hash,
-                                      status=1,
-                                      tx_index=0,
-                                      step_price=step_price,
-                                      step_used=step_used,
-                                      event_logs=[event_log])
+        tx_result = TransactionResult(
+            tx_hash=tx_hash,
+            status=1,
+            tx_index=0,
+            step_price=step_price,
+            step_used=step_used,
+            event_logs=[event_log],
+        )
 
-        def func() -> Iterable[Tuple['Transaction', 'TransactionResult']]:
+        def func() -> Iterable[Tuple["Transaction", "TransactionResult"]]:
             yield tx, tx_result
 
         calculator = BalanceCalculator(address)
@@ -136,23 +152,27 @@ class TestBalanceCalculator(object):
         stake = icx_to_loop(100)
         data = Transaction.CallData(method="setStake", params={"value": hex(stake)})
 
-        tx = Transaction(version=3,
-                         nid=1,
-                         tx_hash=tx_hash,
-                         from_=address,
-                         to=score_address,
-                         value=value,
-                         step_limit=step_limit,
-                         data_type=data_type,
-                         data=data)
+        tx = Transaction(
+            version=3,
+            nid=1,
+            tx_hash=tx_hash,
+            from_=address,
+            to=score_address,
+            value=value,
+            step_limit=step_limit,
+            data_type=data_type,
+            data=data,
+        )
 
-        tx_result = TransactionResult(tx_hash=tx_hash,
-                                      status=TransactionResult.Status.SUCCESS,
-                                      tx_index=0,
-                                      step_price=step_price,
-                                      step_used=step_used)
+        tx_result = TransactionResult(
+            tx_hash=tx_hash,
+            status=TransactionResult.Status.SUCCESS,
+            tx_index=0,
+            step_price=step_price,
+            step_used=step_used,
+        )
 
-        def func() -> Iterable[Tuple['Transaction', 'TransactionResult']]:
+        def func() -> Iterable[Tuple["Transaction", "TransactionResult"]]:
             yield tx, tx_result
 
         calculator = BalanceCalculator(address)

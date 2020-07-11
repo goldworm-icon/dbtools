@@ -43,12 +43,12 @@ def block_hash() -> bytes:
 
 
 @pytest.fixture
-def address() -> 'Address':
+def address() -> "Address":
     return Address(AddressPrefix.EOA, os.urandom(20))
 
 
 @pytest.fixture(scope="session")
-def create_address() -> Callable[[], 'Address']:
+def create_address() -> Callable[[], "Address"]:
     def func():
         return Address(AddressPrefix.EOA, os.urandom(20))
 

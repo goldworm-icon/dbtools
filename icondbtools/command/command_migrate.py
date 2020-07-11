@@ -19,8 +19,18 @@ from typing import Optional, Tuple
 import plyvel
 
 from icondbtools.command.command import Command
-from icondbtools.libs import NID_KEY, TRANSACTION_COUNT_KEY, LAST_BLOCK_KEY, PREPS_KEY_PREFIX, ZERO_HASH, UTF8
-from icondbtools.libs.block_database_raw_reader import BlockDatabaseRawReader, TransactionParser
+from icondbtools.libs import (
+    NID_KEY,
+    TRANSACTION_COUNT_KEY,
+    LAST_BLOCK_KEY,
+    PREPS_KEY_PREFIX,
+    ZERO_HASH,
+    UTF8,
+)
+from icondbtools.libs.block_database_raw_reader import (
+    BlockDatabaseRawReader,
+    TransactionParser,
+)
 
 
 class CommandCopy(Command):
@@ -31,15 +41,30 @@ class CommandCopy(Command):
         self.add_parser(sub_parser, common_parser)
 
     def add_parser(self, sub_parser, common_parser):
-        name = 'migrate'
-        desc = 'Migrate Loopchain blocks between start and end BH to target DB path with msgpack'
+        name = "migrate"
+        desc = "Migrate Loopchain blocks between start and end BH to target DB path with msgpack"
 
         parser_copy = sub_parser.add_parser(name, parents=[common_parser], help=desc)
 
-        parser_copy.add_argument('-s', '--start', type=int, default=-1, help='start block height to be copied')
-        parser_copy.add_argument('--end', type=int, default=-1, help='end block height to be copied, inclusive')
-        parser_copy.add_argument('--count', type=int, default=-1, help='block count to be copied')
-        parser_copy.add_argument('--new-db', type=str, default="", help='new DB path for blocks to be copied')
+        parser_copy.add_argument(
+            "-s",
+            "--start",
+            type=int,
+            default=-1,
+            help="start block height to be copied",
+        )
+        parser_copy.add_argument(
+            "--end",
+            type=int,
+            default=-1,
+            help="end block height to be copied, inclusive",
+        )
+        parser_copy.add_argument(
+            "--count", type=int, default=-1, help="block count to be copied"
+        )
+        parser_copy.add_argument(
+            "--new-db", type=str, default="", help="new DB path for blocks to be copied"
+        )
         parser_copy.set_defaults(func=self.run)
 
     def run(self, args):
@@ -94,9 +119,13 @@ class CommandCopy(Command):
         # Get transaction data from the DB using transactions in block
         transactions: list = block_reader.get_transactions_from_block(block)
         for transaction in transactions:
-            tx_hash_key: Optional[bytes] = TransactionParser.get_tx_hash_key_from_transaction(transaction)
+            tx_hash_key: Optional[
+                bytes
+            ] = TransactionParser.get_tx_hash_key_from_transaction(transaction)
             if tx_hash_key is not None:
-                full_transaction: bytes = block_reader.get_transaction_by_key(tx_hash_key)
+                full_transaction: bytes = block_reader.get_transaction_by_key(
+                    tx_hash_key
+                )
                 wb.put(tx_hash_key, full_transaction)
 
     @classmethod
@@ -110,7 +139,7 @@ class CommandCopy(Command):
     def _write_reps_data(cls, wb, block_reader, block: bytes):
         block_dict: dict = json.loads(block)
 
-        if block_dict['version'] != "0.1a":
+        if block_dict["version"] != "0.1a":
             # Copy reps_data
             reps_hash_str: str = block_dict.get("repsHash", "0x")[2:]
             reps_data = block_reader.get_reps(bytes.fromhex(reps_hash))
@@ -137,8 +166,9 @@ class CommandCopy(Command):
 
         # Copy last_block_hash
         block: dict = json.loads(last_block)
-        last_block_hash: str = block.get('block_hash') if 'block_hash' in block \
-            else block.get("hash")[2:]
+        last_block_hash: str = block.get(
+            "block_hash"
+        ) if "block_hash" in block else block.get("hash")[2:]
         wb.put(LAST_BLOCK_KEY, last_block_hash.encode(UTF8))
 
     @classmethod
@@ -148,7 +178,7 @@ class CommandCopy(Command):
         """
         if end > -1:
             if end < start:
-                raise ValueError(f'end({end} < start({start})')
+                raise ValueError(f"end({end} < start({start})")
             count = max(count, end - start + 1)
         elif count == -1:
             count = cls.MAX_COPY_BLOCK_COUNT

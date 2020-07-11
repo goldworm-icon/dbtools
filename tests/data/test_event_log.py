@@ -29,10 +29,12 @@ class TestEventLog(unittest.TestCase):
 
     def test_from_dict_with_transfer_event_log(self):
         signature = "Transfer(Address,Address,int)"
-        score_address = Address.from_string("cx4d6f646441a3f9c9b91019c9b98e3c342cceb114")
+        score_address = Address.from_string(
+            "cx4d6f646441a3f9c9b91019c9b98e3c342cceb114"
+        )
         indexed_address_0 = Address.from_data(AddressPrefix.EOA, b"address0")
         indexed_address_1 = Address.from_data(AddressPrefix.EOA, b"address1")
-        value = 0x8ac7230489e80000
+        value = 0x8AC7230489E80000
 
         event_log_data = {
             "scoreAddress": str(score_address),
@@ -40,9 +42,9 @@ class TestEventLog(unittest.TestCase):
                 signature,
                 str(indexed_address_0),
                 str(indexed_address_1),
-                hex(value)
+                hex(value),
             ],
-            "data": []
+            "data": [],
         }
 
         event_log = EventLog.from_dict(event_log_data)
@@ -57,14 +59,16 @@ class TestEventLog(unittest.TestCase):
 
     def test_from_dict_with_iscore_claimed_log(self):
         signature = "IScoreClaimed(int,int)"
-        score_address = Address.from_string("cx0000000000000000000000000000000000000000")
-        iscore = 0x186a0  # unit: iscore
+        score_address = Address.from_string(
+            "cx0000000000000000000000000000000000000000"
+        )
+        iscore = 0x186A0  # unit: iscore
         icx = 0x64  # unit: loop
 
         event_log_data = {
             "scoreAddress": str(score_address),
             "indexed": [signature],
-            "data": [hex(iscore), hex(icx)]
+            "data": [hex(iscore), hex(icx)],
         }
 
         event_log = EventLog.from_dict(event_log_data)
@@ -77,5 +81,5 @@ class TestEventLog(unittest.TestCase):
         assert event_log.data[1] == icx
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -56,13 +56,15 @@ def main():
         CommandIISSTXData,
         CommandCopy,
         CommandTerm,
-        CommandBalance
+        CommandBalance,
     ]
 
     version = get_dbtools_version()
-    parser = argparse.ArgumentParser(prog='icondbtools', description=f'icon db tools v{version}')
+    parser = argparse.ArgumentParser(
+        prog="icondbtools", description=f"icon db tools v{version}"
+    )
 
-    sub_parser = parser.add_subparsers(title='subcommands')
+    sub_parser = parser.add_subparsers(title="subcommands")
     common_parser = create_common_parser()
 
     for command in commands:
@@ -79,7 +81,7 @@ def main():
     timer.start()
     ret: int = args.func(args)
     timer.stop()
-    print(f'elapsedTime: {timer.duration()} seconds')
+    print(f"elapsedTime: {timer.duration()} seconds")
 
     return ret
 
@@ -87,14 +89,12 @@ def main():
 def create_common_parser() -> argparse.ArgumentParser:
     parent_parser = argparse.ArgumentParser(add_help=False)
     parent_parser.add_argument(
-        "--db",
-        type=str,
-        required=True,
+        "--db", type=str, required=True,
     )
 
     return parent_parser
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     exit_code: int = main()
     sys.exit(exit_code)

@@ -13,11 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-NID_KEY = b'NID_KEY'
-LAST_BLOCK_KEY = b'last_block_key'
-TRANSACTION_COUNT_KEY = b'TRANSACTION_COUNT'
+NID_KEY = b"NID_KEY"
+LAST_BLOCK_KEY = b"last_block_key"
+TRANSACTION_COUNT_KEY = b"TRANSACTION_COUNT"
 
-BLOCK_HEIGHT_KEY_PREFIX = b'block_height_key'
-PREPS_KEY_PREFIX = b'preps_key'
+BLOCK_HEIGHT_KEY_PREFIX = b"block_height_key"
+PREPS_KEY_PREFIX = b"preps_key"
 ZERO_HASH = f"0x{'0' * 64}"
-UTF8 = 'utf-8'
+UTF8 = "utf-8"

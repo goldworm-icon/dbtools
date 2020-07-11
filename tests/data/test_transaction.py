@@ -25,13 +25,11 @@ class TestTransaction(object):
         to = Address.from_string("cx0000000000000000000000000000000000000000")
         version = 0x3
         nid = 0x1
-        step_limit = 0x1a2c0
+        step_limit = 0x1A2C0
         data_type = "call"
         signature = "Ot+ouYw5Fdb4XkfODSv+8X3q7Kn8Fse4D51nLmzY62cPgR/5HZ26JTMCxO6D44pbbCumy8vS6e70XdB+ddL/mwA="
         method = "setStake"
-        params = {
-            "value": hex(icx_to_loop(2))
-        }
+        params = {"value": hex(icx_to_loop(2))}
 
         tx_data = {
             "version": hex(version),
@@ -41,12 +39,9 @@ class TestTransaction(object):
             "stepLimit": hex(step_limit),
             "timestamp": hex(timestamp),
             "dataType": data_type,
-            "data": {
-                "method": method,
-                "params": params
-            },
+            "data": {"method": method, "params": params},
             "signature": signature,
-            "txHash": bytes_to_hex(tx_hash)
+            "txHash": bytes_to_hex(tx_hash),
         }
 
         tx = Transaction.from_dict(tx_data)

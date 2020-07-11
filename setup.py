@@ -20,12 +20,12 @@ import setuptools
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-version = os.environ.get('VERSION')
+version = os.environ.get("VERSION")
 if version is None:
-    with open(os.path.join('.', 'VERSION')) as version_file:
+    with open(os.path.join(".", "VERSION")) as version_file:
         version = version_file.read().strip()
 
-with open('requirements.txt') as requirements:
+with open("requirements.txt") as requirements:
     requires = list(requirements)
 
 setuptools.setup(
@@ -37,21 +37,17 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/goldworm-icon/dbtools",
-    packages=setuptools.find_packages(exclude=['tests*']),
-    setup_requires=['pytest-runner'],
-    tests_require=['pytest'],
-    test_suite='tests',
+    packages=setuptools.find_packages(exclude=["tests*"]),
+    setup_requires=["pytest-runner"],
+    tests_require=["pytest"],
+    test_suite="tests",
     install_requires=requires,
     classifiers=[
-        'Development Status :: 5 - Production/Stable',
-        'Intended Audience :: Developers',
-        'Natural Language :: English',
-        'License :: OSI Approved :: Apache Software License',
-        'Programming Language :: Python :: 3'
+        "Development Status :: 5 - Production/Stable",
+        "Intended Audience :: Developers",
+        "Natural Language :: English",
+        "License :: OSI Approved :: Apache Software License",
+        "Programming Language :: Python :: 3",
     ],
-    entry_points={
-        'console_scripts': [
-            'icondbtools=icondbtools.__main__:main'
-        ]
-    }
+    entry_points={"console_scripts": ["icondbtools=icondbtools.__main__:main"]},
 )

@@ -20,21 +20,29 @@ from icondbtools.libs.block_database_reader import BlockDatabaseReader
 
 
 class CommandBlock(Command):
-
     def __init__(self, sub_parser, common_parser):
         self.add_parser(sub_parser, common_parser)
 
     def add_parser(self, sub_parser, common_parser):
-        name = 'block'
-        desc = 'Print the block indicated by block height'
+        name = "block"
+        desc = "Print the block indicated by block height"
 
         # create the parser for block
         parser_block = sub_parser.add_parser(name, parents=[common_parser], help=desc)
-        parser_block.add_argument('--height', type=int, default=0, help='Block height to print', required=False)
-        parser_block.add_argument('--hash', type=str,
-                                  help='blockHash without "0x"\n'
-                                  "(ex: e9cad58aae99c1cae85c2545ad33ddb34e8dc4b5e5dd9f363a30cb55e809018e)",
-                                  required=False)
+        parser_block.add_argument(
+            "--height",
+            type=int,
+            default=0,
+            help="Block height to print",
+            required=False,
+        )
+        parser_block.add_argument(
+            "--hash",
+            type=str,
+            help='blockHash without "0x"\n'
+            "(ex: e9cad58aae99c1cae85c2545ad33ddb34e8dc4b5e5dd9f363a30cb55e809018e)",
+            required=False,
+        )
         parser_block.set_defaults(func=self.run)
 
     def run(self, args):
@@ -52,5 +60,3 @@ class CommandBlock(Command):
         block_reader.close()
 
         pprint(block)
-
-

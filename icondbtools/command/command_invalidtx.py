@@ -18,17 +18,16 @@ from icondbtools.libs.invalid_transaction_checker import InvalidTransactionCheck
 
 
 class CommandInvalidTx(Command):
-
     def __init__(self, sub_parser, common_parser):
         self.add_parser(sub_parser, common_parser)
 
     def add_parser(self, sub_parser, common_parser):
-        name = 'invalidtx'
-        desc = 'Check whether invalid transaction are present or not'
+        name = "invalidtx"
+        desc = "Check whether invalid transaction are present or not"
 
         parser = sub_parser.add_parser(name, parents=[common_parser], help=desc)
-        parser.add_argument('--start', type=int, default=1, required=False)
-        parser.add_argument('--end', type=int, default=-1, required=False)
+        parser.add_argument("--start", type=int, default=1, required=False)
+        parser.add_argument("--end", type=int, default=-1, required=False)
         parser.set_defaults(func=self.run)
 
     def run(self, args):

@@ -62,7 +62,7 @@ def bytes_to_hex(value: bytes, prefix: str = "0x") -> str:
     if value is None:
         return "None"
 
-    return f'{prefix}{value.hex()}'
+    return f"{prefix}{value.hex()}"
 
 
 def hex_to_bytes(value: Optional[str]) -> Optional[bytes]:
@@ -79,7 +79,7 @@ def remove_0x_prefix(value: str) -> str:
 
 
 def is_hex(value: str) -> bool:
-    return value.startswith('0x') or value.startswith('-0x')
+    return value.startswith("0x") or value.startswith("-0x")
 
 
 def convert_hex_str_to_bytes(value: str):
