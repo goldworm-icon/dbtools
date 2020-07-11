@@ -13,27 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
-from typing import Optional, Tuple
-
-import plyvel
+from typing import Tuple
 
 from icondbtools.command.command import Command
-from icondbtools.libs import (
-    NID_KEY,
-    TRANSACTION_COUNT_KEY,
-    LAST_BLOCK_KEY,
-    PREPS_KEY_PREFIX,
-    ZERO_HASH,
-    UTF8,
-)
-from icondbtools.libs.block_database_raw_reader import (
-    BlockDatabaseRawReader,
-    TransactionParser,
-)
+from ..migrate.BlockMigrator import BlockMigrator
 
 
-class CommandCopy(Command):
+class CommandMigrate(Command):
 
     MAX_COPY_BLOCK_COUNT = 999_999_999
 
@@ -42,7 +28,10 @@ class CommandCopy(Command):
 
     def add_parser(self, sub_parser, common_parser):
         name = "migrate"
-        desc = "Migrate Loopchain blocks between start and end BH to target DB path with msgpack"
+        desc = (
+            "Convert loopchain blocks between start and end BH to binary blocks, "
+            "writing them to target db"
+        )
 
         parser_copy = sub_parser.add_parser(name, parents=[common_parser], help=desc)
 
@@ -76,100 +65,10 @@ class CommandCopy(Command):
 
         start, end = self._get_copy_block_range(start, end, count)
 
-        block_reader = BlockDatabaseRawReader()
-        block_reader.open(db_path)
-        new_db = plyvel.DB(new_db_path, create_if_missing=True)
-
-        last_block: Optional[bytes] = None
-        height = start
-        wb_size = 100
-
-        while height < end:
-            with new_db.write_batch() as wb:
-                # Write batch_data to leveldb every 10000 blocks
-                for _ in range(wb_size):
-                    block: bytes = block_reader.get_block_by_height(height)
-                    if block is None:
-                        height = end
-                        break
-
-                    # Copy a block data from source db to target db
-                    self._copy_block(wb, block_reader, block, height)
-
-                    height += 1
-                    last_block = block
-
-            # Display copy progress status
-            print(".", end="", flush=True)
-
-        if last_block:
-            with new_db.write_batch() as wb:
-                self._copy_stats(wb, block_reader, last_block)
-
-        block_reader.close()
-
-    @classmethod
-    def _copy_block(cls, wb, block_reader, block: bytes, height: int):
-        cls._write_transactions(wb, block_reader, block)
-        cls._write_block(wb, block_reader, block, height)
-        cls._write_reps_data(wb, block_reader, block)
-
-    @classmethod
-    def _write_transactions(cls, wb, block_reader, block):
-        # Get transaction data from the DB using transactions in block
-        transactions: list = block_reader.get_transactions_from_block(block)
-        for transaction in transactions:
-            tx_hash_key: Optional[
-                bytes
-            ] = TransactionParser.get_tx_hash_key_from_transaction(transaction)
-            if tx_hash_key is not None:
-                full_transaction: bytes = block_reader.get_transaction_by_key(
-                    tx_hash_key
-                )
-                wb.put(tx_hash_key, full_transaction)
-
-    @classmethod
-    def _write_block(cls, wb, block_reader, block: bytes, height: int):
-        block_height_key: bytes = block_reader.get_block_height_key(height)
-        block_hash_key: bytes = block_reader.get_block_hash_key_by_height(height)
-        wb.put(block_hash_key, block)
-        wb.put(block_height_key, block_hash_key)
-
-    @classmethod
-    def _write_reps_data(cls, wb, block_reader, block: bytes):
-        block_dict: dict = json.loads(block)
-
-        if block_dict["version"] != "0.1a":
-            # Copy reps_data
-            reps_hash_str: str = block_dict.get("repsHash", "0x")[2:]
-            reps_data = block_reader.get_reps(bytes.fromhex(reps_hash))
-            wb.put(PREPS_KEY_PREFIX + bytes.fromhex(reps_hash), reps_data)
-
-            # Copy next_reps_data
-            next_reps_hash = block_dict.get("nextRepsHash")
-            if next_reps_hash != ZERO_HASH:
-                next_reps_hash = bytes.fromhex(next_reps_hash[2:])
-                reps_data = block_reader.get_reps(next_reps_hash)
-                wb.put(PREPS_KEY_PREFIX + next_reps_hash, reps_data)
-
-    @classmethod
-    def _copy_stats(cls, wb, block_reader, last_block: bytes):
-        # Copy nid
-        nid_data: bytes = block_reader.get_nid()
-        if nid_data:
-            wb.put(NID_KEY, nid_data)
-
-        # Copy transaction count
-        transaction_count_data: bytes = block_reader.get_transaction_count()
-        if transaction_count_data:
-            wb.put(TRANSACTION_COUNT_KEY, transaction_count_data)
-
-        # Copy last_block_hash
-        block: dict = json.loads(last_block)
-        last_block_hash: str = block.get(
-            "block_hash"
-        ) if "block_hash" in block else block.get("hash")[2:]
-        wb.put(LAST_BLOCK_KEY, last_block_hash.encode(UTF8))
+        block_migrator = BlockMigrator()
+        block_migrator.open(db_path, new_db_path)
+        block_migrator.run(start, end)
+        block_migrator.close()
 
     @classmethod
     def _get_copy_block_range(cls, start: int, end: int, count: int) -> Tuple[int, int]:
