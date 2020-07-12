@@ -7,6 +7,7 @@ from iconservice.base.address import Address
 
 from ..libs.loopchain_block import LoopchainBlock
 from ..utils import pack
+from ..utils.convert_type import bytes_to_hex
 from ..utils.transaction import tx_dict_to_params
 
 
@@ -32,6 +33,10 @@ class Block(object):
         state_hash: bytes = None,
         transactions: List[Dict[str, Any]] = None,
     ):
+        """
+        :param transactions: transactions which contains items have already been converted to object
+        """
+
         self.version = version
         self.height = height
         self.timestamp: int = timestamp
@@ -40,9 +45,18 @@ class Block(object):
         self.leader = leader
         self.state_hash: bytes = state_hash
         self.transactions: List[Dict[str, Any]] = transactions
-        """
-        :param transactions: transactions which contains items have already been converted to object
-        """
+
+    def __str__(self):
+        return (
+            f"version={self.version} "
+            f"height={self.height} "
+            f"timestamp={self.timestamp} "
+            f"block_hash={bytes_to_hex(self.block_hash)} "
+            f"prev_block_hash={bytes_to_hex(self.prev_block_hash)} "
+            f"leader={self.leader} "
+            f"state_hash={bytes_to_hex(self.state_hash)} "
+            f"transactions={self.transactions}"
+        )
 
     @classmethod
     def from_bytes(cls, data: bytes):

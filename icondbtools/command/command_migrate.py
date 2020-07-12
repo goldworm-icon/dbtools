@@ -33,28 +33,28 @@ class CommandMigrate(Command):
             "writing them to target db"
         )
 
-        parser_copy = sub_parser.add_parser(name, parents=[common_parser], help=desc)
+        parser = sub_parser.add_parser(name, parents=[common_parser], help=desc)
 
-        parser_copy.add_argument(
+        parser.add_argument(
             "-s",
             "--start",
             type=int,
             default=-1,
             help="start block height to be copied",
         )
-        parser_copy.add_argument(
+        parser.add_argument(
             "--end",
             type=int,
             default=-1,
             help="end block height to be copied, inclusive",
         )
-        parser_copy.add_argument(
+        parser.add_argument(
             "--count", type=int, default=-1, help="block count to be copied"
         )
-        parser_copy.add_argument(
+        parser.add_argument(
             "--new-db", type=str, default="", help="new DB path for blocks to be copied"
         )
-        parser_copy.set_defaults(func=self.run)
+        parser.set_defaults(func=self.run)
 
     def run(self, args):
         db_path: str = args.db
