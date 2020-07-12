@@ -5,6 +5,10 @@ import plyvel
 from .block import Block
 from ..libs.block_database_raw_reader import BlockDatabaseRawReader
 from ..libs.loopchain_block import LoopchainBlock
+from iconcommons.logger import Logger
+
+
+TAG = "MGT"
 
 
 def get_db_key_by_height(height: int) -> bytes:
@@ -62,7 +66,10 @@ class BlockMigrator(object):
 
     @classmethod
     def _convert_block(cls, loopchain_block: LoopchainBlock) -> Block:
-        return Block.from_loopchain_block(loopchain_block)
+        block = Block.from_loopchain_block(loopchain_block)
+        print(block)
+
+        return block
 
     def _write_block(self, block: Block):
         key: bytes = get_db_key_by_height(block.height)
