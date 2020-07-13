@@ -16,7 +16,7 @@
 from typing import Tuple
 
 from icondbtools.command.command import Command
-from ..migrate.BlockMigrator import BlockMigrator
+from ..migrate.block_migrator import BlockMigrator
 
 
 class CommandMigrate(Command):

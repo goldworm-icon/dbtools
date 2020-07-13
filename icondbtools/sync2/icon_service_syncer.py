@@ -14,16 +14,18 @@
 # limitations under the License.
 
 import asyncio
-import inspect
 import logging
 import os
 import shutil
 import time
 from concurrent.futures import ThreadPoolExecutor
-from typing import TYPE_CHECKING, Optional, List, Tuple, Dict
+from typing import TYPE_CHECKING, Optional, List, Tuple, Dict, Any, Set
 
 from iconcommons.icon_config import IconConfig
 from iconcommons.logger import Logger
+
+from icondbtools.utils.convert_type import object_to_str
+from icondbtools.word_detector import WordDetector
 from iconservice.base.address import Address
 from iconservice.base.block import Block
 from iconservice.database.batch import TransactionBatchValue
@@ -35,42 +37,43 @@ from iconservice.iconscore.icon_score_context import (
     IconScoreContext,
 )
 from iconservice.iiss.reward_calc.storage import Storage
-
-from icondbtools.utils.convert_type import object_to_str
-from icondbtools.utils.transaction import create_transaction_requests
-from icondbtools.word_detector import WordDetector
-from .block_database_reader import BlockDatabaseReader
-from .loopchain_block import LoopchainBlock
-from .vote import Vote
 from ..data.node_container import NodeContainer
+from ..libs.vote import Vote
+from ..migrate.block import Block as BinBlock
+from ..sync2.block_reader import BlockDatabaseReader as BinBlockDatabaseReader
+from ..sync2.utils import create_transaction_requests
 
 if TYPE_CHECKING:
     from iconservice.database.batch import BlockBatch
     from iconservice.precommit_data_manager import PrecommitData, PrecommitDataManager
 
 
-def _create_iconservice_block(loopchain_block: "LoopchainBlock") -> "Block":
+def _create_iconservice_block(bin_block: BinBlock) -> "Block":
     return Block(
-        block_height=loopchain_block.height,
-        block_hash=loopchain_block.block_hash,
-        timestamp=loopchain_block.timestamp,
-        prev_hash=loopchain_block.prev_block_hash,
+        block_height=bin_block.height,
+        block_hash=bin_block.block_hash,
+        timestamp=bin_block.timestamp,
+        prev_hash=bin_block.prev_block_hash,
     )
 
 
+def _transaction_to_request(params: dict):
+    return {
+        "method": "icx_sendTransaction",
+        "params": params,
+    }
+
+
 def _create_block_validators(
-    block_dict: dict, leader: Optional["Address"]
-) -> Optional[List["Address"]]:
-    if "prevVotes" not in block_dict:
+    prev_votes: Optional[List[Vote]], leader: Optional[Address],
+) -> Optional[List[Address]]:
+    if prev_votes is None:
         return None
 
-    validators: List["Address"] = []
+    validators: List[Address] = []
 
-    for item in block_dict["prevVotes"]:
-        if not isinstance(item, dict):
-            continue
-
-        vote = Vote.from_dict(item)
+    for vote in prev_votes:
+        assert isinstance(vote, Vote)
         if leader != vote.rep:
             validators.append(vote.rep)
 
@@ -78,33 +81,31 @@ def _create_block_validators(
 
 
 def _create_prev_block_votes(
-    block_dict: dict, leader: Optional["Address"], main_preps: Optional["NodeContainer"]
-) -> Optional[List[Tuple["Address", int]]]:
-    if "prevVotes" not in block_dict:
+    prev_votes: Optional[List[Vote]],
+    leader: Optional[Address],
+    main_preps: Optional["NodeContainer"],
+) -> Optional[List[Tuple[Address, int]]]:
+    if prev_votes is None:
         return None
 
     if main_preps is None:
         return None
 
-    ret: List[Tuple["Address", int]] = []
-    prev_votes = {}
+    ret: List[Tuple[Address, int]] = []
+    votes: Set[Address] = set()
 
-    # Parse prevVotes
-    for item in block_dict["prevVotes"]:
-        if not isinstance(item, dict):
-            continue
-
-        vote = Vote.from_dict(item)
-        prev_votes[vote.rep] = vote
+    for vote in prev_votes:
+        assert isinstance(vote, Vote)
+        votes.add(vote.rep)
 
     for main_prep in main_preps:
-        address: "Address" = main_prep.address
+        address: Address = main_prep.address
 
         if address == leader:
             # Skip it if address is a leader address
             continue
 
-        vote_result = 1 if address in prev_votes else 0
+        vote_result = 1 if address in votes else 0
         ret.append((address, vote_result))
 
     return ret
@@ -114,7 +115,7 @@ class IconServiceSyncer(object):
     _TAG = "SYNC"
 
     def __init__(self):
-        self._block_reader = BlockDatabaseReader()
+        self._block_reader = BinBlockDatabaseReader()
         self._engine = IconServiceEngine()
 
     def open(
@@ -239,10 +240,9 @@ class IconServiceSyncer(object):
         print("block_height | commit_state | state_root_hash | tx_count")
 
         prev_block: Optional["Block"] = None
-        prev_loopchain_block: Optional["LoopchainBlock"] = None
+        prev_bin_block: Optional[BinBlock] = None
         if start_height > 0:
-            block_dict = self._block_reader.get_block_by_block_height(start_height - 1)
-            prev_loopchain_block = LoopchainBlock.from_dict(block_dict)
+            prev_bin_block = self._block_reader.get_block_by_height(start_height - 1)
 
         main_preps: Optional["NodeContainer"] = None
         next_main_preps: Optional["NodeContainer"] = None
@@ -250,27 +250,21 @@ class IconServiceSyncer(object):
         end_height = start_height + count - 1
 
         for height in range(start_height, start_height + count):
-            block_dict: dict = self._block_reader.get_block_by_block_height(height)
-
-            if block_dict is None:
+            # block_dict: dict = self._block_reader.get_block_by_block_height(height)
+            bin_block = self._block_reader.get_block_by_height(height)
+            if bin_block is None:
                 print(f"last block: {height - 1}")
                 break
 
-            if main_preps is None:
-                preps: list = self._block_reader.load_main_preps(block_dict)
-                main_preps: Optional['NodeContainer'] = NodeContainer.from_list(preps=preps)
+            block: "Block" = _create_iconservice_block(bin_block)
 
-            loopchain_block: 'LoopchainBlock' = LoopchainBlock.from_dict(block_dict)
-            block: 'Block' = _create_iconservice_block(loopchain_block)
-
-            tx_requests: list = create_transaction_requests(loopchain_block)
+            tx_requests: List[Dict[str, Any]] = create_transaction_requests(bin_block.transactions)
             prev_block_generator: Optional["Address"] = \
-                prev_loopchain_block.leader if prev_loopchain_block else None
-            prev_block_validators: Optional[List["Address"]] = _create_block_validators(
-                block_dict, prev_block_generator
-            )
+                prev_bin_block.leader if prev_bin_block else None
+            prev_block_validators: Optional[List["Address"]] = \
+                _create_block_validators(bin_block.prev_votes, prev_block_generator)
             prev_block_votes: Optional[List[Tuple["Address", int]]] = \
-                _create_prev_block_votes(block_dict, prev_block_generator, main_preps)
+                _create_prev_block_votes(bin_block.prev_votes, prev_block_generator, main_preps)
 
             Logger.info(
                 tag=self._TAG, msg=f"prev_block_generator={prev_block_generator}"
@@ -293,9 +287,7 @@ class IconServiceSyncer(object):
             tx_results, state_root_hash = invoke_result[0], invoke_result[1]
             main_preps_as_dict: Optional[Dict] = invoke_result[3]
 
-            commit_state: bytes = self._block_reader.get_commit_state(
-                block_dict, channel
-            )
+            commit_state: bytes = bin_block.state_hash
 
             # "commit_state" is the field name of state_root_hash in loopchain block
             if (height - start_height) % print_block_height == 0:
@@ -312,8 +304,8 @@ class IconServiceSyncer(object):
                         if commit_state != state_root_hash:
                             raise Exception()
 
-                    if height > 0 and not self._check_invoke_result(tx_results):
-                        raise Exception()
+                    # if height > 0 and not self._check_invoke_result(tx_results):
+                    #     raise Exception()
             except Exception as e:
                 logging.exception(e)
 
@@ -330,20 +322,19 @@ class IconServiceSyncer(object):
                     self._backup_iiss_db(iiss_db_backup_path, block.height)
 
             # If no_commit is set to True, the config only affects to the last block to commit
-            if height < end_height:
+            if not no_commit or height < end_height:
                 while word_detector.get_hold():
                     time.sleep(0.5)
 
                 # Call IconServiceEngine.commit() with a block
-                if not no_commit:
-                    self._commit(block)
+                self._commit(block)
 
             while word_detector.get_hold():
                 time.sleep(0.5)
             # Prepare the next iteration
             self._backup_state_db(block, backup_period)
             prev_block = block
-            prev_loopchain_block = loopchain_block
+            prev_bin_block = bin_block
 
             if next_main_preps:
                 main_preps = next_main_preps
@@ -359,10 +350,11 @@ class IconServiceSyncer(object):
         return ret
 
     def _commit(self, block: "Block"):
-        if "block" in inspect.signature(self._engine.commit).parameters:
-            self._engine.commit(block)
-        else:
-            self._engine.commit(block.height, block.hash, block.hash)
+        # if "block" in inspect.signature(self._engine.commit).parameters:
+        #     self._engine.commit(block)
+        # else:
+        #     self._engine.commit(block.height, block.hash, block.hash)
+        self._engine.commit(block.height, block.hash, block.hash)
 
     def _backup_iiss_db(self, iiss_db_backup_path: Optional[str], block_height: int):
         iiss_db_path: str = os.path.join(self._engine._state_db_root_path, "iiss")
@@ -379,56 +371,56 @@ class IconServiceSyncer(object):
                     shutil.copytree(entry.path, dst_path)
                     break
 
-    def _check_invoke_result(self, tx_results: list):
-        """Compare the transaction results from IconServiceEngine
-        with the results stored in loopchain db
-
-        If transaction result is not compatible to protocol v3, pass it
-
-        :param tx_results: the transaction results that IconServiceEngine.invoke() returns
-        :return: True(same) False(different)
-        """
-
-        for tx_result in tx_results:
-            tx_info_in_db: dict = self._block_reader.get_transaction_result_by_hash(
-                tx_result.tx_hash.hex()
-            )
-            tx_result_in_db = tx_info_in_db["result"]
-
-            # tx_v2 dose not have transaction result_v3
-            if "status" not in tx_result_in_db:
-                continue
-
-            # information extracted from db
-            status: int = int(tx_result_in_db["status"], 16)
-            tx_hash: bytes = bytes.fromhex(tx_result_in_db["txHash"])
-            step_used: int = int(tx_result_in_db["stepUsed"], 16)
-            step_price: int = int(tx_result_in_db["stepPrice"], 16)
-            event_logs: list = tx_result_in_db["eventLogs"]
-            step: int = step_used * step_price
-
-            if tx_hash != tx_result.tx_hash:
-                print(f"tx_hash: {tx_hash.hex()} != {tx_result.tx_hash.hex()}")
-                return False
-            if status != tx_result.status:
-                print(f"status: {status} != {tx_result.status}")
-                return False
-            if step_used != tx_result.step_used:
-                print(f"step_used: {step_used} != {tx_result.step_used}")
-                return False
-
-            tx_result_step: int = tx_result.step_used * tx_result.step_price
-            if step != tx_result_step:
-                print(f"step: {step} != {tx_result_step}")
-                return False
-            if step_price != tx_result.step_price:
-                print(f"step_price: {step_price} != {tx_result.step_price}")
-                return False
-
-            if not self._check_event_logs(event_logs, tx_result.event_logs):
-                return False
-
-        return True
+    # def _check_invoke_result(self, tx_results: list):
+    #     """Compare the transaction results from IconServiceEngine
+    #     with the results stored in loopchain db
+    #
+    #     If transaction result is not compatible to protocol v3, pass it
+    #
+    #     :param tx_results: the transaction results that IconServiceEngine.invoke() returns
+    #     :return: True(same) False(different)
+    #     """
+    #
+    #     for tx_result in tx_results:
+    #         tx_info_in_db: dict = self._block_reader.get_transaction_result_by_hash(
+    #             tx_result.tx_hash.hex()
+    #         )
+    #         tx_result_in_db = tx_info_in_db["result"]
+    #
+    #         # tx_v2 dose not have transaction result_v3
+    #         if "status" not in tx_result_in_db:
+    #             continue
+    #
+    #         # information extracted from db
+    #         status: int = int(tx_result_in_db["status"], 16)
+    #         tx_hash: bytes = bytes.fromhex(tx_result_in_db["txHash"])
+    #         step_used: int = int(tx_result_in_db["stepUsed"], 16)
+    #         step_price: int = int(tx_result_in_db["stepPrice"], 16)
+    #         event_logs: list = tx_result_in_db["eventLogs"]
+    #         step: int = step_used * step_price
+    #
+    #         if tx_hash != tx_result.tx_hash:
+    #             print(f"tx_hash: {tx_hash.hex()} != {tx_result.tx_hash.hex()}")
+    #             return False
+    #         if status != tx_result.status:
+    #             print(f"status: {status} != {tx_result.status}")
+    #             return False
+    #         if step_used != tx_result.step_used:
+    #             print(f"step_used: {step_used} != {tx_result.step_used}")
+    #             return False
+    #
+    #         tx_result_step: int = tx_result.step_used * tx_result.step_price
+    #         if step != tx_result_step:
+    #             print(f"step: {step} != {tx_result_step}")
+    #             return False
+    #         if step_price != tx_result.step_price:
+    #             print(f"step_price: {step_price} != {tx_result.step_price}")
+    #             return False
+    #
+    #         if not self._check_event_logs(event_logs, tx_result.event_logs):
+    #             return False
+    #
+    #     return True
 
     @staticmethod
     def _check_event_logs(event_logs_in_db: list, event_logs_in_tx_result: list):

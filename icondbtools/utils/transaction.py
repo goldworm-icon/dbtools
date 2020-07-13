@@ -15,12 +15,11 @@
 
 from typing import Union
 
+from icondbtools.libs.loopchain_block import LoopchainBlock
+from icondbtools.utils.convert_type import str_to_int
 from iconservice.base.address import Address
 from iconservice.base.address import MalformedAddress
 from iconservice.base.exception import InvalidParamsException
-
-from icondbtools.libs.loopchain_block import LoopchainBlock
-from icondbtools.utils.convert_type import str_to_int
 
 
 def create_transaction_requests(loopchain_block: "LoopchainBlock") -> list:

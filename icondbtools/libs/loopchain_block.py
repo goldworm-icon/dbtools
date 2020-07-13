@@ -30,6 +30,7 @@ class LoopchainBlock(object):
         prev_block_hash: bytes = None,
         leader: "Address" = None,
         state_hash: bytes = None,
+        prev_votes: Optional[list] = None,
         transactions: list = None,
     ):
         self.version = version
@@ -39,6 +40,7 @@ class LoopchainBlock(object):
         self.timestamp: int = timestamp
         self.leader = leader
         self.state_hash: bytes = state_hash
+        self.prev_votes: Optional[list] = prev_votes
         self.transactions = transactions
 
     def __bool__(self):
@@ -72,6 +74,7 @@ class LoopchainBlock(object):
         state_hash: bytes = cls._get_commit_state(block)
         leader: "Address" = cls._get_peer_id(block)
 
+        prev_votes: Optional[list] = block.get("prevVotes")
         transactions: list = block["confirmed_transaction_list"]
 
         return LoopchainBlock(
@@ -82,6 +85,7 @@ class LoopchainBlock(object):
             prev_block_hash=prev_block_hash,
             state_hash=state_hash,
             leader=leader,
+            prev_votes=prev_votes,
             transactions=transactions,
         )
 
@@ -111,6 +115,7 @@ class LoopchainBlock(object):
         leader = Address.from_string(block["leader"])
         timestamp: int = str_to_int(block["timestamp"])
         state_hash: bytes = convert_hex_str_to_bytes(block["stateHash"])
+        prev_votes: Optional[list] = block.get("prevVotes")
         transactions: list = block["transactions"]
 
         return LoopchainBlock(
@@ -121,5 +126,6 @@ class LoopchainBlock(object):
             prev_block_hash=prev_block_hash,
             state_hash=state_hash,
             leader=leader,
+            prev_votes=prev_votes,
             transactions=transactions,
         )
