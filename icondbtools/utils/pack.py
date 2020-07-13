@@ -5,12 +5,15 @@ __all__ = ("encode", "decode")
 from enum import Enum
 
 import msgpack
+
+from ..libs.vote import Vote
 from iconservice.base.address import Address, MalformedAddress, AddressPrefix
 
 
 class ExtType(Enum):
     ADDRESS = 0
-    MalformedAddress = 1
+    MALFORMED_ADDRESS = 1
+    VOTE = 2
 
 
 def encode(obj: object) -> bytes:
@@ -24,7 +27,7 @@ def decode(data: bytes) -> object:
 def default(obj) -> msgpack.ExtType:
     if isinstance(obj, Address):
         code = (
-            ExtType.MalformedAddress
+            ExtType.MALFORMED_ADDRESS
             if isinstance(obj, MalformedAddress)
             else ExtType.ADDRESS
         )
@@ -33,10 +36,12 @@ def default(obj) -> msgpack.ExtType:
     raise TypeError(f"Unknown type: {repr(obj)}")
 
 
-def ext_hook(code, data):
+def ext_hook(code: int, data: bytes):
     if code == ExtType.ADDRESS.value:
         return Address.from_bytes_including_prefix(data)
-    elif code == ExtType.MalformedAddress.value:
+    elif code == ExtType.MALFORMED_ADDRESS.value:
         return MalformedAddress(AddressPrefix.EOA, data[1:])
+    elif code == ExtType.VOTE.value:
+        return Vote.from_bytes(data)
 
     return msgpack.ExtType(code, data)

@@ -1,17 +1,21 @@
 # -*- coding: utf-8 -*-
 
 from enum import IntEnum, auto
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 
 from iconservice.base.address import Address
-
 from ..libs.loopchain_block import LoopchainBlock
+from ..libs.vote import Vote
 from ..utils import pack
 from ..utils.convert_type import bytes_to_hex
 from ..utils.transaction import tx_dict_to_params
 
 
 class Block(object):
+    """Block containing block data from loopchain db
+
+    All field values are already converted to each original type compared to LoopchainBlock
+    """
     class Index(IntEnum):
         VERSION = auto()
         HEIGHT = auto()
@@ -20,6 +24,7 @@ class Block(object):
         PREV_BLOCK_HASH = auto()
         LEADER = auto()
         STATE_HASH = auto()
+        PREV_VOTES = auto()
         TXS = auto()
 
     def __init__(
@@ -31,6 +36,7 @@ class Block(object):
         prev_block_hash: bytes = None,
         leader: "Address" = None,
         state_hash: bytes = None,
+        prev_votes: Optional[List[Vote]] = None,
         transactions: List[Dict[str, Any]] = None,
     ):
         """
@@ -44,6 +50,7 @@ class Block(object):
         self.prev_block_hash = prev_block_hash
         self.leader = leader
         self.state_hash: bytes = state_hash
+        self.prev_votes: Optional[List[Vote]] = prev_votes
         self.transactions: List[Dict[str, Any]] = transactions
 
     def __str__(self):
@@ -55,6 +62,7 @@ class Block(object):
             f"prev_block_hash={bytes_to_hex(self.prev_block_hash)} "
             f"leader={self.leader} "
             f"state_hash={bytes_to_hex(self.state_hash)} "
+            f"prev_votes={self.prev_votes} "
             f"transactions={self.transactions}"
         )
 
@@ -71,11 +79,16 @@ class Block(object):
             prev_block_hash=obj[cls.Index.PREV_BLOCK_HASH],
             leader=obj[cls.Index.LEADER],
             state_hash=obj[cls.Index.STATE_HASH],
+            prev_votes=obj[cls.Index.PREV_VOTES],
             transactions=obj[cls.Index.TXS],
         )
 
     @classmethod
     def from_loopchain_block(cls, loopchain_block: LoopchainBlock) -> "Block":
+        prev_votes: Optional[list] = loopchain_block.prev_votes
+        if prev_votes is not None:
+            prev_votes = [Vote.from_dict(data) for data in prev_votes]
+
         transactions = [
             tx_dict_to_params(tx_dict, loopchain_block.timestamp)
             for tx_dict in loopchain_block.transactions
@@ -89,6 +102,7 @@ class Block(object):
             prev_block_hash=loopchain_block.prev_block_hash,
             leader=loopchain_block.leader,
             state_hash=loopchain_block.state_hash,
+            prev_votes=prev_votes,
             transactions=transactions,
         )
 
@@ -101,6 +115,7 @@ class Block(object):
             self.prev_block_hash,
             self.leader,
             self.state_hash,
+            self.prev_votes,
             self.transactions,
         ]
         return pack.encode(obj)

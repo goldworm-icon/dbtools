@@ -13,13 +13,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from enum import IntEnum, auto
 from typing import Optional
 
-from iconservice.base.address import Address
 from icondbtools.utils.convert_type import str_to_int, convert_hex_str_to_bytes
+from iconservice.base.address import Address
+from ..utils import pack
 
 
 class Vote(object):
+    class Index(IntEnum):
+        REP = auto()
+        HEIGHT = auto()
+        HASH = auto()
+        TIMESTAMP = auto()
+        ROUND = auto()
+
     def __init__(
         self,
         rep: "Address",
@@ -33,6 +42,15 @@ class Vote(object):
         self.block_hash = block_hash
         self.timestamp = timestamp
         self.round = round
+
+    def __str__(self):
+        return (
+            f"rep={self.rep} "
+            f"height={self.height} "
+            f"hash={self.block_hash} " 
+            f"timestamp={self.timestamp} "
+            f"round={self.round}"
+        )
 
     @classmethod
     def from_dict(cls, data: Optional[dict]) -> "Vote":
@@ -64,3 +82,19 @@ class Vote(object):
             timestamp=timestamp,
             round=round_,
         )
+
+    @classmethod
+    def from_bytes(cls, data: bytes) -> "Vote":
+        obj: object = pack.decode(data)
+        assert isinstance(obj, list)
+
+        return cls(*obj)
+
+    def to_bytes(self) -> bytes:
+        return pack.encode([
+            self.rep,
+            self.height,
+            self.block_hash,
+            self.timestamp,
+            self.round,
+        ])
