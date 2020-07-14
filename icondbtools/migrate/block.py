@@ -17,6 +17,10 @@ class Block(object):
     All field values are already converted to each original type compared to LoopchainBlock
     """
     class Index(IntEnum):
+        def _generate_next_value_(self, start, count, last_values):
+            """generate consecutive automatic numbers starting from zero"""
+            return count
+
         VERSION = auto()
         HEIGHT = auto()
         TIMESTAMP = auto()
@@ -87,7 +91,10 @@ class Block(object):
     def from_loopchain_block(cls, loopchain_block: LoopchainBlock) -> "Block":
         prev_votes: Optional[list] = loopchain_block.prev_votes
         if prev_votes is not None:
-            prev_votes = [Vote.from_dict(data) for data in prev_votes]
+            prev_votes = [
+                Vote.from_dict(data)
+                for data in prev_votes if isinstance(data, dict)
+            ]
 
         transactions = [
             tx_dict_to_params(tx_dict, loopchain_block.timestamp)

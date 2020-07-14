@@ -18,6 +18,7 @@ from typing import Optional
 import plyvel
 
 from ..migrate.block import Block
+from ..utils.convert_type import bytes_to_hex
 
 
 class Bucket(IntEnum):
@@ -54,7 +55,7 @@ class BlockDatabaseReader(object):
         key: Optional[bytes] = self._get_key_by_block_hash(block_hash)
         return self._get_block(key)
 
-    def _get_block(self, key: Optional[bytes]) -> Optional[bytes]:
+    def _get_block(self, key: Optional[bytes]) -> Optional[Block]:
         if key is None:
             return None
 
@@ -66,7 +67,7 @@ class BlockDatabaseReader(object):
 
     @classmethod
     def _get_key_by_height(cls, height: int) -> bytes:
-        return Bucket.HEIGHT.value.to_bytes(1, "big") + height.to_bytes(8, "big")
+        return Bucket.BLOCK_HEIGHT.value.to_bytes(1, "big") + height.to_bytes(8, "big")
 
     def _get_key_by_block_hash(self, block_hash: bytes) -> Optional[bytes]:
         key: bytes = self._get_key(Bucket.BLOCK_HASH, block_hash)
