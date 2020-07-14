@@ -20,6 +20,7 @@ from pprint import pprint
 from icondbtools.command.command_account import CommandAccount
 from icondbtools.command.command_balance import CommandBalance
 from icondbtools.command.command_block import CommandBlock
+from icondbtools.command.command_calculatefee import CommandCalculateFee
 from icondbtools.command.command_clear import CommandClear
 from icondbtools.command.command_copy import CommandCopy
 from icondbtools.command.command_dbinfo import CommandDbinfo
@@ -56,7 +57,8 @@ def main():
         CommandIISSTXData,
         CommandCopy,
         CommandTerm,
-        CommandBalance
+        CommandBalance,
+        CommandCalculateFee,
     ]
 
     version = get_dbtools_version()
