@@ -5,7 +5,7 @@ from typing import Dict, List, Any, Optional
 
 from iconservice.base.address import Address
 from ..libs.loopchain_block import LoopchainBlock
-from ..libs.vote import Vote
+from icondbtools.data.vote import Vote
 from ..utils import pack
 from ..utils.convert_type import bytes_to_hex
 from ..utils.transaction import tx_dict_to_params
