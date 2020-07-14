@@ -1,12 +1,54 @@
 # -*- coding: utf-8 -*-
 
-__all__ = ("encode", "decode")
+__all__ = ("ExtType", "encode", "decode", "Meta")
+
+from abc import ABCMeta, abstractmethod
+from enum import Enum
 
 import msgpack
 
 from iconservice.base.address import Address, MalformedAddress, AddressPrefix
-from . import ExtType
-from ..libs.vote import Vote
+
+
+class ExtType(Enum):
+    ADDRESS = 0
+    MALFORMED_ADDRESS = 1
+    BIGINT = 2
+    VOTE = 3
+
+
+# Do not access this variable directly
+registry = {}
+
+
+class Meta(ABCMeta):
+    def __new__(mcs, name, bases, class_dict):
+        cls = type.__new__(mcs, name, bases, class_dict)
+        register_class(cls)
+        return cls
+
+
+def register_class(cls):
+    ext_type = cls.get_ext_type()
+    if isinstance(ext_type, int):
+        registry[ext_type] = cls
+        print(registry)
+
+
+class Serializable(metaclass=Meta):
+    @classmethod
+    @abstractmethod
+    def get_ext_type(cls) -> ExtType:
+        pass
+
+    @classmethod
+    @abstractmethod
+    def from_bytes(cls, data: bytes):
+        pass
+
+    @abstractmethod
+    def to_bytes(self) -> bytes:
+        pass
 
 
 def encode(obj: object) -> bytes:
@@ -17,7 +59,7 @@ def decode(data: bytes) -> object:
     return msgpack.unpackb(data, ext_hook=ext_hook, raw=False)
 
 
-def default(obj) -> msgpack.ExtType:
+def default(obj: object) -> msgpack.ExtType:
     if isinstance(obj, Address):
         code = (
             ExtType.MALFORMED_ADDRESS
@@ -25,12 +67,12 @@ def default(obj) -> msgpack.ExtType:
             else ExtType.ADDRESS
         )
         return msgpack.ExtType(code.value, obj.to_bytes_including_prefix())
-    elif isinstance(obj, Vote):
-        return msgpack.ExtType(ExtType.VOTE.value, obj.to_bytes())
     elif isinstance(obj, int):
         return msgpack.ExtType(ExtType.BIGINT.value, obj.to_bytes(32, "big", signed=True))
+    else:
+        return msgpack.ExtType(obj.get_ext_type(), obj.to_bytes())
 
-    raise TypeError(f"Unknown type: {repr(obj)}")
+    # raise TypeError(f"Unknown type: {repr(obj)}")
 
 
 def ext_hook(code: int, data: bytes):
@@ -38,9 +80,10 @@ def ext_hook(code: int, data: bytes):
         return Address.from_bytes_including_prefix(data)
     elif code == ExtType.MALFORMED_ADDRESS.value:
         return MalformedAddress(AddressPrefix.EOA, data[1:])
-    elif code == ExtType.VOTE.value:
-        return Vote.from_bytes(data)
     elif code == ExtType.BIGINT.value:
         return int.from_bytes(data, "big", signed=True)
+    elif code in registry:
+        cls = registry[code]
+        return cls.from_bytes(data)
 
     return msgpack.ExtType(code, data)

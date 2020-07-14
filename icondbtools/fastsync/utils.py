@@ -5,7 +5,7 @@ from typing import Dict, List, Any, Optional, Tuple, Set
 from iconservice.base.address import Address
 from iconservice.base.block import Block
 from ..data.node_container import NodeContainer
-from ..libs.vote import Vote
+from icondbtools.data.vote import Vote
 from ..migrate.block import Block as BinBlock
 
 

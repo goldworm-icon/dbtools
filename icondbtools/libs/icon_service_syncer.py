@@ -41,7 +41,7 @@ from iconservice.iconscore.icon_score_context import (
 from iconservice.iiss.reward_calc.storage import Storage
 from .block_database_reader import BlockDatabaseReader
 from .loopchain_block import LoopchainBlock
-from .vote import Vote
+from icondbtools.data.vote import Vote
 from ..data.node_container import NodeContainer
 
 if TYPE_CHECKING:

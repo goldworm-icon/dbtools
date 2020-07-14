@@ -16,41 +16,24 @@
 from enum import IntEnum, auto
 from typing import Optional
 
-import msgpack
+from iconservice.base.address import Address
 
-from icondbtools.utils.convert_type import str_to_int, convert_hex_str_to_bytes
-from iconservice.base.address import Address, MalformedAddress, AddressPrefix
-from ..utils import ExtType
-
-
-def _default(obj) -> msgpack.ExtType:
-    if isinstance(obj, Address):
-        code = (
-            ExtType.MALFORMED_ADDRESS
-            if isinstance(obj, MalformedAddress)
-            else ExtType.ADDRESS
-        )
-        return msgpack.ExtType(code.value, obj.to_bytes_including_prefix())
-
-    raise TypeError(f"Unknown type: {repr(obj)}")
+from ..utils import pack
+from ..utils.convert_type import str_to_int, convert_hex_str_to_bytes
 
 
-def _ext_hook(code: int, data: bytes):
-    if code == ExtType.ADDRESS.value:
-        return Address.from_bytes_including_prefix(data)
-    elif code == ExtType.MALFORMED_ADDRESS.value:
-        return MalformedAddress(AddressPrefix.EOA, data[1:])
+class Vote(pack.Serializable):
 
-    return msgpack.ExtType(code, data)
-
-
-class Vote(object):
     class Index(IntEnum):
         REP = auto()
         HEIGHT = auto()
         HASH = auto()
         TIMESTAMP = auto()
         ROUND = auto()
+
+    @classmethod
+    def get_ext_type(cls) -> int:
+        return pack.ExtType.VOTE.value
 
     def __init__(
         self,
@@ -120,7 +103,7 @@ class Vote(object):
 
     @classmethod
     def from_bytes(cls, data: bytes) -> "Vote":
-        obj: object = msgpack.unpackb(data, ext_hook=_ext_hook, raw=False)
+        obj: object = pack.decode(data)
         assert isinstance(obj, list)
 
         return cls(*obj)
@@ -134,4 +117,4 @@ class Vote(object):
             self.round,
         ]
 
-        return msgpack.packb(obj, default=_default, use_bin_type=True)
+        return pack.encode(obj)
