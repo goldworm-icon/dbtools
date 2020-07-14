@@ -19,11 +19,15 @@ import logging
 import os
 import shutil
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor
 from typing import TYPE_CHECKING, Optional, List, Tuple, Dict
 
 from iconcommons.icon_config import IconConfig
 from iconcommons.logger import Logger
+
+from icondbtools.utils.convert_type import object_to_str
+from icondbtools.utils.transaction import create_transaction_requests
+from icondbtools.word_detector import WordDetector
 from iconservice.base.address import Address
 from iconservice.base.block import Block
 from iconservice.database.batch import TransactionBatchValue
@@ -35,10 +39,6 @@ from iconservice.iconscore.icon_score_context import (
     IconScoreContext,
 )
 from iconservice.iiss.reward_calc.storage import Storage
-
-from icondbtools.utils.convert_type import object_to_str
-from icondbtools.utils.transaction import create_transaction_requests
-from icondbtools.word_detector import WordDetector
 from .block_database_reader import BlockDatabaseReader
 from .loopchain_block import LoopchainBlock
 from .vote import Vote

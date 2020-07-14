@@ -19,7 +19,7 @@ import os
 import shutil
 import time
 from concurrent.futures import ThreadPoolExecutor
-from typing import TYPE_CHECKING, Optional, List, Tuple, Dict, Any, Set
+from typing import TYPE_CHECKING, Optional, List, Tuple, Dict, Any
 
 from iconcommons.icon_config import IconConfig
 from iconcommons.logger import Logger
@@ -38,77 +38,18 @@ from iconservice.iconscore.icon_score_context import (
 )
 from iconservice.iiss.reward_calc.storage import Storage
 from ..data.node_container import NodeContainer
-from ..libs.vote import Vote
 from ..migrate.block import Block as BinBlock
-from ..sync2.block_reader import BlockDatabaseReader as BinBlockDatabaseReader
-from ..sync2.utils import create_transaction_requests
+from ..fastsync.block_reader import BlockDatabaseReader as BinBlockDatabaseReader
+from ..fastsync.utils import (
+    create_transaction_requests,
+    create_iconservice_block,
+    create_block_validators,
+    create_prev_block_votes,
+)
 
 if TYPE_CHECKING:
     from iconservice.database.batch import BlockBatch
     from iconservice.precommit_data_manager import PrecommitData, PrecommitDataManager
-
-
-def _create_iconservice_block(bin_block: BinBlock) -> "Block":
-    return Block(
-        block_height=bin_block.height,
-        block_hash=bin_block.block_hash,
-        timestamp=bin_block.timestamp,
-        prev_hash=bin_block.prev_block_hash,
-    )
-
-
-def _transaction_to_request(params: dict):
-    return {
-        "method": "icx_sendTransaction",
-        "params": params,
-    }
-
-
-def _create_block_validators(
-    prev_votes: Optional[List[Vote]], leader: Optional[Address],
-) -> Optional[List[Address]]:
-    if prev_votes is None:
-        return None
-
-    validators: List[Address] = []
-
-    for vote in prev_votes:
-        assert isinstance(vote, Vote)
-        if leader != vote.rep:
-            validators.append(vote.rep)
-
-    return validators
-
-
-def _create_prev_block_votes(
-    prev_votes: Optional[List[Vote]],
-    leader: Optional[Address],
-    main_preps: Optional["NodeContainer"],
-) -> Optional[List[Tuple[Address, int]]]:
-    if prev_votes is None:
-        return None
-
-    if main_preps is None:
-        return None
-
-    ret: List[Tuple[Address, int]] = []
-    votes: Set[Address] = set()
-
-    for vote in prev_votes:
-        assert isinstance(vote, Vote)
-        votes.add(vote.rep)
-
-    for main_prep in main_preps:
-        address: Address = main_prep.address
-
-        if address == leader:
-            # Skip it if address is a leader address
-            continue
-
-        vote_result = 1 if address in votes else 0
-        ret.append((address, vote_result))
-
-    return ret
 
 
 class IconServiceSyncer(object):
@@ -206,7 +147,7 @@ class IconServiceSyncer(object):
         db_path: str,
         channel: str,
         start_height: int = 0,
-        count: int = 99999999,
+        count: int = 99_999_999,
         stop_on_error: bool = True,
         no_commit: bool = False,
         backup_period: int = 0,
@@ -250,21 +191,20 @@ class IconServiceSyncer(object):
         end_height = start_height + count - 1
 
         for height in range(start_height, start_height + count):
-            # block_dict: dict = self._block_reader.get_block_by_block_height(height)
             bin_block = self._block_reader.get_block_by_height(height)
             if bin_block is None:
                 print(f"last block: {height - 1}")
                 break
 
-            block: "Block" = _create_iconservice_block(bin_block)
+            block: "Block" = create_iconservice_block(bin_block)
 
             tx_requests: List[Dict[str, Any]] = create_transaction_requests(bin_block.transactions)
             prev_block_generator: Optional["Address"] = \
                 prev_bin_block.leader if prev_bin_block else None
             prev_block_validators: Optional[List["Address"]] = \
-                _create_block_validators(bin_block.prev_votes, prev_block_generator)
+                create_block_validators(bin_block.prev_votes, prev_block_generator)
             prev_block_votes: Optional[List[Tuple["Address", int]]] = \
-                _create_prev_block_votes(bin_block.prev_votes, prev_block_generator, main_preps)
+                create_prev_block_votes(bin_block.prev_votes, prev_block_generator, main_preps)
 
             Logger.info(
                 tag=self._TAG, msg=f"prev_block_generator={prev_block_generator}"
@@ -275,7 +215,7 @@ class IconServiceSyncer(object):
             Logger.info(tag=self._TAG, msg=f"prev_block_votes={prev_block_votes}")
 
             if prev_block is not None and prev_block.hash != block.prev_hash:
-                raise Exception()
+                raise Exception(f"Invalid prev_block_hash: height={height}")
 
             invoke_result = self._engine.invoke(
                 block,
@@ -302,10 +242,10 @@ class IconServiceSyncer(object):
                 if stop_on_error:
                     if commit_state:
                         if commit_state != state_root_hash:
-                            raise Exception()
+                            raise Exception("state_root_hash mismatch")
 
-                    # if height > 0 and not self._check_invoke_result(tx_results):
-                    #     raise Exception()
+                    if height > 0 and not self._check_invoke_result(tx_results):
+                        raise Exception("tx_result mismatch")
             except Exception as e:
                 logging.exception(e)
 
@@ -371,16 +311,16 @@ class IconServiceSyncer(object):
                     shutil.copytree(entry.path, dst_path)
                     break
 
-    # def _check_invoke_result(self, tx_results: list):
-    #     """Compare the transaction results from IconServiceEngine
-    #     with the results stored in loopchain db
-    #
-    #     If transaction result is not compatible to protocol v3, pass it
-    #
-    #     :param tx_results: the transaction results that IconServiceEngine.invoke() returns
-    #     :return: True(same) False(different)
-    #     """
-    #
+    def _check_invoke_result(self, tx_results: list):
+        """Compare the transaction results from IconServiceEngine
+        with the results stored in loopchain db
+
+        If transaction result is not compatible to protocol v3, pass it
+
+        :param tx_results: the transaction results that IconServiceEngine.invoke() returns
+        :return: True(same) False(different)
+        """
+
     #     for tx_result in tx_results:
     #         tx_info_in_db: dict = self._block_reader.get_transaction_result_by_hash(
     #             tx_result.tx_hash.hex()
@@ -420,7 +360,7 @@ class IconServiceSyncer(object):
     #         if not self._check_event_logs(event_logs, tx_result.event_logs):
     #             return False
     #
-    #     return True
+        return True
 
     @staticmethod
     def _check_event_logs(event_logs_in_db: list, event_logs_in_tx_result: list):

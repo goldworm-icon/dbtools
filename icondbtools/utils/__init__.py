@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import os
+from enum import Enum
 
 import pkg_resources
 
@@ -35,3 +36,10 @@ def get_dbtools_version() -> str:
     except:
         version = "unknown"
     return version
+
+
+class ExtType(Enum):
+    ADDRESS = 0
+    MALFORMED_ADDRESS = 1
+    VOTE = 2
+    BIGINT = 3

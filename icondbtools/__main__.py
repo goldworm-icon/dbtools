@@ -24,6 +24,7 @@ from .command.command_block import CommandBlock
 from .command.command_clear import CommandClear
 from .command.command_copy import CommandCopy
 from .command.command_dbinfo import CommandDbinfo
+from .command.command_fastsync import CommandFastSync
 from .command.command_iiss_data import CommandIISSData
 from .command.command_iiss_tx_data import CommandIISSTXData
 from .command.command_invalidtx import CommandInvalidTx
@@ -42,6 +43,7 @@ from .libs.timer import Timer
 def main():
     commands = [
         CommandSync,
+        CommandFastSync,
         CommandLastBlock,
         CommandBlock,
         CommandClear,

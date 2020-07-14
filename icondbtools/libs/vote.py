@@ -16,9 +16,32 @@
 from enum import IntEnum, auto
 from typing import Optional
 
+import msgpack
+
 from icondbtools.utils.convert_type import str_to_int, convert_hex_str_to_bytes
-from iconservice.base.address import Address
-from ..utils import pack
+from iconservice.base.address import Address, MalformedAddress, AddressPrefix
+from ..utils import ExtType
+
+
+def _default(obj) -> msgpack.ExtType:
+    if isinstance(obj, Address):
+        code = (
+            ExtType.MALFORMED_ADDRESS
+            if isinstance(obj, MalformedAddress)
+            else ExtType.ADDRESS
+        )
+        return msgpack.ExtType(code.value, obj.to_bytes_including_prefix())
+
+    raise TypeError(f"Unknown type: {repr(obj)}")
+
+
+def _ext_hook(code: int, data: bytes):
+    if code == ExtType.ADDRESS.value:
+        return Address.from_bytes_including_prefix(data)
+    elif code == ExtType.MALFORMED_ADDRESS.value:
+        return MalformedAddress(AddressPrefix.EOA, data[1:])
+
+    return msgpack.ExtType(code, data)
 
 
 class Vote(object):
@@ -31,7 +54,7 @@ class Vote(object):
 
     def __init__(
         self,
-        rep: "Address",
+        rep: Address,
         block_height: int,
         block_hash: bytes,
         timestamp: int,
@@ -52,6 +75,18 @@ class Vote(object):
             f"round={self.round}"
         )
 
+    def __eq__(self, other):
+        return (
+            self.rep == other.rep and
+            self.height == other.height and
+            self.block_hash == other.block_hash and
+            self.timestamp == other.timestamp and
+            self.round == other.round
+        )
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     @classmethod
     def from_dict(cls, data: Optional[dict]) -> "Vote":
         """
@@ -67,7 +102,7 @@ class Vote(object):
         :param data:
         :return:
         """
-        rep: "Address" = Address.from_string(data["rep"])
+        rep: Address = Address.from_string(data["rep"])
         height: int = str_to_int(data["blockHeight"])
         block_hash: bytes = convert_hex_str_to_bytes(data["blockHash"])
         timestamp: int = str_to_int(data["timestamp"])
@@ -85,16 +120,18 @@ class Vote(object):
 
     @classmethod
     def from_bytes(cls, data: bytes) -> "Vote":
-        obj: object = pack.decode(data)
+        obj: object = msgpack.unpackb(data, ext_hook=_ext_hook, raw=False)
         assert isinstance(obj, list)
 
         return cls(*obj)
 
     def to_bytes(self) -> bytes:
-        return pack.encode([
+        obj = [
             self.rep,
             self.height,
             self.block_hash,
             self.timestamp,
             self.round,
-        ])
+        ]
+
+        return msgpack.packb(obj, default=_default, use_bin_type=True)

@@ -5,8 +5,6 @@ import plyvel
 from .block import Block
 from ..libs.block_database_raw_reader import BlockDatabaseRawReader
 from ..libs.loopchain_block import LoopchainBlock
-from iconcommons.logger import Logger
-
 
 TAG = "MGT"
 
@@ -53,6 +51,7 @@ class BlockMigrator(object):
             # Write write_batch to the target db
             if self._bytes_to_write >= self.MAX_BYTES_TO_CACHE:
                 self._flush()
+                print(height)
 
         # Write data remaining in write_batch to the target db
         self._flush()
@@ -67,8 +66,6 @@ class BlockMigrator(object):
     @classmethod
     def _convert_block(cls, loopchain_block: LoopchainBlock) -> Block:
         block = Block.from_loopchain_block(loopchain_block)
-        print(block)
-
         return block
 
     def _write_block(self, block: Block):
