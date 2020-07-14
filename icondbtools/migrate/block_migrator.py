@@ -78,4 +78,5 @@ class BlockMigrator(object):
     def _flush(self):
         if self._bytes_to_write > 0:
             self._write_batch.write()
+            self._write_batch.clear()
             self._bytes_to_write = 0

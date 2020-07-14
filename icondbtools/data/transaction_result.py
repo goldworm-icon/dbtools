@@ -15,7 +15,7 @@
 
 import json
 from enum import IntEnum
-from typing import List, Dict, Union
+from typing import List, Dict, Union, Any
 
 from iconservice.base.address import Address
 from ..data.event_log import EventLog
@@ -41,16 +41,17 @@ class TransactionResult(object):
         event_logs: List["EventLog"] = None,
     ):
         self._tx_hash: bytes = tx_hash
-        self._tx_index: int = tx_index
         self._status = status
+        self._tx_index: int = tx_index
         self._to: "Address" = to
         self._score_address = score_address
         self._block_height: int = block_height
         self._block_hash: bytes = block_hash
         self._step_price = step_price
         self._step_used = step_used
-        self._fee = step_price * step_used
         self._event_logs: List["EventLog"] = [] if event_logs is None else event_logs
+
+        self._fee = step_price * step_used
 
     def __str__(self) -> str:
         items = (
@@ -158,3 +159,26 @@ class TransactionResult(object):
             ret.append(EventLog.from_dict(log))
 
         return ret
+
+    def to_list(self) -> List[Any]:
+        if len(self._event_logs) > 0:
+            event_logs = [event_log.to_list() for event_log in self._event_logs]
+        else:
+            event_logs = None
+
+        return [
+            self._tx_hash,
+            self._status.value,
+            self._tx_index,
+            self._to,
+            self._score_address,
+            self._block_height,
+            self._block_hash,
+            self._step_price,
+            self._step_used,
+            event_logs,
+        ]
+
+    @classmethod
+    def from_list(cls, obj: List[Any]) -> "TransactionResult":
+        return cls(*obj)

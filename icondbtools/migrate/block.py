@@ -17,11 +17,7 @@ class Block(object):
     All field values are already converted to each original type compared to LoopchainBlock
     """
     class Index(IntEnum):
-        def _generate_next_value_(self, start, count, last_values):
-            """generate consecutive automatic numbers starting from zero"""
-            return count
-
-        VERSION = auto()
+        VERSION = 0
         HEIGHT = auto()
         TIMESTAMP = auto()
         BLOCK_HASH = auto()
