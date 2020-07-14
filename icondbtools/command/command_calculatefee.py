@@ -80,4 +80,4 @@ class CommandCalculateFee(Command):
                           f"stepPrice: {step_price} | \t"
                           f"accumulatedFee : {total_fee}")
         print(f"startBlock : {start}, endBlock: {end}, total charged fee(loop) : {total_fee}\n"
-              f"average fee per day(loop) : {total_fee // (BLOCKS_IN_DAY * (end - start))}")
+              f"average fee per day(loop) : {(total_fee // (end - start + 1)) * BLOCKS_IN_DAY}")
