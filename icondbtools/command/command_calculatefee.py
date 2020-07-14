@@ -19,6 +19,7 @@ from icondbtools.libs.block_database_reader import BlockDatabaseReader
 IGNORE_DATA_TYPES = ("base", )
 TX_KEY = "transactions"
 OLD_TX_KEY = "confirmed_transaction_list"
+BLOCKS_IN_DAY = 43200
 
 
 class CommandCalculateFee(Command):
@@ -78,4 +79,5 @@ class CommandCalculateFee(Command):
                           f"stepUsed : {step_used} | \t"
                           f"stepPrice: {step_price} | \t"
                           f"accumulatedFee : {total_fee}")
-        print(f"total fee in {start} - {end} is {total_fee}")
+        print(f"startBlock : {start}, endBlock: {end}, total charged fee(loop) : {total_fee}\n"
+              f"average fee per day(loop) : {total_fee // (BLOCKS_IN_DAY * (end - start))}")
