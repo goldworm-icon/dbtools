@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import List, Dict, Tuple, Union
+from typing import List, Dict, Tuple, Union, Any
 
 from iconservice.base.address import Address
 from ..utils.convert_type import str_to_object
@@ -78,6 +78,17 @@ class EventLog(object):
 
         index = signature.index("(")
         name = signature[:index]
-        params = signature[index + 1 : -1].split(",")
+        params = signature[index + 1: -1].split(",")
 
         return name, params
+
+    def to_list(self) -> List[Any]:
+        return [
+            self._score_address,
+            self._indexed,
+            self._data,
+        ]
+
+    @classmethod
+    def from_list(cls, obj: List[Any]) -> "EventLog":
+        return cls(*obj)
