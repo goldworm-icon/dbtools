@@ -40,6 +40,12 @@ class CommandCalculateFee(Command):
         parser.add_argument(
             "--print-detail", dest="detail_flag", help="print detail flag", action="store_true"
         )
+        parser.add_argument(
+            "--average-unit",
+            dest="unit",
+            help="average unit. (b: block, d: day, w: week, m: month, y: year). default unit is block. "
+                 "set default unit when input is wrong", default="b"
+        )
         parser.set_defaults(func=self.run)
 
     def run(self, args):
@@ -47,7 +53,9 @@ class CommandCalculateFee(Command):
         start: int = args.start
         end: int = args.end
         detail_flag: bool = args.detail_flag
+        unit: str = args.unit
         total_fee: int = 0
+        average_range: int = self.input_unit_to_block(unit)
 
         block_reader = BlockDatabaseReader()
         block_reader.open(db_path)
@@ -80,4 +88,31 @@ class CommandCalculateFee(Command):
                           f"stepPrice: {step_price} | \t"
                           f"accumulatedFee : {total_fee}")
         print(f"startBlock : {start}, endBlock: {end}, total charged fee(loop) : {total_fee}\n"
-              f"average fee per day(loop) : {(total_fee // (end - start + 1)) * BLOCKS_IN_DAY}")
+              f"average fee per {self.input_unit_to_word(unit)}(loop) : "
+              f"{(total_fee // (end - start + 1)) * average_range}")
+
+    @staticmethod
+    def input_unit_to_block(average_unit: str) -> int:
+        if average_unit.lower() == "d":
+            return BLOCKS_IN_DAY
+        elif average_unit.lower() == "w":
+            return BLOCKS_IN_DAY * 7
+        elif average_unit.lower() == "m":
+            return BLOCKS_IN_DAY * 30
+        elif average_unit.lower() == "y":
+            return BLOCKS_IN_DAY * 365
+        else:
+            return 1
+
+    @staticmethod
+    def input_unit_to_word(average_unit: str) -> str:
+        if average_unit.lower() == "d":
+            return "day"
+        elif average_unit.lower() == "w":
+            return "week"
+        elif average_unit.lower() == "m":
+            return "month"
+        elif average_unit.lower() == "y":
+            return "year"
+        else:
+            return "block"
