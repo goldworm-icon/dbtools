@@ -70,18 +70,7 @@ class Block(object):
     def from_bytes(cls, data: bytes):
         obj = pack.decode(data)
         assert isinstance(obj, list)
-
-        return cls(
-            version=obj[cls.Index.VERSION],
-            height=obj[cls.Index.HEIGHT],
-            timestamp=obj[cls.Index.TIMESTAMP],
-            block_hash=obj[cls.Index.BLOCK_HASH],
-            prev_block_hash=obj[cls.Index.PREV_BLOCK_HASH],
-            leader=obj[cls.Index.LEADER],
-            state_hash=obj[cls.Index.STATE_HASH],
-            prev_votes=obj[cls.Index.PREV_VOTES],
-            transactions=obj[cls.Index.TXS],
-        )
+        return cls(*obj)
 
     @classmethod
     def from_loopchain_block(cls, loopchain_block: LoopchainBlock) -> "Block":

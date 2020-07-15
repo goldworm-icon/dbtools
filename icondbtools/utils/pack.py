@@ -3,7 +3,8 @@
 __all__ = ("ExtType", "encode", "decode", "Meta")
 
 from abc import ABCMeta, abstractmethod
-from enum import Enum
+from enum import Enum, IntEnum
+from typing import Type
 
 import msgpack
 
@@ -15,6 +16,8 @@ class ExtType(Enum):
     MALFORMED_ADDRESS = 1
     BIGINT = 2
     VOTE = 3
+    TX_RESULT = 4
+    EVENT_LOG = 5
 
 
 # Do not access this variable directly
@@ -23,16 +26,11 @@ registry = {}
 
 class Meta(ABCMeta):
     def __new__(mcs, name, bases, class_dict):
-        cls = type.__new__(mcs, name, bases, class_dict)
-        register_class(cls)
+        cls = super().__new__(mcs, name, bases, class_dict)
+        if cls.__name__ != "Serializable":
+            register_class(cls)
+
         return cls
-
-
-def register_class(cls):
-    ext_type = cls.get_ext_type()
-    if isinstance(ext_type, int):
-        registry[ext_type] = cls
-        print(registry)
 
 
 class Serializable(metaclass=Meta):
@@ -49,6 +47,13 @@ class Serializable(metaclass=Meta):
     @abstractmethod
     def to_bytes(self) -> bytes:
         pass
+
+
+def register_class(cls: Type[Serializable]):
+    ext_type = cls.get_ext_type()
+    if isinstance(ext_type, int):
+        registry[ext_type] = cls
+        print(registry)
 
 
 def encode(obj: object) -> bytes:
@@ -69,10 +74,10 @@ def default(obj: object) -> msgpack.ExtType:
         return msgpack.ExtType(code.value, obj.to_bytes_including_prefix())
     elif isinstance(obj, int):
         return msgpack.ExtType(ExtType.BIGINT.value, obj.to_bytes(32, "big", signed=True))
-    else:
+    elif isinstance(obj, Serializable):
         return msgpack.ExtType(obj.get_ext_type(), obj.to_bytes())
 
-    # raise TypeError(f"Unknown type: {repr(obj)}")
+    raise TypeError(f"Unknown type: {repr(obj)}")
 
 
 def ext_hook(code: int, data: bytes):

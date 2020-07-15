@@ -14,15 +14,28 @@
 # limitations under the License.
 
 import json
-from enum import IntEnum
+from enum import IntEnum, auto
 from typing import List, Dict, Union, Any
 
 from iconservice.base.address import Address
 from ..data.event_log import EventLog
+from ..utils import pack
 from ..utils.convert_type import hex_to_bytes, bytes_to_hex, str_to_int
 
 
-class TransactionResult(object):
+class TransactionResult(pack.Serializable):
+    class Index(IntEnum):
+        TX_HASH = 0
+        STATUS = auto()
+        TX_INDEX = auto()
+        TO = auto()
+        SCORE_ADDRESS = auto()
+        BLOCK_HEIGHT = auto()
+        BLOCK_HASH = auto()
+        STEP_PRICE = auto()
+        STEP_USED = auto()
+        EVENT_LOGS = auto()
+
     class Status(IntEnum):
         FAILURE = 0
         SUCCESS = 1
@@ -30,7 +43,7 @@ class TransactionResult(object):
     def __init__(
         self,
         tx_hash: bytes = None,
-        status: Status = Status.FAILURE,
+        status: Union[Status, int] = Status.FAILURE,
         tx_index: int = -1,
         to: "Address" = None,
         score_address: "Address" = None,
@@ -41,7 +54,7 @@ class TransactionResult(object):
         event_logs: List["EventLog"] = None,
     ):
         self._tx_hash: bytes = tx_hash
-        self._status = status
+        self._status = status if isinstance(status, self.Status) else self.Status(status)
         self._tx_index: int = tx_index
         self._to: "Address" = to
         self._score_address = score_address
@@ -118,7 +131,7 @@ class TransactionResult(object):
         return self._event_logs
 
     @classmethod
-    def from_bytes(cls, data: bytes) -> "TransactionResult":
+    def from_json(cls, data: bytes) -> "TransactionResult":
         data_in_dict = json.loads(data)
 
         # The result of a transaction is nested with "result" key in the transaction data in loopchain db.
@@ -126,7 +139,7 @@ class TransactionResult(object):
 
     @classmethod
     def from_dict(cls, data: Dict[str, Union[str, List]]) -> "TransactionResult":
-        status = TransactionResult.Status(str_to_int(data["status"]))
+        status = cls.Status(str_to_int(data["status"]))
         to: "Address" = Address.from_string(data["to"])
         score_address: "Address" = Address.from_string(
             data["scoreAddress"]
@@ -182,3 +195,16 @@ class TransactionResult(object):
     @classmethod
     def from_list(cls, obj: List[Any]) -> "TransactionResult":
         return cls(*obj)
+
+    @classmethod
+    def get_ext_type(cls) -> int:
+        return pack.ExtType.TX_RESULT.value
+
+    @classmethod
+    def from_bytes(cls, data: bytes):
+        obj = pack.decode(data)
+        assert isinstance(obj, list)
+        return cls.from_list(obj)
+
+    def to_bytes(self) -> bytes:
+        return pack.encode(self.to_list())
