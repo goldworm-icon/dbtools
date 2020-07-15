@@ -13,14 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import unittest
-
-from iconservice.base.address import Address, AddressPrefix
+import os
+import random
+import pytest
 
 from icondbtools.data.event_log import EventLog
+from iconservice.base.address import Address, AddressPrefix
 
 
-class TestEventLog(unittest.TestCase):
+class TestEventLog:
     def test_parse_signature(self):
         signature = "Transfer(Address,Address,int)"
         name, types = EventLog.parse_signature(signature)
@@ -80,6 +81,28 @@ class TestEventLog(unittest.TestCase):
         assert event_log.data[0] == iscore
         assert event_log.data[1] == icx
 
+    @pytest.mark.parametrize(
+        "indexed,data",
+        [
+            (
+                [
+                    "Transfer(Address,Address,int)",
+                    Address.from_prefix_and_int(AddressPrefix.EOA, 0),
+                    Address.from_prefix_and_int(AddressPrefix.EOA, 1),
+                ],
+                [random.randint(0, 99999)]
+            ),
+            (
+                ["IScoreClaimed(int,int)"],
+                [10_000, 10],
+            )
+        ]
+    )
+    def test_serializable(self, indexed, data):
+        score_address = Address(AddressPrefix.CONTRACT, os.urandom(20))
 
-if __name__ == "__main__":
-    unittest.main()
+        expected = EventLog(score_address, indexed, data)
+        event_log = EventLog.from_bytes(expected.to_bytes())
+        assert event_log == expected
+        assert event_log.indexed == indexed
+        assert event_log.data == data

@@ -17,9 +17,10 @@ from typing import List, Dict, Tuple, Union, Any
 
 from iconservice.base.address import Address
 from ..utils.convert_type import str_to_object
+from ..utils import pack
 
 
-class EventLog(object):
+class EventLog(pack.Serializable):
     def __init__(self, score_address: "Address", indexed: List, data: List):
         self._score_address: "Address" = score_address
         self._indexed = indexed
@@ -31,6 +32,16 @@ class EventLog(object):
             f"indexed={self._indexed} "
             f"data={self._data}"
         )
+
+    def __eq__(self, other):
+        return (
+            self._score_address == other.score_address and
+            self._indexed == other.indexed and
+            self._data == other.data
+        )
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     @property
     def signature(self) -> str:
@@ -92,3 +103,16 @@ class EventLog(object):
     @classmethod
     def from_list(cls, obj: List[Any]) -> "EventLog":
         return cls(*obj)
+
+    @classmethod
+    def get_ext_type(cls) -> int:
+        return pack.ExtType.EVENT_LOG.value
+
+    @classmethod
+    def from_bytes(cls, data: bytes):
+        obj = pack.decode(data)
+        assert isinstance(obj, list)
+        return cls.from_list(obj)
+
+    def to_bytes(self) -> bytes:
+        return pack.encode(self.to_list())

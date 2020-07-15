@@ -124,14 +124,14 @@ class TransactionCollector(object):
                     break
 
                 tx = Transaction.from_bytes(data)
-                tx_result = TransactionResult.from_bytes(data)
+                tx_result = TransactionResult.from_json(data)
                 yield tx, tx_result
 
     def _get_transaction_result(self, tx_hash: bytes) -> "TransactionResult":
         data: bytes = self._reader.get_transaction_result_by_hash(tx_hash)
         assert isinstance(data, bytes)
 
-        return TransactionResult.from_bytes(data)
+        return TransactionResult.from_json(data)
 
     def close(self):
         self._reader.close()

@@ -45,7 +45,7 @@ class TestBalanceCalculator(object):
 
         tx_result = TransactionResult(
             tx_hash=tx_hash,
-            status=1,
+            status=TransactionResult.Status(1),
             tx_index=0,
             step_price=step_price,
             step_used=step_used,
