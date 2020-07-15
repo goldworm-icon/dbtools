@@ -37,7 +37,7 @@ from .command.command_term import CommandTerm
 from .command.command_token import CommandToken
 from .command.command_tps import CommandTps
 from .command.command_txresult import CommandTxResult
-from .libs.timer import Timer
+from .utils.timer import Timer
 
 
 def main():
