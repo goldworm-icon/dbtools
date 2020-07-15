@@ -21,6 +21,7 @@ class BlockMigrator(object):
         self._new_db = None
         self._write_batch = None
         self._bytes_to_write = 0
+        self._height_written = -1
 
     def open(self, db_path: str, new_db_path: str):
         self._block_reader.open(db_path)
@@ -38,6 +39,15 @@ class BlockMigrator(object):
             self._new_db = None
 
     def run(self, start: int, end: int):
+        try:
+            self._run(start, end)
+        except:
+            raise
+        finally:
+            # Write data remaining in write_batch to the target db
+            self._flush()
+
+    def _run(self, start: int, end: int):
         for height in range(start, end + 1):
             # Read an original block data from loopchain db
             loopchain_block = self._read_loopchain_block(height)
@@ -51,10 +61,6 @@ class BlockMigrator(object):
             # Write write_batch to the target db
             if self._bytes_to_write >= self.MAX_BYTES_TO_CACHE:
                 self._flush()
-                print(height)
-
-        # Write data remaining in write_batch to the target db
-        self._flush()
 
     def _read_loopchain_block(self, height: int) -> LoopchainBlock:
         data: bytes = self._block_reader.get_block_by_height(height)
@@ -74,9 +80,12 @@ class BlockMigrator(object):
         self._write_batch.put(key, value)
 
         self._bytes_to_write += len(value)
+        self._height_written = block.height
 
     def _flush(self):
         if self._bytes_to_write > 0:
             self._write_batch.write()
             self._write_batch.clear()
             self._bytes_to_write = 0
+
+        print(f"height: {self._height_written}", flush=True)
