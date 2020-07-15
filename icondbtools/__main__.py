@@ -21,6 +21,7 @@ from .__about__ import version, name
 from .command.command_account import CommandAccount
 from .command.command_balance import CommandBalance
 from .command.command_block import CommandBlock
+from .command.command_cdb import CommandCDB
 from .command.command_clear import CommandClear
 from .command.command_copy import CommandCopy
 from .command.command_dbinfo import CommandDbinfo
@@ -43,7 +44,6 @@ from .utils.timer import Timer
 def main():
     commands = [
         CommandSync,
-        CommandFastSync,
         CommandLastBlock,
         CommandBlock,
         CommandClear,
@@ -58,9 +58,13 @@ def main():
         CommandIISSData,
         CommandIISSTXData,
         CommandCopy,
-        CommandMigrate,
         CommandTerm,
         CommandBalance,
+
+        # Commands for compact db
+        CommandCDB,
+        CommandMigrate,
+        CommandFastSync,
     ]
 
     parser = argparse.ArgumentParser(

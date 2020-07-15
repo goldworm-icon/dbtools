@@ -5,9 +5,10 @@ from datetime import timedelta
 import plyvel
 
 from .block import Block
+from ..fastsync.block_reader import Bucket
 from ..libs.block_database_raw_reader import BlockDatabaseRawReader
 from ..libs.loopchain_block import LoopchainBlock
-from ..libs.timer import Timer
+from ..utils.timer import Timer
 
 TAG = "MGT"
 
@@ -17,6 +18,13 @@ def get_db_key_by_height(height: int) -> bytes:
 
 
 class BlockMigrator(object):
+    """Migrate block data to a new db
+
+    Process
+    1. Read block data from loopchain db
+    2. Convert loopchain block to binary block
+    3. Write binary block data to a new db
+    """
     MAX_BYTES_TO_CACHE = 1_000_000
 
     def __init__(self):
@@ -46,6 +54,14 @@ class BlockMigrator(object):
         if self._new_db:
             self._new_db.close()
             self._new_db = None
+
+    def get_last_block(self) -> Block:
+        it = self._new_db.iterator(
+            prefix=Bucket.BLOCK_HEIGHT.value, reverse=True, include_key=False)
+        v = next(it)
+        it.close()
+
+        return Block.from_bytes(v)
 
     def run(self, start: int, count: int):
         try:
