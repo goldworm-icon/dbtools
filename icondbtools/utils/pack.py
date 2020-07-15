@@ -28,7 +28,7 @@ def default(obj) -> msgpack.ExtType:
     elif isinstance(obj, Vote):
         return msgpack.ExtType(ExtType.VOTE.value, obj.to_bytes())
     elif isinstance(obj, int):
-        return msgpack.ExtType(ExtType.BIGINT.value, obj.to_bytes(32, "big"))
+        return msgpack.ExtType(ExtType.BIGINT.value, obj.to_bytes(32, "big", signed=True))
 
     raise TypeError(f"Unknown type: {repr(obj)}")
 
@@ -41,6 +41,6 @@ def ext_hook(code: int, data: bytes):
     elif code == ExtType.VOTE.value:
         return Vote.from_bytes(data)
     elif code == ExtType.BIGINT.value:
-        return int.from_bytes(data, "big")
+        return int.from_bytes(data, "big", signed=True)
 
     return msgpack.ExtType(code, data)
