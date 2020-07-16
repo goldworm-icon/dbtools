@@ -4,22 +4,17 @@ from typing import Dict, List, Any, Optional, Tuple, Set
 
 from iconservice.base.address import Address
 from iconservice.base.block import Block
-from ..data.node_container import NodeContainer
+
 from icondbtools.data.vote import Vote
+from ..data.node_container import NodeContainer
 from ..migrate.block import Block as BinBlock
 
 
 def create_transaction_requests(converted_tx_params: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     return [
-        convert_transaction_to_request(tx_param) for tx_param in converted_tx_params
+        {"method": "icx_sendTransaction", "params": params}
+        for params in converted_tx_params
     ]
-
-
-def convert_transaction_to_request(params: dict) -> Dict:
-    return {
-        "method": "icx_sendTransaction",
-        "params": params,
-    }
 
 
 def create_iconservice_block(bin_block: BinBlock) -> Block:
