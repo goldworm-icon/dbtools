@@ -29,6 +29,7 @@ class BlockMigrator(object):
         new_db = plyvel.DB(new_db_path, create_if_missing=True)
         self._write_batch = new_db.write_batch()
         self._bytes_to_write = 0
+        self._new_db = new_db
 
     def close(self):
         self._block_reader.close()
