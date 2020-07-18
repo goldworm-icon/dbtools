@@ -23,7 +23,6 @@ from ..utils.convert_type import str_to_int, convert_hex_str_to_bytes
 
 
 class Vote(pack.Serializable):
-
     class Index(IntEnum):
         REP = auto()
         HEIGHT = auto()
@@ -53,18 +52,18 @@ class Vote(pack.Serializable):
         return (
             f"rep={self.rep} "
             f"height={self.height} "
-            f"hash={self.block_hash} " 
+            f"hash={self.block_hash} "
             f"timestamp={self.timestamp} "
             f"round={self.round}"
         )
 
     def __eq__(self, other):
         return (
-            self.rep == other.rep and
-            self.height == other.height and
-            self.block_hash == other.block_hash and
-            self.timestamp == other.timestamp and
-            self.round == other.round
+            self.rep == other.rep
+            and self.height == other.height
+            and self.block_hash == other.block_hash
+            and self.timestamp == other.timestamp
+            and self.round == other.round
         )
 
     def __ne__(self, other):

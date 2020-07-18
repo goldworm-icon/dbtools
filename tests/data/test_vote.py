@@ -18,7 +18,7 @@ def test_vote(address, timestamp):
         block_height=height,
         block_hash=block_hash,
         timestamp=timestamp,
-        round=round
+        round=round,
     )
 
     data = expected.to_bytes()
@@ -45,7 +45,7 @@ def test_votes(address, timestamp):
         block_height=height,
         block_hash=block_hash,
         timestamp=timestamp,
-        round=round
+        round=round,
     )
 
     expected = [vote]

@@ -29,13 +29,7 @@ with open("README.md", "r") as f:
 with open("requirements.txt") as requirements:
     requires = list(requirements)
 
-extras_require = {
-    "test": [
-        "hypothesis",
-        "coverage",
-        "pytest",
-    ]
-}
+extras_require = {"test": ["hypothesis", "coverage", "pytest",]}
 
 tests_require = extras_require["test"]
 

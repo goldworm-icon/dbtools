@@ -13,11 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from collections import namedtuple
-from pprint import pprint
-
 from .command import Command
 from ..fastsync.block_reader import BlockDatabaseReader
+from ..migrate.block import Block
+from ..utils.convert_type import hex_to_bytes
 
 
 class CommandCDB(Command):
@@ -29,8 +28,20 @@ class CommandCDB(Command):
         desc = "Print details of compact db"
 
         # create the parser for block
-        parser_block = sub_parser.add_parser(name, parents=[common_parser], help=desc)
-        parser_block.set_defaults(func=self.run)
+        parser = sub_parser.add_parser(name, parents=[common_parser], help=desc)
+        parser.add_argument(
+            "--block-height",
+            type=int,
+            required=False,
+            help="Print block indicated by a given height",
+        )
+        parser.add_argument(
+            "--block-hash",
+            type=hex_to_bytes,
+            required=False,
+            help="Print block indicated by a given hash",
+        )
+        parser.set_defaults(func=self.run)
 
     def run(self, args):
         db_path: str = args.db
@@ -38,9 +49,35 @@ class CommandCDB(Command):
         block_reader = BlockDatabaseReader()
         try:
             block_reader.open(db_path)
-            start_height: int = block_reader.get_start_block_height()
-            end_height: int = block_reader.get_end_block_height()
 
-            print(f"block range: {start_height} ~ {end_height}")
+            self.print_block_range(block_reader)
+
+            if hasattr(args, "block_height") and isinstance(args.block_height, int):
+                self._print_block_by_height(block_reader, args.block_height)
+            elif hasattr(args, "block_hash") and isinstance(args.block_hash, bytes):
+                self._print_block_by_hash(block_reader, args.block_hash)
+
         finally:
             block_reader.close()
+
+    @classmethod
+    def print_block_range(cls, block_reader: BlockDatabaseReader):
+        start_height: int = block_reader.get_start_block_height()
+        end_height: int = block_reader.get_end_block_height()
+        print(f"block range: {start_height} ~ {end_height}")
+
+    @classmethod
+    def _print_block_by_height(
+        cls, block_reader: BlockDatabaseReader, block_height: int
+    ):
+        block = block_reader.get_block_by_height(block_height)
+        cls._print_block(block)
+
+    @classmethod
+    def _print_block_by_hash(cls, block_reader: BlockDatabaseReader, block_hash: bytes):
+        block = block_reader.get_block_by_hash(block_hash)
+        cls._print_block(block)
+
+    @classmethod
+    def _print_block(cls, block: Block):
+        print(block)
