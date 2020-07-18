@@ -19,13 +19,11 @@ import os
 import shutil
 import time
 from concurrent.futures import ThreadPoolExecutor
+from datetime import timedelta
 from typing import TYPE_CHECKING, Optional, List, Tuple, Dict, Any
 
 from iconcommons.icon_config import IconConfig
 from iconcommons.logger import Logger
-
-from icondbtools.utils.convert_type import object_to_str
-from icondbtools.word_detector import WordDetector
 from iconservice.base.address import Address
 from iconservice.base.block import Block
 from iconservice.database.batch import TransactionBatchValue
@@ -37,6 +35,9 @@ from iconservice.iconscore.icon_score_context import (
     IconScoreContext,
 )
 from iconservice.iiss.reward_calc.storage import Storage
+
+from icondbtools.utils.convert_type import object_to_str
+from icondbtools.word_detector import WordDetector
 from ..data.node_container import NodeContainer
 from ..fastsync.block_reader import BlockDatabaseReader as BinBlockDatabaseReader
 from ..fastsync.utils import (
@@ -46,6 +47,8 @@ from ..fastsync.utils import (
     create_prev_block_votes,
 )
 from ..migrate.block import Block as BinBlock
+from ..utils import estimate_remaining_time_s
+from ..utils.timer import Timer
 
 if TYPE_CHECKING:
     from iconservice.database.batch import BlockBatch
@@ -58,6 +61,7 @@ class IconServiceSyncer(object):
     def __init__(self):
         self._block_reader = BinBlockDatabaseReader()
         self._engine = IconServiceEngine()
+        self._timer = Timer()
 
     def open(
         self,
@@ -190,6 +194,8 @@ class IconServiceSyncer(object):
 
         end_height = start_height + count - 1
 
+        self._timer.start()
+
         for height in range(start_height, start_height + count):
             bin_block = self._block_reader.get_block_by_height(height)
             if bin_block is None:
@@ -238,9 +244,9 @@ class IconServiceSyncer(object):
 
             # "commit_state" is the field name of state_root_hash in loopchain block
             if (height - start_height) % print_block_height == 0:
-                print(
-                    f"{height} | {commit_state.hex()[:6]} | {state_root_hash.hex()[:6]} | {len(tx_requests)}",
-                    flush=True
+                self._print_status(
+                    height, start_height, count,
+                    commit_state, state_root_hash, len(tx_requests)
                 )
 
             if write_precommit_data:
@@ -472,6 +478,29 @@ class IconServiceSyncer(object):
                     shutil.copytree(basename, f"{dirname}/{basename}/")
                 except FileExistsError:
                     pass
+
+    def _print_status(
+            self,
+            height: int, start_height: int, count: int,
+            commit_state: bytes, state_root_hash: bytes, tx_requests: int):
+        self._timer.stop()
+
+        blocks_done = height - start_height + 1
+        estimated_time_s: float = estimate_remaining_time_s(
+            count, blocks_done, self._timer.duration()
+        )
+
+        status = (
+            f"{height}",
+            f"{commit_state.hex()[:6]}",
+            f"{state_root_hash.hex()[:6]}",
+            f"{tx_requests}",
+            f"{blocks_done}/{count}",
+            f"{blocks_done * 100 / count:.2f}%",
+            f"{timedelta(seconds=estimated_time_s)}",
+        )
+
+        print(" | ".join(status), flush=True)
 
     def close(self):
         pass

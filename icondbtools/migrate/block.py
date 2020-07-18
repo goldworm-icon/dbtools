@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from enum import IntEnum, auto
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Iterable
 
 from iconservice.base.address import Address
 from ..libs.loopchain_block import LoopchainBlock
@@ -66,6 +66,29 @@ class Block(object):
             f"prev_votes={self.prev_votes} "
             f"transactions={self.transactions}"
         )
+
+    def __dir__(self) -> Iterable[str]:
+        return (
+            "version",
+            "height",
+            "timestamp",
+            "block_hash",
+            "prev_block_hash",
+            "leader",
+            "state_hash",
+            "prev_votes",
+            "transactions",
+        )
+
+    def __eq__(self, other):
+        try:
+            for attr in dir(self):
+                if getattr(self, attr) != getattr(other, attr):
+                    return False
+        except:
+            return False
+
+        return True
 
     @classmethod
     def from_bytes(cls, data: bytes):

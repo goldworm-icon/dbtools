@@ -14,7 +14,6 @@
 # limitations under the License.
 
 import os
-from enum import Enum
 
 import pkg_resources
 
@@ -36,3 +35,9 @@ def get_dbtools_version() -> str:
     except:
         version = "unknown"
     return version
+
+
+def estimate_remaining_time_s(
+        total_blocks: int, blocks_done: int, elapsed_time_s: float) -> float:
+    blocks_to_do = total_blocks - blocks_done
+    return blocks_to_do * elapsed_time_s / blocks_done
