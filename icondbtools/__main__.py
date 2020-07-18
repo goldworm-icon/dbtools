@@ -60,16 +60,13 @@ def main():
         CommandCopy,
         CommandTerm,
         CommandBalance,
-
         # Commands for compact db
         CommandCDB,
         CommandMigrate,
         CommandFastSync,
     ]
 
-    parser = argparse.ArgumentParser(
-        prog=name, description=f"{name}-{version}"
-    )
+    parser = argparse.ArgumentParser(prog=name, description=f"{name}-{version}")
 
     sub_parser = parser.add_subparsers(title="subcommands")
     common_parser = create_common_parser()

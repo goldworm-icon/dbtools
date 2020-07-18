@@ -73,7 +73,9 @@ def default(obj: object) -> msgpack.ExtType:
         )
         return msgpack.ExtType(code.value, obj.to_bytes_including_prefix())
     elif isinstance(obj, int):
-        return msgpack.ExtType(ExtType.BIGINT.value, obj.to_bytes(32, "big", signed=True))
+        return msgpack.ExtType(
+            ExtType.BIGINT.value, obj.to_bytes(32, "big", signed=True)
+        )
     elif isinstance(obj, Serializable):
         return msgpack.ExtType(obj.get_ext_type(), obj.to_bytes())
 

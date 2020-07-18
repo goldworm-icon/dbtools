@@ -25,6 +25,7 @@ class BlockMigrator(object):
     2. Convert loopchain block to binary block
     3. Write binary block data to a new db
     """
+
     MAX_BYTES_TO_CACHE = 1_000_000
 
     def __init__(self):
@@ -57,7 +58,8 @@ class BlockMigrator(object):
 
     def get_last_block(self) -> Block:
         it = self._new_db.iterator(
-            prefix=Bucket.BLOCK_HEIGHT.value, reverse=True, include_key=False)
+            prefix=Bucket.BLOCK_HEIGHT.value, reverse=True, include_key=False
+        )
         v = next(it)
         it.close()
 

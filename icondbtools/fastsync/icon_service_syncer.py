@@ -198,13 +198,20 @@ class IconServiceSyncer(object):
 
             block: "Block" = create_iconservice_block(bin_block)
 
-            tx_requests: List[Dict[str, Any]] = create_transaction_requests(bin_block.transactions)
-            prev_block_generator: Optional["Address"] = \
-                prev_bin_block.leader if prev_bin_block else None
-            prev_block_validators: Optional[List["Address"]] = \
-                create_block_validators(bin_block.prev_votes, prev_block_generator)
-            prev_block_votes: Optional[List[Tuple["Address", int]]] = \
-                create_prev_block_votes(bin_block.prev_votes, prev_block_generator, main_preps)
+            tx_requests: List[Dict[str, Any]] = create_transaction_requests(
+                bin_block.transactions
+            )
+            prev_block_generator: Optional[
+                "Address"
+            ] = prev_bin_block.leader if prev_bin_block else None
+            prev_block_validators: Optional[List["Address"]] = create_block_validators(
+                bin_block.prev_votes, prev_block_generator
+            )
+            prev_block_votes: Optional[
+                List[Tuple["Address", int]]
+            ] = create_prev_block_votes(
+                bin_block.prev_votes, prev_block_generator, main_preps
+            )
 
             Logger.info(
                 tag=self._TAG, msg=f"prev_block_generator={prev_block_generator}"
@@ -322,45 +329,45 @@ class IconServiceSyncer(object):
         :return: True(same) False(different)
         """
 
-    #     for tx_result in tx_results:
-    #         tx_info_in_db: dict = self._block_reader.get_transaction_result_by_hash(
-    #             tx_result.tx_hash.hex()
-    #         )
-    #         tx_result_in_db = tx_info_in_db["result"]
-    #
-    #         # tx_v2 dose not have transaction result_v3
-    #         if "status" not in tx_result_in_db:
-    #             continue
-    #
-    #         # information extracted from db
-    #         status: int = int(tx_result_in_db["status"], 16)
-    #         tx_hash: bytes = bytes.fromhex(tx_result_in_db["txHash"])
-    #         step_used: int = int(tx_result_in_db["stepUsed"], 16)
-    #         step_price: int = int(tx_result_in_db["stepPrice"], 16)
-    #         event_logs: list = tx_result_in_db["eventLogs"]
-    #         step: int = step_used * step_price
-    #
-    #         if tx_hash != tx_result.tx_hash:
-    #             print(f"tx_hash: {tx_hash.hex()} != {tx_result.tx_hash.hex()}")
-    #             return False
-    #         if status != tx_result.status:
-    #             print(f"status: {status} != {tx_result.status}")
-    #             return False
-    #         if step_used != tx_result.step_used:
-    #             print(f"step_used: {step_used} != {tx_result.step_used}")
-    #             return False
-    #
-    #         tx_result_step: int = tx_result.step_used * tx_result.step_price
-    #         if step != tx_result_step:
-    #             print(f"step: {step} != {tx_result_step}")
-    #             return False
-    #         if step_price != tx_result.step_price:
-    #             print(f"step_price: {step_price} != {tx_result.step_price}")
-    #             return False
-    #
-    #         if not self._check_event_logs(event_logs, tx_result.event_logs):
-    #             return False
-    #
+        #     for tx_result in tx_results:
+        #         tx_info_in_db: dict = self._block_reader.get_transaction_result_by_hash(
+        #             tx_result.tx_hash.hex()
+        #         )
+        #         tx_result_in_db = tx_info_in_db["result"]
+        #
+        #         # tx_v2 dose not have transaction result_v3
+        #         if "status" not in tx_result_in_db:
+        #             continue
+        #
+        #         # information extracted from db
+        #         status: int = int(tx_result_in_db["status"], 16)
+        #         tx_hash: bytes = bytes.fromhex(tx_result_in_db["txHash"])
+        #         step_used: int = int(tx_result_in_db["stepUsed"], 16)
+        #         step_price: int = int(tx_result_in_db["stepPrice"], 16)
+        #         event_logs: list = tx_result_in_db["eventLogs"]
+        #         step: int = step_used * step_price
+        #
+        #         if tx_hash != tx_result.tx_hash:
+        #             print(f"tx_hash: {tx_hash.hex()} != {tx_result.tx_hash.hex()}")
+        #             return False
+        #         if status != tx_result.status:
+        #             print(f"status: {status} != {tx_result.status}")
+        #             return False
+        #         if step_used != tx_result.step_used:
+        #             print(f"step_used: {step_used} != {tx_result.step_used}")
+        #             return False
+        #
+        #         tx_result_step: int = tx_result.step_used * tx_result.step_price
+        #         if step != tx_result_step:
+        #             print(f"step: {step} != {tx_result_step}")
+        #             return False
+        #         if step_price != tx_result.step_price:
+        #             print(f"step_price: {step_price} != {tx_result.step_price}")
+        #             return False
+        #
+        #         if not self._check_event_logs(event_logs, tx_result.event_logs):
+        #             return False
+        #
         return True
 
     @staticmethod

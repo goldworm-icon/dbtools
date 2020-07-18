@@ -35,9 +35,9 @@ class EventLog(pack.Serializable):
 
     def __eq__(self, other):
         return (
-            self._score_address == other.score_address and
-            self._indexed == other.indexed and
-            self._data == other.data
+            self._score_address == other.score_address
+            and self._indexed == other.indexed
+            and self._data == other.data
         )
 
     def __ne__(self, other):
@@ -89,7 +89,7 @@ class EventLog(pack.Serializable):
 
         index = signature.index("(")
         name = signature[:index]
-        params = signature[index + 1: -1].split(",")
+        params = signature[index + 1 : -1].split(",")
 
         return name, params
 

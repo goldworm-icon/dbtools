@@ -10,7 +10,9 @@ from ..data.node_container import NodeContainer
 from ..migrate.block import Block as BinBlock
 
 
-def create_transaction_requests(converted_tx_params: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def create_transaction_requests(
+    converted_tx_params: List[Dict[str, Any]]
+) -> List[Dict[str, Any]]:
     return [
         {"method": "icx_sendTransaction", "params": params}
         for params in converted_tx_params

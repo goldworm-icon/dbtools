@@ -16,6 +16,7 @@ class Block(object):
 
     All field values are already converted to each original type compared to LoopchainBlock
     """
+
     class Index(IntEnum):
         VERSION = 0
         HEIGHT = auto()
@@ -77,8 +78,7 @@ class Block(object):
         prev_votes: Optional[list] = loopchain_block.prev_votes
         if prev_votes is not None:
             prev_votes = [
-                Vote.from_dict(data)
-                for data in prev_votes if isinstance(data, dict)
+                Vote.from_dict(data) for data in prev_votes if isinstance(data, dict)
             ]
 
         transactions = [

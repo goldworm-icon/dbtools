@@ -54,7 +54,9 @@ class TransactionResult(pack.Serializable):
         event_logs: List["EventLog"] = None,
     ):
         self._tx_hash: bytes = tx_hash
-        self._status = status if isinstance(status, self.Status) else self.Status(status)
+        self._status = (
+            status if isinstance(status, self.Status) else self.Status(status)
+        )
         self._tx_index: int = tx_index
         self._to: "Address" = to
         self._score_address = score_address

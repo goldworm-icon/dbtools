@@ -90,13 +90,10 @@ class TestEventLog:
                     Address.from_prefix_and_int(AddressPrefix.EOA, 0),
                     Address.from_prefix_and_int(AddressPrefix.EOA, 1),
                 ],
-                [random.randint(0, 99999)]
+                [random.randint(0, 99999)],
             ),
-            (
-                ["IScoreClaimed(int,int)"],
-                [10_000, 10],
-            )
-        ]
+            (["IScoreClaimed(int,int)"], [10_000, 10],),
+        ],
     )
     def test_serializable(self, indexed, data):
         score_address = Address(AddressPrefix.CONTRACT, os.urandom(20))

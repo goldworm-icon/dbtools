@@ -59,9 +59,7 @@ class CommandFastSync(Command):
             action="store_true",
             help="stop running when commit_state is different from state_root_hash",
         )
-        parser.add_argument(
-            "--no-commit", action="store_true", help="Do not commit"
-        )
+        parser.add_argument("--no-commit", action="store_true", help="Do not commit")
         parser.add_argument(
             "--write-precommit-data",
             action="store_true",

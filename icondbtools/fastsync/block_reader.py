@@ -23,6 +23,7 @@ from ..migrate.block import Block
 class Bucket(Enum):
     BLOCK_HEIGHT = b"\x00"
     BLOCK_HASH = b"\x01"
+    BLOCK_RESULT = b"\x02"
 
 
 class BlockDatabaseReader(object):

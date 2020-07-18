@@ -259,13 +259,15 @@ class IconServiceSyncer(object):
             block: "Block" = _create_iconservice_block(loopchain_block)
 
             tx_requests: list = create_transaction_requests(loopchain_block)
-            prev_block_generator: Optional["Address"] = \
-                prev_loopchain_block.leader if prev_loopchain_block else None
+            prev_block_generator: Optional[
+                "Address"
+            ] = prev_loopchain_block.leader if prev_loopchain_block else None
             prev_block_validators: Optional[List["Address"]] = _create_block_validators(
                 block_dict, prev_block_generator
             )
-            prev_block_votes: Optional[List[Tuple["Address", int]]] = \
-                _create_prev_block_votes(block_dict, prev_block_generator, main_preps)
+            prev_block_votes: Optional[
+                List[Tuple["Address", int]]
+            ] = _create_prev_block_votes(block_dict, prev_block_generator, main_preps)
 
             Logger.info(
                 tag=self._TAG, msg=f"prev_block_generator={prev_block_generator}"
