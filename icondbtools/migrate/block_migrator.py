@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
 
+from datetime import timedelta
+
 import plyvel
 
 from .block import Block
 from ..libs.block_database_raw_reader import BlockDatabaseRawReader
 from ..libs.loopchain_block import LoopchainBlock
+from ..libs.timer import Timer
 
 TAG = "MGT"
 
@@ -20,8 +23,13 @@ class BlockMigrator(object):
         self._block_reader = BlockDatabaseRawReader()
         self._new_db = None
         self._write_batch = None
+
+        # Status
         self._bytes_to_write = 0
         self._height_written = -1
+        self._block_range = -1, -1
+        self._blocks = -1
+        self._timer = Timer()
 
     def open(self, db_path: str, new_db_path: str):
         self._block_reader.open(db_path)
@@ -41,15 +49,22 @@ class BlockMigrator(object):
 
     def run(self, start: int, end: int):
         try:
+            self._block_range = start, end
+            self._blocks = end - start + 1
+
             self._run(start, end)
         except:
             raise
         finally:
             # Write data remaining in write_batch to the target db
             self._flush()
+            self._timer.stop()
+            self._print_status()
 
     def _run(self, start: int, end: int):
-        for height in range(start, end + 1):
+        self._timer.start()
+
+        for height in range(start, end):
             # Read an original block data from loopchain db
             loopchain_block = self._read_loopchain_block(height)
 
@@ -62,6 +77,8 @@ class BlockMigrator(object):
             # Write write_batch to the target db
             if self._bytes_to_write >= self.MAX_BYTES_TO_CACHE:
                 self._flush()
+                self._timer.stop()
+                self._print_status()
 
     def _read_loopchain_block(self, height: int) -> LoopchainBlock:
         data: bytes = self._block_reader.get_block_by_height(height)
@@ -89,4 +106,18 @@ class BlockMigrator(object):
             self._write_batch.clear()
             self._bytes_to_write = 0
 
-        print(f"height: {self._height_written}", flush=True)
+    def _print_status(self):
+        height = self._height_written
+        blocks_done: int = height - self._block_range[0] + 1
+
+        percent: float = blocks_done * 100.0 / self._blocks
+        eta = int(self._timer.duration() * (self._blocks - blocks_done) / blocks_done)
+
+        status = (
+            f"{percent:.1f}%",
+            f"{self._height_written}",
+            f"{blocks_done}/{self._blocks}"
+            f"{timedelta(seconds=eta)}",
+        )
+
+        print(" ".join(status), flush=True)
