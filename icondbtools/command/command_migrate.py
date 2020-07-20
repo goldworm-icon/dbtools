@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2019 ICON Foundation
+# Copyright 2020 ICON Foundation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -63,17 +63,17 @@ class CommandMigrate(Command):
         count: int = args.count
         new_db_path: str = args.new_db
 
-        start, end = self._get_copy_block_range(start, end, count)
+        start, count = self._get_block_range(start, end, count)
 
         block_migrator = BlockMigrator()
         block_migrator.open(db_path, new_db_path)
-        block_migrator.run(start, end)
+        block_migrator.run(start, count)
         block_migrator.close()
 
     @classmethod
-    def _get_copy_block_range(cls, start: int, end: int, count: int) -> Tuple[int, int]:
+    def _get_block_range(cls, start: int, end: int, count: int) -> Tuple[int, int]:
         """
-        :return: start block and end block height, exclusive
+        :return: start block and the number of blocks to migrate
         """
         if end > -1:
             if end < start:
@@ -82,4 +82,4 @@ class CommandMigrate(Command):
         elif count == -1:
             count = cls.MAX_COPY_BLOCK_COUNT
 
-        return start, start + count
+        return start, count

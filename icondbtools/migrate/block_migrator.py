@@ -26,9 +26,9 @@ class BlockMigrator(object):
 
         # Status
         self._bytes_to_write = 0
-        self._height_written = -1
-        self._block_range = -1, -1
+        self._start_height = -1
         self._blocks = -1
+        self._blocks_done = 0
         self._timer = Timer()
 
     def open(self, db_path: str, new_db_path: str):
@@ -47,12 +47,12 @@ class BlockMigrator(object):
             self._new_db.close()
             self._new_db = None
 
-    def run(self, start: int, end: int):
+    def run(self, start: int, count: int):
         try:
-            self._block_range = start, end
-            self._blocks = end - start + 1
+            self._start_height = start
+            self._blocks = count
 
-            self._run(start, end)
+            self._run(start, end=start + count)
         except:
             raise
         finally:
@@ -62,6 +62,10 @@ class BlockMigrator(object):
             self._print_status()
 
     def _run(self, start: int, end: int):
+        """
+        :param start: start block to migrate
+        :param end: end block to migrate, exclusive
+        """
         self._timer.start()
 
         for height in range(start, end):
@@ -98,7 +102,7 @@ class BlockMigrator(object):
         self._write_batch.put(key, value)
 
         self._bytes_to_write += len(value)
-        self._height_written = block.height
+        self._blocks_done += 1
 
     def _flush(self):
         if self._bytes_to_write > 0:
@@ -107,16 +111,16 @@ class BlockMigrator(object):
             self._bytes_to_write = 0
 
     def _print_status(self):
-        height = self._height_written
-        blocks_done: int = height - self._block_range[0] + 1
+        blocks_done = self._blocks_done
+        height = self._start_height + (blocks_done - 1)
 
         percent: float = blocks_done * 100.0 / self._blocks
         eta = int(self._timer.duration() * (self._blocks - blocks_done) / blocks_done)
 
         status = (
             f"{percent:.1f}%",
-            f"{self._height_written}",
-            f"{blocks_done}/{self._blocks}"
+            f"{height}",
+            f"{blocks_done}/{self._blocks}",
             f"{timedelta(seconds=eta)}",
         )
 
