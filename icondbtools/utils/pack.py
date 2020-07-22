@@ -14,8 +14,8 @@ from iconservice.base.address import Address, MalformedAddress, AddressPrefix
 class ExtType(Enum):
     ADDRESS = 0
     MALFORMED_ADDRESS = 1
-    BIGINT = 2
-    VOTE = 3
+    VOTE = 2
+    BIGINT = 3
     TX_RESULT = 4
     EVENT_LOG = 5
 
