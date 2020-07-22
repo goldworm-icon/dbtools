@@ -38,7 +38,6 @@ from iconservice.iconscore.icon_score_context import (
 )
 from iconservice.iiss.reward_calc.storage import Storage
 from ..data.node_container import NodeContainer
-from ..migrate.block import Block as BinBlock
 from ..fastsync.block_reader import BlockDatabaseReader as BinBlockDatabaseReader
 from ..fastsync.utils import (
     create_transaction_requests,
@@ -46,6 +45,7 @@ from ..fastsync.utils import (
     create_block_validators,
     create_prev_block_votes,
 )
+from ..migrate.block import Block as BinBlock
 
 if TYPE_CHECKING:
     from iconservice.database.batch import BlockBatch
@@ -232,7 +232,8 @@ class IconServiceSyncer(object):
             # "commit_state" is the field name of state_root_hash in loopchain block
             if (height - start_height) % print_block_height == 0:
                 print(
-                    f"{height} | {commit_state.hex()[:6]} | {state_root_hash.hex()[:6]} | {len(tx_requests)}"
+                    f"{height} | {commit_state.hex()[:6]} | {state_root_hash.hex()[:6]} | {len(tx_requests)}",
+                    flush=True
                 )
 
             if write_precommit_data:
