@@ -97,15 +97,27 @@ class CommandUnstakeBug(Command):
             last_block: dict = block_reader.get_last_block()
             end = int(last_block.get("height"), 0)
 
+        i = 0
         for block_height in range(start+1, end+1):
+            if i % 300 == 0:
+                print(block_height)
+
             block = block_reader.get_block_by_block_height(block_height)
             transactions = block.get("transactions", None)
-            for tx in transactions:
+            for tx_index, tx in enumerate(transactions):
                 if tx.get("dataType") == "base":
                     # skip base transaction
                     continue
 
-                tx_result = block_reader.get_transaction_result_by_hash(tx.get("txHash", None))
+                for key in ("txHash", "tx_hash"):
+                    tx_hash = tx.get(key, None)
+                    if tx_hash:
+                        break
+
+                if tx_hash is None:
+                    print(f"invalid TX: {tx_index} {block}")
+
+                tx_result = block_reader.get_transaction_result_by_hash(tx_hash)
                 if tx_result is None or tx_result["result"]["status"] != "0x1":
                     # skip failed transaction
                     continue
@@ -113,11 +125,13 @@ class CommandUnstakeBug(Command):
                 from_ = tx.get("from", None)
                 if from_ is not None and from_ in unstake:
                     value = unstake[from_]
-                    if block_height >= value.get("unstake_block_height", 0):
+                    if block_height >= value.get("unstake_block_height", end+1):
                         # increase TX count which called after unstake lockup expired
                         error_count = value.get("error_count", 0)
                         error_count += 1
                         value["error_count"] = error_count
+
+            i += 1
 
         result = {}
         sum = 0
