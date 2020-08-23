@@ -107,7 +107,7 @@ class IISSDataReader(object):
         count = 0
 
         for key, value in self._db.iterator(prefix=prefix):
-            height: int = int.from_bytes(key[len(prefix) :], "big", signed=False)
+            height: int = int.from_bytes(key[len(prefix):], "big", signed=False)
 
             if start_height < 0:
                 start_height = height

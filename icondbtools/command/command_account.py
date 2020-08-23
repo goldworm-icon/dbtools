@@ -61,7 +61,9 @@ class CommandAccount(Command):
                 print(
                     f"address: {account.address}\n"
                     f"amount: {account.balance / 10 ** 18} in icx\n"
-                    f"stake: {account.stake}\n"
+                    f"stake: {account.stake_part.stake}\n"
+                    f"unstake: {account.stake_part.unstake}\n"
+                    f"unstakeInfo: {account.stake_part.unstakes_info}\n"
                 )
         finally:
             reader.close()
