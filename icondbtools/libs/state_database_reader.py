@@ -75,6 +75,12 @@ class StateDatabaseReader(object):
 
         return account
 
+    @property
+    def iterator(self):
+        start = bytes.fromhex("0"*40)
+        stop = bytes.fromhex("f" * 40)
+        return self._db.iterator(start=start, stop=stop)
+
     def _get_part(self,
                   part_class: Union[type(CoinPart), type(StakePart), type(DelegationPart)],
                   address: 'Address') -> Union['CoinPart', 'StakePart', 'DelegationPart']:
