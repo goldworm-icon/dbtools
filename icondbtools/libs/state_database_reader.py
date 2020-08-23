@@ -18,7 +18,9 @@ import hashlib
 import plyvel
 
 from iconservice.base.block import Block
+from iconservice.base.address import Address
 from iconservice.icx.icx_account import Account
+from iconservice.icx.stake_part import StakePart
 
 
 class StateHash(object):
@@ -122,3 +124,24 @@ class StateDatabaseReader(object):
 
         state_hash: bytes = sha3_256.digest()
         return state_hash, rows, total_key_size, total_value_size
+
+    def iterate_stake_part(self, cmp: callable) -> list:
+        return self.iterate_db(StakePart.PREFIX, cmp)
+
+    def iterate_db(self, prefix: bytes, cmp: callable) -> list:
+        result = []
+
+        if prefix is None:
+            db = self._db
+        else:
+            db = self._db.prefixed_db(prefix)
+
+        for key, value in db:
+            address = Address.from_bytes_including_prefix(key)
+            stake_part = StakePart.from_bytes(value)
+            stake_part.set_complete(True)
+            if cmp(stake_part):
+                result.append((address, stake_part))
+
+        return result
+
