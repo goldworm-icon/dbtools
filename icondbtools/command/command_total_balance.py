@@ -51,17 +51,27 @@ class CommandTotalBalance(Command):
 
             iterator = reader.iterator
             for key, value in iterator:
-                if len(key) not in (20, 21):
-                    continue
-                address = Address.from_bytes(key)
-                account: "Account" = reader.get_account(address)
-                if account.coin_part is not None:
-                    total_balance += account.balance
-                if account.stake_part is not None:
-                    total_staked += account.total_stake
+                if is_account_key(key):
+                    address = Address.from_bytes(key)
+                    account: "Account" = reader.get_account(address)
+                    if account.coin_part is not None:
+                        total_balance += account.balance
+                    if account.stake_part is not None:
+                        total_staked += account.total_stake
             print(
                 f"total balance: {total_balance}\n"
                 f"total balance including staked values: {total_balance + total_staked}\n"
+                f"total supply : {reader.get_total_supply()}\n"
             )
         finally:
             reader.close()
+
+
+def is_account_key(key) -> bool:
+    key_length = len(key)
+    if key_length == 20:
+        return True
+    elif key_length == 21:
+        if key[0] == b'\x01':
+            return True
+    return False

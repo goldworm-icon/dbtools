@@ -78,7 +78,7 @@ class StateDatabaseReader(object):
     @property
     def iterator(self):
         start = bytes.fromhex("0"*40)
-        stop = bytes.fromhex("f" * 40)
+        stop = bytes.fromhex("f"*40)
         return self._db.iterator(start=start, stop=stop)
 
     def _get_part(self,
@@ -107,6 +107,14 @@ class StateDatabaseReader(object):
             return None
 
         return Block.from_bytes(value)
+
+    def get_total_supply(self) -> int:
+        value: bytes = self._db.get(b'total_supply')
+        amount = 0
+        if value:
+            amount = int.from_bytes(value, 'big')
+
+        return amount
 
     def create_state_hash(self, prefix: bytes = None) -> "StateHash":
         """Read key and value from state db and create sha3 hash value from them
