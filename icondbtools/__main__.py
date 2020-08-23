@@ -38,6 +38,7 @@ from .command.command_term import CommandTerm
 from .command.command_token import CommandToken
 from .command.command_tps import CommandTps
 from .command.command_txresult import CommandTxResult
+from .command.command_transactions import CommandTransactions
 from .utils.timer import Timer
 
 
@@ -60,6 +61,7 @@ def main():
         CommandCopy,
         CommandTerm,
         CommandBalance,
+        CommandTransactions,
         # Commands for compact db
         CommandCDB,
         CommandMigrate,
