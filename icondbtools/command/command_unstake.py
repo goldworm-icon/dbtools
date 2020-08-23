@@ -57,6 +57,7 @@ class CommandUnstake(Command):
                     json.dump(results, fp=fp, indent=2)
             else:
                 print(json.dumps(results, indent=2))
+            print(f"Found {len(results)} accounts")
             reader.close()
 
     def _cmp_unstake(self, stake_part: StakePart) -> bool:
@@ -84,8 +85,6 @@ class CommandUnstakeBug(Command):
     def run(self, args):
         with open(args.unstake) as f:
             unstake: dict = json.load(f)
-
-        print(unstake)
 
         db_path: str = args.db
         start: int = args.start
@@ -121,13 +120,17 @@ class CommandUnstakeBug(Command):
                         value["error_count"] = error_count
 
         result = {}
+        sum = 0
         for k, v in unstake.items():
             if "error_count" in v:
                 v["error_amount"] = v["error_count"] * v["unstake"]
                 result[k] = v
+                sum += v
 
         if args.to:
             with open(args.to, 'w') as fp:
-                json.dump(unstake, fp=fp, indent=2)
+                json.dump(result, fp=fp, indent=2)
         else:
-            print(json.dumps(unstake, indent=2))
+            print(json.dumps(result, indent=2))
+
+        print(f"Found {len(result)} accounts and {sum} ICX")
