@@ -14,11 +14,16 @@
 # limitations under the License.
 
 import hashlib
+from typing import Union
 
 import plyvel
+from iconservice.base.address import Address
 
 from iconservice.base.block import Block
+from iconservice.icx.coin_part import CoinPart
+from iconservice.icx.delegation_part import DelegationPart
 from iconservice.icx.icx_account import Account
+from iconservice.icx.stake_part import StakePart
 
 
 class StateHash(object):
@@ -64,11 +69,19 @@ class StateDatabaseReader(object):
         value: bytes = self._db.get(address.to_bytes())
         if value is None:
             return None
-
-        account = Account.from_bytes(value)
-        account.address = address
+        coin_part = self._get_part(CoinPart, address)
+        stake_part = self._get_part(StakePart, address)
+        account = Account(address, 0, 0, coin_part=coin_part, stake_part=stake_part)
 
         return account
+
+    def _get_part(self,
+                  part_class: Union[type(CoinPart), type(StakePart), type(DelegationPart)],
+                  address: 'Address') -> Union['CoinPart', 'StakePart', 'DelegationPart']:
+        key: bytes = part_class.make_key(address)
+        value: bytes = self._db.get(key)
+
+        return part_class.from_bytes(value) if value else part_class()
 
     def get_by_key(self, key):
         value: bytes = self._db.get(key)
