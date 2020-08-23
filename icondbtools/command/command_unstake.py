@@ -125,7 +125,7 @@ class CommandUnstakeBug(Command):
             if "error_count" in v:
                 v["error_amount"] = v["error_count"] * v["unstake"]
                 result[k] = v
-                sum += v
+                sum += v["error_amount"]
 
         if args.to:
             with open(args.to, 'w') as fp:
