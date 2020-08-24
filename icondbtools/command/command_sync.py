@@ -65,6 +65,8 @@ class CommandSync(Command):
         parser_sync.add_argument('--iiss-db-backup-path', dest="iiss_db_backup_path",  type=str,
                                  help="Backup all IISS DBs to specified path. "
                                       "If IISS DB is already exists on the path, overwrite it")
+        parser_sync.add_argument('--unstake-error-path', dest="unstake_error_path", type=str,
+                                 help="Write unstake error Info.")
         parser_sync.set_defaults(func=self.run)
 
     def run(self, args):
@@ -85,6 +87,7 @@ class CommandSync(Command):
         iconservice_config_path: str = args.is_config
         print_block_height: int = args.print_block_height
         iiss_db_backup_path: Optional[str] = args.iiss_db_backup_path
+        unstake_error_path: Optional[str] = args.unstake_error_path
 
         reader = StateDatabaseReader()
 
@@ -132,6 +135,7 @@ class CommandSync(Command):
                 write_precommit_data=write_precommit_data,
                 backup_period=backup_period,
                 print_block_height=print_block_height,
-                iiss_db_backup_path=iiss_db_backup_path)
+                iiss_db_backup_path=iiss_db_backup_path,
+                unstake_error_path=unstake_error_path)
         finally:
             syncer.close()

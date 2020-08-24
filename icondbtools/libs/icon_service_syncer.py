@@ -15,6 +15,7 @@
 
 import asyncio
 import inspect
+import json
 import logging
 import os
 import shutil
@@ -200,7 +201,8 @@ class IconServiceSyncer(object):
              backup_period: int = 0,
              write_precommit_data: bool = False,
              print_block_height: int = 1,
-             iiss_db_backup_path: Optional[str] = None) -> int:
+             iiss_db_backup_path: Optional[str] = None,
+             unstake_error_path: Optional[str] = None) -> int:
         """Begin to synchronize IconServiceEngine with blocks from loopchain db
 
         :param db_path: loopchain db path
@@ -232,6 +234,9 @@ class IconServiceSyncer(object):
 
         main_preps: Optional['NodeContainer'] = None
         next_main_preps: Optional['NodeContainer'] = None
+        unstake = {}
+        unstake_count = 0
+        unstake_amount = 0
 
         end_height = start_height + count - 1
 
@@ -263,6 +268,7 @@ class IconServiceSyncer(object):
                                                 prev_block_generator, prev_block_validators, prev_block_votes)
             tx_results, state_root_hash = invoke_result[0], invoke_result[1]
             main_preps_as_dict: Optional[Dict] = invoke_result[3]
+            unstake_error: Optional[Dict] = invoke_result[4]
 
             commit_state: bytes = self._block_reader.get_commit_state(block_dict, channel)
 
@@ -318,8 +324,28 @@ class IconServiceSyncer(object):
             if main_preps_as_dict is not None:
                 next_main_preps = NodeContainer.from_dict(main_preps_as_dict)
 
+            # update unstake error statistics
+            for k, v in unstake_error.items():
+                if k in unstake:
+                    unstake[k]["error_count"] += v["error_count"]
+                    unstake[k]["error_amount"] += v["error_amount"]
+                else:
+                    unstake[k] = v
+
+                unstake_count += v["error_count"]
+                unstake_amount += v["error_amount"]
+
         self._block_reader.close()
         word_detector.stop()
+
+        with open(unstake_error_path, 'w') as fp:
+            json.dump(unstake, fp=fp, indent=2)
+        print(
+            f"Unstake error\n"
+            f"accounts     : {len(unstake)}\n"
+            f"error count  : {unstake_count:30,}\n"
+            f"error amount : {unstake_amount:30,}\n"
+        )
 
         Logger.debug(tag=self._TAG, msg=f"_run() end: {ret}")
         return ret

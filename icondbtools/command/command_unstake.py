@@ -209,4 +209,4 @@ class CommandUnstakeBug(Command):
         else:
             print(json.dumps(result, indent=2))
 
-        print(f"Found {len(result)} accounts and {sum} ICX")
+        print(f"Found {len(result)} accounts and {sum:,} loop")
