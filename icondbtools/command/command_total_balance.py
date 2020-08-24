@@ -73,7 +73,7 @@ class CommandTotalBalance(Command):
             reader.close()
 
 
-def is_account_key(key) -> bool:
+def is_account_key(key: bytes) -> bool:
     key_length = len(key)
     if key_length == 20:
         return True

@@ -14,11 +14,11 @@
 # limitations under the License.
 
 import hashlib
-from typing import Union
+from typing import Union, Optional
 
 import plyvel
-from iconservice.base.address import Address
 
+from iconservice.base.address import Address
 from iconservice.base.block import Block
 from iconservice.icx.coin_part import CoinPart
 from iconservice.icx.delegation_part import DelegationPart
@@ -60,26 +60,43 @@ class StateDatabaseReader(object):
             self._db.close()
             self._db = None
 
-    def get_account(self, address: "Address") -> "Account":
+    def get_account(self, address: "Address", current_block_height: int, revision: int) -> Optional["Account"]:
         """Read the account from statedb
 
         :param address:
+        :param current_block_height:
+        :param revision:
         :return:
         """
         value: bytes = self._db.get(address.to_bytes())
         if value is None:
             return None
+
         coin_part = self._get_part(CoinPart, address)
         stake_part = self._get_part(StakePart, address)
-        account = Account(address, 0, 0, coin_part=coin_part, stake_part=stake_part)
 
-        return account
+        return Account(
+            address,
+            current_block_height,
+            revision,
+            coin_part=coin_part,
+            stake_part=stake_part
+        )
 
     @property
     def iterator(self):
         start = bytes.fromhex("0"*40)
         stop = bytes.fromhex("f"*40)
         return self._db.iterator(start=start, stop=stop)
+
+    def get_coin_part(self, address: 'Address') -> CoinPart:
+        return self._get_part(CoinPart, address)
+
+    def get_stake_part(self, address: 'Address') -> StakePart:
+        return self._get_part(StakePart, address)
+
+    def get_delegation_part(self, address: 'Address') -> DelegationPart:
+        return self._get_part(DelegationPart, address)
 
     def _get_part(self,
                   part_class: Union[type(CoinPart), type(StakePart), type(DelegationPart)],
@@ -110,11 +127,7 @@ class StateDatabaseReader(object):
 
     def get_total_supply(self) -> int:
         value: bytes = self._db.get(b'total_supply')
-        amount = 0
-        if value:
-            amount = int.from_bytes(value, 'big')
-
-        return amount
+        return int.from_bytes(value, 'big') if value else 0
 
     def create_state_hash(self, prefix: bytes = None) -> "StateHash":
         """Read key and value from state db and create sha3 hash value from them
