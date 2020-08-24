@@ -15,6 +15,7 @@
 
 import json
 
+from iconservice.base.address import Address
 from iconservice.icx.stake_part import StakePart
 
 from icondbtools.command.command import Command
@@ -70,13 +71,48 @@ class CommandUnstake(Command):
         return False
 
 
+class CommandUnstakePreprocess(Command):
+    def __init__(self, sub_parser, common_parser):
+        self.add_parser(sub_parser, common_parser)
+
+    def add_parser(self, sub_parser, common_parser):
+        name = 'unstake_preprocess'
+        desc = 'Preprocess the unstake account'
+
+        # create the parser for balance
+        parser_unstake = sub_parser.add_parser(name, parents=[common_parser], help=desc)
+        parser_unstake.add_argument('--unstake', type=str, required=True, help='list of account which has unstake ')
+        parser_unstake.add_argument('--to', type=str, help='write result to file')
+        parser_unstake.set_defaults(func=self.run)
+
+    def run(self, args):
+        with open(args.unstake) as f:
+            unstake: dict = json.load(f)
+
+        db_path: str = args.db
+
+        reader = StateDatabaseReader()
+        try:
+            reader.open(db_path)
+            for k in unstake.keys():
+                coin_part = reader.get_coin_part(Address.from_string(k))
+                unstake[k]["init_balance"] = coin_part.balance
+        finally:
+            if args.to:
+                with open(args.to, 'w') as fp:
+                    json.dump(unstake, fp=fp, indent=2)
+            else:
+                print(json.dumps(unstake, indent=2))
+            reader.close()
+
+
 class CommandUnstakeBug(Command):
     def __init__(self, sub_parser, common_parser):
         self.add_parser(sub_parser, common_parser)
 
     def add_parser(self, sub_parser, common_parser):
         name = 'unstake_bug'
-        desc = 'Check the acount of ICX earned by unstake bug'
+        desc = 'Check the account of ICX earned by unstake bug'
 
         # create the parser for balance
         parser_unstake = sub_parser.add_parser(name, parents=[common_parser], help=desc)
@@ -99,7 +135,7 @@ class CommandUnstakeBug(Command):
 
         if end == -1:
             last_block: dict = block_reader.get_last_block()
-            end = int(last_block.get("height"), 0)
+            end = int(last_block.get("height", "0x0"), 0)
 
         i = 0
         for block_height in range(start+1, end+1):
