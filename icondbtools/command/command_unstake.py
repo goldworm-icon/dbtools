@@ -96,7 +96,8 @@ class CommandUnstakePreprocess(Command):
             reader.open(db_path)
             for k in unstake.keys():
                 coin_part = reader.get_coin_part(Address.from_string(k))
-                unstake[k]["init_balance"] = coin_part.balance
+                unstake[k]["balance_init"] = coin_part.balance
+                unstake[k]["balance_diff"] = unstake[k]["balance"] - coin_part.balance
         finally:
             if args.to:
                 with open(args.to, 'w') as fp:
