@@ -102,7 +102,9 @@ class StateDatabaseReader(object):
         key: bytes = part_class.make_key(address)
         value: bytes = self._db.get(key)
 
-        return part_class.from_bytes(value) if value else part_class()
+        part = part_class.from_bytes(value) if value else part_class()
+        part.set_complete(True)
+        return part
 
     def get_by_key(self, key):
         value: bytes = self._db.get(key)
