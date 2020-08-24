@@ -48,6 +48,9 @@ class CommandTotalBalance(Command):
         active_account_count = 0
         staking_account_count = 0
 
+        revision = 10
+        current_block_height = 0
+
         try:
             reader.open(db_path)
 
@@ -55,7 +58,7 @@ class CommandTotalBalance(Command):
             for key, value in iterator:
                 if is_account_key(key):
                     address = Address.from_bytes(key)
-                    account: "Account" = reader.get_account(address)
+                    account: "Account" = reader.get_account(address, current_block_height, revision)
                     if account.coin_part is not None:
                         active_account_count += 1
                         total_balance += account.balance
