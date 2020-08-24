@@ -78,11 +78,14 @@ class CommandTotalBalance(Command):
 
                 i += 1
 
+            full_balance = total_balance + total_staked
+            total_supply = reader.get_total_supply()
             print(
-                f"total supply : {reader.get_total_supply():30,}\n"
-                f"total balance: {total_balance:30,}\n"
+                f"total supply : {total_supply:30,}\n"
+                f"total balance: {full_balance:30,}\n"
                 f"      balance: {total_balance:30,}\n"
                 f"      staked : {total_staked:30,}\n"
+                f"diff         : {full_balance - total_supply:,}\n"
                 f"active account count : {active_account_count:,}\n"
                 f"staking account count : {staking_account_count:,}\n"
                 f"errors: {errors}"
