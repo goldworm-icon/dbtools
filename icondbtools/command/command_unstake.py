@@ -49,7 +49,11 @@ class CommandUnstake(Command):
             results = {}
             iter_results = reader.iterate_stake_part(self._cmp_unstake)
             for result in iter_results:
-                results[str(result[0])] = result[1].to_dict()
+                coin_part = reader.get_coin_part(result[0])
+                stake_part = result[1]
+                value = {"balance": coin_part.balance}
+                value.update(stake_part.to_dict())
+                results[str(result[0])] = value
 
         finally:
             if args.to:

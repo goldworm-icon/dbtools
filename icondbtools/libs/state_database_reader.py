@@ -19,6 +19,7 @@ import plyvel
 
 from iconservice.base.block import Block
 from iconservice.base.address import Address
+from iconservice.icx.coin_part import CoinPart
 from iconservice.icx.icx_account import Account
 from iconservice.icx.stake_part import StakePart
 
@@ -125,10 +126,20 @@ class StateDatabaseReader(object):
         state_hash: bytes = sha3_256.digest()
         return state_hash, rows, total_key_size, total_value_size
 
-    def iterate_stake_part(self, cmp: callable) -> list:
-        return self.iterate_db(StakePart.PREFIX, cmp)
+    def get_coin_part(self, address: Address) -> CoinPart:
+        key = CoinPart.make_key(address)
+        data = self.get_by_key(key)
+        return CoinPart.from_bytes(data)
 
-    def iterate_db(self, prefix: bytes, cmp: callable) -> list:
+    def iterate_stake_part(self, cmp: callable) -> list:
+        def stake_parser(value: bytes) -> StakePart:
+            stake_part = StakePart.from_bytes(value)
+            stake_part.set_complete(True)
+            return stake_part
+
+        return self.iterate_db(StakePart.PREFIX, stake_parser, cmp)
+
+    def iterate_db(self, prefix: bytes, parser: callable, cmp: callable) -> list:
         result = []
 
         if prefix is None:
@@ -138,10 +149,9 @@ class StateDatabaseReader(object):
 
         for key, value in db:
             address = Address.from_bytes_including_prefix(key)
-            stake_part = StakePart.from_bytes(value)
-            stake_part.set_complete(True)
-            if cmp(stake_part):
-                result.append((address, stake_part))
+            data = parser(value)
+            if cmp(data):
+                result.append((address, data))
 
         return result
 
