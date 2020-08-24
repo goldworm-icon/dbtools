@@ -55,21 +55,26 @@ class CommandTotalBalance(Command):
             iterator = reader.iterator
 
             i = 0
+            errors = 0
             for key, value in iterator:
                 if not is_account_key(key):
                     continue
 
-                address = Address.from_bytes(key)
-                coin_part = reader.get_coin_part(address)
-                stake_part = reader.get_stake_part(address)
-                print(f"{i}: {address}")
+                try:
+                    address = Address.from_bytes(key)
+                    print(f"{i}: {address}")
 
-                if coin_part is not None:
-                    active_account_count += 1
-                    total_balance += coin_part.balance
-                if stake_part is not None:
-                    staking_account_count += 1
-                    total_staked += stake_part.total_stake
+                    coin_part = reader.get_coin_part(address)
+                    stake_part = reader.get_stake_part(address)
+
+                    if coin_part is not None:
+                        active_account_count += 1
+                        total_balance += coin_part.balance
+                    if stake_part is not None:
+                        staking_account_count += 1
+                        total_staked += stake_part.total_stake
+                except BaseException as e:
+                    errors += 1
 
                 i += 1
 
@@ -78,8 +83,9 @@ class CommandTotalBalance(Command):
                 f"total balance: {total_balance:30,}\n"
                 f"      balance: {total_balance:30,}\n"
                 f"      staked : {total_staked:30,}\n"
-                f"active account count : {active_account_count}\n"
-                f"staking account count : {staking_account_count}\n"
+                f"active account count : {active_account_count:,}\n"
+                f"staking account count : {staking_account_count:,}\n"
+                f"errors: {errors}"
             )
         except Exception as e:
             print(f"address: {address}")
