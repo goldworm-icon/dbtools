@@ -150,12 +150,19 @@ class CommandUnstakeBug(Command):
                     # skip base transaction
                     continue
 
+                target = ""
                 from_ = tx.get("from", "")
-                if from_ not in unstake:
-                    # skip has no unstake
+                to = tx.get("to", "")
+                if from_ in unstake:
+                    target = from_
+                elif to in unstake:
+                    target = to
+
+                if target == "":
+                    # skip tx touch no unstake account
                     continue
 
-                if "error_count" in unstake[from_]:
+                if "error_count" in unstake[target]:
                     data_type = tx.get("dataType", "")
                     if data_type == "call" and tx["data"]["method"] in ("setStake", "setDelegation"):
                         # only setStake and setDelegation
@@ -179,7 +186,7 @@ class CommandUnstakeBug(Command):
                     # skip failed transaction
                     continue
 
-                value = unstake[from_]
+                value = unstake[target]
                 if block_height >= value.get("unstake_block_height", end+1):
                     # increase TX count which called after unstake lockup expired
                     error_count = value.get("error_count", 0)
