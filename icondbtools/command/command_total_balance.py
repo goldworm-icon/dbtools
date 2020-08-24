@@ -48,14 +48,9 @@ class CommandTotalBalance(Command):
         active_account_count = 0
         staking_account_count = 0
 
-        revision = 10
-        current_block_height = 0
-
         address = None
-        account = None
 
         try:
-            f = open("")
             reader.open(db_path)
             iterator = reader.iterator
 
@@ -67,7 +62,6 @@ class CommandTotalBalance(Command):
                 address = Address.from_bytes(key)
                 coin_part = reader.get_coin_part(address)
                 stake_part = reader.get_stake_part(address)
-                # account: "Account" = reader.get_account(address, current_block_height, revision)
                 print(f"{i}: {address}")
 
                 if coin_part is not None:
@@ -76,13 +70,6 @@ class CommandTotalBalance(Command):
                 if stake_part is not None:
                     staking_account_count += 1
                     total_staked += stake_part.total_stake
-
-                # if account.coin_part is not None:
-                #     active_account_count += 1
-                #     total_balance += account.balance
-                # if account.stake_part is not None:
-                #     staking_account_count += 1
-                #     total_staked += account.total_stake
 
                 i += 1
 
