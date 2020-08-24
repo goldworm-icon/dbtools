@@ -329,6 +329,7 @@ class IconServiceSyncer(object):
                 if k in unstake:
                     unstake[k]["error_count"] += v["error_count"]
                     unstake[k]["error_amount"] += v["error_amount"]
+                    unstake[k]["transactions"].extend(v["transactions"])
                 else:
                     unstake[k] = v
 
