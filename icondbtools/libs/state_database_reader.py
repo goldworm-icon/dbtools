@@ -85,9 +85,7 @@ class StateDatabaseReader(object):
 
     @property
     def iterator(self):
-        start = bytes.fromhex("0"*40)
-        stop = bytes.fromhex("f"*40)
-        return self._db.iterator(start=start, stop=stop)
+        return self._db.iterator()
 
     def get_coin_part(self, address: 'Address') -> CoinPart:
         return self._get_part(CoinPart, address)
