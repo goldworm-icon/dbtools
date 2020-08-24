@@ -55,6 +55,7 @@ class CommandTotalBalance(Command):
         account = None
 
         try:
+            f = open("")
             reader.open(db_path)
             iterator = reader.iterator
 
@@ -63,26 +64,33 @@ class CommandTotalBalance(Command):
                 if not is_account_key(key):
                     continue
 
-                try:
-                    address = Address.from_bytes(key)
-                    account: "Account" = reader.get_account(address, current_block_height, revision)
-                    print(f"{i}: {address}")
+                address = Address.from_bytes(key)
+                coin_part = reader.get_coin_part(address)
+                stake_part = reader.get_stake_part(address)
+                # account: "Account" = reader.get_account(address, current_block_height, revision)
+                print(f"{i}: {address}")
 
-                    if account.coin_part is not None:
-                        active_account_count += 1
-                        total_balance += account.balance
-                    if account.stake_part is not None:
-                        staking_account_count += 1
-                        total_staked += account.total_stake
-                except Exception as e:
-                    print(e)
+                if coin_part is not None:
+                    active_account_count += 1
+                    total_balance += coin_part.balance
+                if stake_part is not None:
+                    staking_account_count += 1
+                    total_staked += stake_part.total_stake
+
+                # if account.coin_part is not None:
+                #     active_account_count += 1
+                #     total_balance += account.balance
+                # if account.stake_part is not None:
+                #     staking_account_count += 1
+                #     total_staked += account.total_stake
 
                 i += 1
 
             print(
-                f"total balance: {total_balance}\n"
-                f"total balance including staked values: {total_balance + total_staked}\n"
-                f"total supply : {reader.get_total_supply()}\n"
+                f"total supply : {reader.get_total_supply():30,}\n"
+                f"total balance: {total_balance:30,}\n"
+                f"      balance: {total_balance:30,}\n"
+                f"      staked : {total_staked:30,}\n"
                 f"active account count : {active_account_count}\n"
                 f"staking account count : {staking_account_count}\n"
             )
