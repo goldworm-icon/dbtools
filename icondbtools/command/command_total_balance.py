@@ -63,16 +63,19 @@ class CommandTotalBalance(Command):
                 if not is_account_key(key):
                     continue
 
-                address = Address.from_bytes(key)
-                account: "Account" = reader.get_account(address, current_block_height, revision)
-                print(f"{i}: {address}")
+                try:
+                    address = Address.from_bytes(key)
+                    account: "Account" = reader.get_account(address, current_block_height, revision)
+                    print(f"{i}: {address}")
 
-                if account.coin_part is not None:
-                    active_account_count += 1
-                    total_balance += account.balance
-                if account.stake_part is not None:
-                    staking_account_count += 1
-                    total_staked += account.total_stake
+                    if account.coin_part is not None:
+                        active_account_count += 1
+                        total_balance += account.balance
+                    if account.stake_part is not None:
+                        staking_account_count += 1
+                        total_staked += account.total_stake
+                except Exception as e:
+                    print(e)
 
                 i += 1
 
