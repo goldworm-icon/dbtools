@@ -237,10 +237,15 @@ class CommandUnstakeValidate(Command):
         i = 0
         tx_count = 0
         tx_fail = 0
+        tx_fail_amount = 0
         tx_result_error = 0
+        duplicate_deposit_count = 0
+        duplicate_deposit_amount = 0
         for k, v in unstake.items():
+            prev_tx_hash = ""
             for tx_value in v["transactions"]:
                 tx_count += 1
+                # check TX result
                 tx_result: dict = block_reader.get_transaction_result_by_hash(tx_value[0])
                 if tx_result is None:
                     print(f"Can't find TX result: {tx_value[0]} for {k}, error amount {tx_value[1]}")
@@ -248,5 +253,16 @@ class CommandUnstakeValidate(Command):
                 elif tx_result["result"]["status"] != "0x1":
                     print(f"Failed TX: {tx_value[0]} for {k}, error amount {tx_value[1]}")
                     tx_fail += 1
+                    tx_fail_amount += tx_value[1]
+
+                # check duplicate deposit
+                if prev_tx_hash == tx_value[0]:
+                    print(f"duplicate deposit: {tx_value[0]}, {tx_value[1]}")
+                    duplicate_deposit_count += 1
+                    duplicate_deposit_amount += tx_value[1]
             i += 1
-        print(f"Validate {tx_count} TXs for {i} accounts. Found {tx_fail} failed TX and {tx_result_error} no result")
+        print(
+            f"Validate {tx_count} TXs for {i} accounts."
+            f"Failed TX {tx_fail}, amount = {tx_fail_amount} "
+            f"Duplicate deposit {duplicate_deposit_count}, amount = {duplicate_deposit_amount}"
+        )
