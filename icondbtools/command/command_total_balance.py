@@ -62,7 +62,7 @@ class CommandTotalBalance(Command):
 
                 try:
                     address = Address.from_bytes(key)
-                    print(f"{i}: {address}")
+                    #print(f"{i}: {address}")
 
                     coin_part = reader.get_coin_part(address)
                     stake_part = reader.get_stake_part(address)
@@ -102,6 +102,6 @@ def is_account_key(key: bytes) -> bool:
     if key_length == 20:
         return True
     elif key_length == 21:
-        if key[0] == b'\x01':
+        if key[0] == 1:
             return True
     return False
