@@ -239,10 +239,13 @@ class CommandUnstakeValidate(Command):
         tx_fail = 0
         tx_fail_amount = 0
         tx_result_error = 0
-        duplicate_deposit_count = 0
-        duplicate_deposit_amount = 0
+        duplicate_tx_count = 0
+        duplicate_tx_amount = 0
+        duplicate_block_count = 0
+        duplicate_block_amount = 0
         for k, v in unstake.items():
             prev_tx_hash = ""
+            prev_block_hash = ""
             for tx_value in v["transactions"]:
                 tx_count += 1
                 # check TX result
@@ -250,21 +253,29 @@ class CommandUnstakeValidate(Command):
                 if tx_result is None:
                     print(f"Can't find TX result: {tx_value[0]} for {k}, error amount {tx_value[1]}")
                     tx_result_error += 1
+                    block_hash = ""
                 elif tx_result["result"]["status"] != "0x1":
                     print(f"Failed TX: {tx_value[0]} for {k}, error amount {tx_value[1]}")
                     tx_fail += 1
                     tx_fail_amount += tx_value[1]
+                    block_hash = tx_result["result"]["blockHash"]
 
-                # check duplicate deposit
+                # check duplicate TX
                 if prev_tx_hash == tx_value[0]:
-                    print(f"duplicate deposit: {tx_value[0]}, {tx_value[1]}")
-                    duplicate_deposit_count += 1
-                    duplicate_deposit_amount += tx_value[1]
+                    print(f"duplicate TX: {tx_value[0]}, {tx_value[1]}")
+                    duplicate_tx_count += 1
+                    duplicate_tx_amount += tx_value[1]
+                elif prev_block_hash != "" and prev_block_hash == block_hash:
+                    print(f"duplicate block {block_hash}: TX1 {prev_tx_hash}, TX2 {tx_value[0]}")
+                    duplicate_block_count += 1
+                    duplicate_block_amount += tx_value[1]
 
                 prev_tx_hash = tx_value[0]
+                prev_block_hash = block_hash
             i += 1
         print(
             f"Validate {tx_count} TXs for {i} accounts.\n"
             f"Failed TX {tx_fail}, amount = {tx_fail_amount}\n"
-            f"Duplicate deposit {duplicate_deposit_count}, amount = {duplicate_deposit_amount}\n"
+            f"Duplicate TX {duplicate_tx_count}, amount = {duplicate_tx_amount}\n"
+            f"Duplicate Block {duplicate_block_count}, amount = {duplicate_block_amount}\n"
         )
