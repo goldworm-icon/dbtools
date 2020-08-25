@@ -20,7 +20,7 @@ import plyvel
 
 from iconservice.base.address import Address
 from iconservice.base.block import Block
-from iconservice.icx.coin_part import CoinPart
+from iconservice.icx.coin_part import CoinPart, CoinPartFlag
 from iconservice.icx.delegation_part import DelegationPart
 from iconservice.icx.icx_account import Account
 from iconservice.icx.stake_part import StakePart
@@ -74,6 +74,13 @@ class StateDatabaseReader(object):
 
         coin_part = self._get_part(CoinPart, address)
         stake_part = self._get_part(StakePart, address)
+        print("coinPart flag : ", coin_part.flags)
+        print("coinPart balance : ", coin_part.balance)
+        print("coinPart has Unstake : ", CoinPartFlag.HAS_UNSTAKE in coin_part.flags)
+        print("stakePart stake : ", stake_part.stake)
+        print("stakePart unstake : ", stake_part.unstake)
+        print("stakePart unstakes_info : ", stake_part.unstakes_info)
+        print("stakePart unstakeBlockHeight : ", stake_part.unstake_block_height)
 
         return Account(
             address,

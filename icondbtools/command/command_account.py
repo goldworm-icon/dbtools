@@ -54,7 +54,7 @@ class CommandAccount(Command):
         try:
             reader.open(db_path)
 
-            account: "Account" = reader.get_account(address)
+            account: "Account" = reader.get_account(address, reader.get_last_block().height, 10)
             if account is None:
                 print(f"Account not found: {address}")
             else:
