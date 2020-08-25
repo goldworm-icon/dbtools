@@ -260,9 +260,11 @@ class CommandUnstakeValidate(Command):
                     print(f"duplicate deposit: {tx_value[0]}, {tx_value[1]}")
                     duplicate_deposit_count += 1
                     duplicate_deposit_amount += tx_value[1]
+
+                prev_tx_hash = tx_value[0]
             i += 1
         print(
-            f"Validate {tx_count} TXs for {i} accounts."
-            f"Failed TX {tx_fail}, amount = {tx_fail_amount} "
-            f"Duplicate deposit {duplicate_deposit_count}, amount = {duplicate_deposit_amount}"
+            f"Validate {tx_count} TXs for {i} accounts.\n"
+            f"Failed TX {tx_fail}, amount = {tx_fail_amount}\n"
+            f"Duplicate deposit {duplicate_deposit_count}, amount = {duplicate_deposit_amount}\n"
         )
