@@ -78,8 +78,9 @@ class BlockDatabaseReader(object):
 
         key: bytes = tx_hash.encode()
         value: bytes = self._db.get(key)
-        tx_result: dict = json.loads(value)
-        return tx_result
+        if value is not None:
+            return json.loads(value)
+        return None
 
     def get_state_root_hash_by_block_height(
             self, block_height: int) -> bytes:

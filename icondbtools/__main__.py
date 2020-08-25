@@ -34,7 +34,9 @@ from icondbtools.command.command_term import CommandTerm
 from icondbtools.command.command_token import CommandToken
 from icondbtools.command.command_tps import CommandTps
 from icondbtools.command.command_txresult import CommandTxResult
-from icondbtools.command.command_unstake import CommandUnstake, CommandUnstakeBug, CommandUnstakePreprocess
+from icondbtools.command.command_unstake import (
+    CommandUnstake, CommandUnstakeBug, CommandUnstakePreprocess, CommandUnstakeValidate
+)
 from icondbtools.libs.timer import Timer
 from icondbtools.utils import get_dbtools_version
 
@@ -61,6 +63,7 @@ def main():
         CommandUnstake,
         CommandUnstakeBug,
         CommandUnstakePreprocess,
+        CommandUnstakeValidate,
     ]
 
     version = get_dbtools_version()
