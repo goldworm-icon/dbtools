@@ -31,8 +31,7 @@ class MyFilter(TransactionFilter):
         self._to = to
 
     def run(self, tx: "Transaction", tx_result: "TransactionResult") -> bool:
-        print(tx)
-        return tx.from_ == self._from and tx.to == self._to
+        return tx.from_ == self._from or tx.to == self._to
 
 
 class CommandTransactions(Command):
@@ -70,10 +69,8 @@ class CommandTransactions(Command):
         size = 0
         with open(path, "wt") as f:
             for tx, tx_result in it:
-                f.write(str(tx) + "\n")
-                f.write(str(tx_result) + "\n")
-                f.write("======================\n")
+                f.write(f"0x{tx.tx_hash.hex()}\n")
                 size += 1
 
         transaction_collector.close()
-        print(f"# of tx: {size}")
+        print(f"tx_count: {size}")
