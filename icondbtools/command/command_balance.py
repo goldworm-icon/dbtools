@@ -108,8 +108,8 @@ class CommandBalance(Command):
             address,
             balance,
             stake_info,
-            transaction_collector.start_block_height,
-            transaction_collector.end_block_height,
+            start,
+            end,
             balance_calculator.txs,
             balance_calculator.tx_results,
         )

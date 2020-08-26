@@ -15,6 +15,7 @@
 
 from enum import IntEnum, auto
 from typing import List, Iterable, Tuple, Dict, Optional
+import sys
 
 from iconservice.base.address import AddressPrefix, Address
 from ..data.transaction import Transaction
@@ -108,6 +109,8 @@ class BalanceCalculator(object):
             if self._address not in (tx.from_, tx.to):
                 continue
 
+            print(f"BH-{tx_result.block_height}", file=sys.stderr)
+
             delta = self._calculate_balance_delta(tx, tx_result)
             balance += delta
 
@@ -174,10 +177,7 @@ class BalanceCalculator(object):
         delta = 0
 
         for event_log in tx_result.event_logs:
-            if (
-                event_log.score_address == ICON_SERVICE_ADDRESS
-                and event_log.signature == "IScoreClaimed(int,int)"
-            ):
+            if event_log.signature in ("IScoreClaimed(int,int)", "IScoreClaimedV2(Address,int,int)"):
                 delta += event_log.data[1]
 
         return delta
@@ -189,7 +189,6 @@ class BalanceCalculator(object):
 
         old_stake = self._stake_info.stake
         new_stake = str_to_int(params["value"])
-
 
         if old_stake > new_stake:
             unstake = old_stake - new_stake
@@ -220,7 +219,7 @@ class BalanceCalculator(object):
     @classmethod
     def _print_title(cls):
         print(
-            f"index | status | tx_type | BH | tx_hash | balance | delta | value | fee\n"
+            f"index | BH | status | tx_type |  tx_hash | balance | delta | value | fee\n"
             f"-----------------------------------------------------------------------"
         )
 
@@ -235,13 +234,13 @@ class BalanceCalculator(object):
         tx_result: "TransactionResult",
     ):
         print(
-            f"{i:04d} "
-            f"{tx_result.status.name} "
-            f"{tx_type.name:14s} "
+            f"{i:05d} "
             f"{tx_result.block_height:010d} "
+            f"{tx_result.status.name[0]} "
+            f"{tx_type.name:14s} "
             f"{bytes_to_hex(tx.tx_hash)} "
-            f"{balance} "
-            f"{delta} "
-            f"{tx.value} "
-            f"{tx_result.fee} "
+            f"{balance:030d} "
+            f"{delta:030d} "
+            f"{tx.value:030d} "
+            f"{tx_result.fee:030d} "
         )
