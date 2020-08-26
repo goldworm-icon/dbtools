@@ -17,6 +17,8 @@ import argparse
 import sys
 from pprint import pprint
 
+from icondbtools.command.command_total_balance import CommandTotalBalance
+
 from .__about__ import version, name
 from .command.command_account import CommandAccount
 from .command.command_balance import CommandBalance
@@ -62,6 +64,8 @@ def main():
         CommandTerm,
         CommandBalance,
         CommandTransactions,
+        CommandTotalBalance,
+
         # Commands for compact db
         CommandCDB,
         CommandMigrate,

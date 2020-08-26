@@ -54,14 +54,16 @@ class CommandAccount(Command):
         try:
             reader.open(db_path)
 
-            account: "Account" = reader.get_account(address)
+            account: "Account" = reader.get_account(address, reader.get_last_block().height, 10)
             if account is None:
                 print(f"Account not found: {address}")
             else:
                 print(
                     f"address: {account.address}\n"
                     f"amount: {account.balance / 10 ** 18} in icx\n"
-                    f"stake: {account.stake}\n"
+                    f"stake: {account.stake_part.stake}\n"
+                    f"unstake: {account.stake_part.unstake}\n"
+                    f"unstakeInfo: {account.stake_part.unstakes_info}\n"
                 )
         finally:
             reader.close()
