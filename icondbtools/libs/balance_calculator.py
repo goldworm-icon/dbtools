@@ -190,6 +190,7 @@ class BalanceCalculator(object):
         old_stake = self._stake_info.stake
         new_stake = str_to_int(params["value"])
 
+
         if old_stake > new_stake:
             unstake = old_stake - new_stake
         else:
