@@ -84,7 +84,7 @@ def main():
         return 1
 
     args = parser.parse_args()
-    pprint(args)
+    # pprint(args)
 
     timer = Timer()
     timer.start()

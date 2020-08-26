@@ -53,6 +53,8 @@ class CommandAccount(Command):
 
         try:
             reader.open(db_path)
+            block = reader.get_last_block()
+            print(f"BH: {block.height}")
 
             account: "Account" = reader.get_account(address, reader.get_last_block().height, 10)
             if account is None:
@@ -60,10 +62,11 @@ class CommandAccount(Command):
             else:
                 print(
                     f"address: {account.address}\n"
-                    f"amount: {account.balance / 10 ** 18} in icx\n"
-                    f"stake: {account.stake_part.stake}\n"
-                    f"unstake: {account.stake_part.unstake}\n"
+                    f"amount (loop): {account.balance:_}\n"
+                    f"stake: {account.stake_part.stake:_}\n"
+                    f"unstake: {account.stake_part.unstake:_}\n"
                     f"unstakeInfo: {account.stake_part.unstakes_info}\n"
+                    f"total: {account.balance + account.total_stake:_}\n"
                 )
         finally:
             reader.close()
