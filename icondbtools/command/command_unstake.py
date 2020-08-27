@@ -16,11 +16,15 @@
 import json
 
 from iconservice.base.address import Address
+from iconservice.icx.coin_part import CoinPartFlag
 from iconservice.icx.stake_part import StakePart
 
 from icondbtools.command.command import Command
 from icondbtools.libs.block_database_reader import BlockDatabaseReader
 from icondbtools.libs.state_database_reader import StateDatabaseReader
+
+BH_REV10 = 23079811
+BH_REV9 = 22657836
 
 
 class CommandUnstake(Command):
@@ -279,3 +283,59 @@ class CommandUnstakeValidate(Command):
             f"Duplicate TX {duplicate_tx_count}, amount = {duplicate_tx_amount}\n"
             f"Duplicate Block {duplicate_block_count}, amount = {duplicate_block_amount}\n"
         )
+
+
+class CommandHasUnstake(Command):
+    """Get unstake account
+
+    """
+
+    def __init__(self, sub_parser, common_parser):
+        self.add_parser(sub_parser, common_parser)
+
+    def add_parser(self, sub_parser, common_parser):
+        name = 'has_unstake'
+        desc = 'find accounts has HAS_UNSTAKE flag bug'
+
+        # create the parser for balance
+        parser_unstake = sub_parser.add_parser(name, parents=[common_parser], help=desc)
+        parser_unstake.add_argument('--to', type=str, help='write result to file')
+        parser_unstake.add_argument('--bh', type=int, default=BH_REV10, help='write result to file')
+        parser_unstake.set_defaults(func=self.run)
+
+    def run(self, args):
+        db_path: str = args.db
+
+        reader = StateDatabaseReader()
+        try:
+            reader.open(db_path)
+
+            results = {}
+            iter_results = reader.iterate_stake_part(self._cmp_unstake)
+            for result in iter_results:
+                coin_part = reader.get_coin_part(result[0])
+                if CoinPartFlag.HAS_UNSTAKE not in coin_part.flags:
+                    stake_part = result[1]
+                    if stake_part.unstake_block_height:
+                        unstake_block_height = stake_part.unstake_block_height
+                    else:
+                        unstake_block_height = stake_part.unstakes_info[0][1]
+                    value = {
+                        "coin part flag": coin_part.flags.value,
+                        "balance": coin_part.balance,
+                        "error": unstake_block_height < args.bh
+                    }
+                    value.update(stake_part.to_dict())
+                    results[str(result[0])] = value
+ 
+        finally:
+            if args.to:
+                with open(args.to, 'w') as fp:
+                    json.dump(results, fp=fp, indent=2)
+            else:
+                print(json.dumps(results, indent=2))
+            print(f"Found {len(results)} accounts")
+            reader.close()
+
+    def _cmp_unstake(self, stake_part: StakePart) -> bool:
+        return len(stake_part.unstakes_info) != 0 or stake_part.unstake_block_height != 0
