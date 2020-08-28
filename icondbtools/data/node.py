@@ -18,7 +18,13 @@ class Node(object):
 
     @classmethod
     def from_dict(cls, data: dict) -> 'Node':
-        address: 'Address' = data["id"]
+        _id = data["id"]
+        if isinstance(_id, str):
+            address: 'Address' = Address.from_string(_id)
+        elif isinstance(_id, Address):
+            address: 'Address' = _id
+        else:
+            raise Exception(f"Invalid data type: (data['id']){type(_id)}")
         p2p_endpoint: str = data["p2pEndpoint"]
 
         return Node(address, p2p_endpoint)

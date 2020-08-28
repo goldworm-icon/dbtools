@@ -241,6 +241,11 @@ class IconServiceSyncer(object):
             if block_dict is None:
                 print(f'last block: {height - 1}')
                 break
+
+            if main_preps is None:
+                preps: list = self._block_reader.load_main_preps(block_dict)
+                main_preps: Optional['NodeContainer'] = NodeContainer.from_list(preps=preps)
+
             loopchain_block: 'LoopchainBlock' = LoopchainBlock.from_dict(block_dict)
             block: 'Block' = _create_iconservice_block(loopchain_block)
 

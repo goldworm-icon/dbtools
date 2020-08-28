@@ -68,6 +68,19 @@ class BlockDatabaseReader(object):
         block: dict = json.loads(value)
         return block
 
+    def load_main_preps(self, block_dict: dict) -> list:
+        reps_hash: Optional[str] = block_dict.get("repsHash")
+        if reps_hash is None:
+            return []
+
+        key: bytes = b'preps_key' + bytes.fromhex(reps_hash[2:])
+        value: bytes = self._db.get(key=key)
+        preps: list = json.loads(value)
+        return preps
+
+    def get(self, key: bytes) -> Optional[bytes]:
+        return self._db.get(key)
+
     def get_last_block(self) -> Optional[dict]:
         key: bytes = self._db.get(LAST_BLOCK_KEY)
         return self.get_block_by_key(key)

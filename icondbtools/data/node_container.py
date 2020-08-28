@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from typing import TYPE_CHECKING, List, Dict, Iterable
+from typing import TYPE_CHECKING, List, Dict, Iterable, Optional
 
 from iconservice.icon_constant import PRepResultState
 from .node import Node
@@ -31,6 +31,20 @@ class NodeContainer(object):
         nodes: Dict['Address', 'Node'] = {}
 
         preps: List = data["preps"]
+        for prep in preps:
+            node = Node.from_dict(prep)
+            nodes[node.address] = node
+
+        return NodeContainer(state, nodes)
+
+    @classmethod
+    def from_list(cls, preps: list) -> Optional['NodeContainer']:
+        if not preps:
+            return None
+
+        state: 'PRepResultState' = PRepResultState.NORMAL
+        nodes: Dict['Address', 'Node'] = {}
+
         for prep in preps:
             node = Node.from_dict(prep)
             nodes[node.address] = node
