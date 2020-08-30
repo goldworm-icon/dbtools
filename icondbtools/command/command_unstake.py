@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import json
+from copy import deepcopy
 
 from iconservice.base.address import Address
 from iconservice.icx.coin_part import CoinPartFlag
@@ -339,3 +340,84 @@ class CommandHasUnstake(Command):
 
     def _cmp_unstake(self, stake_part: StakePart) -> bool:
         return len(stake_part.unstakes_info) != 0 or stake_part.unstake_block_height != 0
+
+
+class CommandUnstakeStatus(Command):
+    def __init__(self, sub_parser, common_parser):
+        self.add_parser(sub_parser, common_parser)
+
+    def add_parser(self, sub_parser, common_parser):
+        name = 'unstake_status'
+        desc = 'Get stauts of the unstake accounts'
+
+        # create the parser
+        parser_unstake = sub_parser.add_parser(name, parents=[common_parser], help=desc)
+        parser_unstake.add_argument('--unstake', type=str, required=True, help='list of account which has unstake ')
+        parser_unstake.add_argument('--to', type=str, help='write result to file')
+        parser_unstake.set_defaults(func=self.run)
+
+    def run(self, args):
+        with open(args.unstake) as f:
+            unstake: dict = json.load(f)
+
+        db_path: str = args.db
+
+        result = {}
+
+        reader = StateDatabaseReader()
+        try:
+            reader.open(db_path)
+            invisible = {
+                "count": 0,
+                "amount": 0,
+                "accounts": []
+            }
+            visible_can_burn = deepcopy(invisible)
+            visible_cannot_burn = deepcopy(invisible)
+
+            for k, v in unstake.items():
+                address = Address.from_string(k)
+                coin_part = reader.get_coin_part(address)
+                stake_part = reader.get_stake_part(address)
+                unstake_amount = v["transactions"][0][1]
+                if (stake_part.unstake_block_height and stake_part.unstake == unstake_amount) or \
+                        (len(stake_part.unstakes_info) > 0 and stake_part.unstakes_info[0][1] == unstake_amount):
+                    self._increase_stats(invisible, address, unstake_amount)
+                elif coin_part.balance >= unstake_amount:
+                    self._increase_stats(visible_can_burn, address, unstake_amount)
+                else:
+                    self._increase_stats(visible_cannot_burn, address, unstake_amount)
+
+            result = {
+                "count": invisible["count"] + visible_can_burn["count"] + visible_cannot_burn["count"],
+                "amount": invisible["amount"] + visible_can_burn["amount"] + visible_cannot_burn["amount"],
+                "invisible": invisible,
+                "visible_can_burn": visible_can_burn,
+                "visible_cannot_burn": visible_cannot_burn,
+            }
+        finally:
+            if args.to:
+                with open(args.to, 'w') as fp:
+                    json.dump(result, fp=fp, indent=2)
+            else:
+                self._print_summary("target", result)
+                self._print_summary("invisible", invisible)
+                self._print_summary("visible_can_burn", visible_can_burn)
+                self._print_summary("visible_cannot_burn", visible_cannot_burn)
+            reader.close()
+
+    def _increase_stats(self, stats: dict, address: Address, unstake_amount: int):
+        stats["count"] += 1
+        stats["amount"] += unstake_amount
+        stats["accounts"].append(
+            {
+                "address": str(address),
+                "amount": unstake_amount
+            }
+        )
+
+    @staticmethod
+    def _print_summary(header: str, stats: dict):
+        count = "count"
+        amount = "amount"
+        print(f"{header}:\n\t{count:10}: {stats['count']:40,}\n\t{amount:10}: {stats['amount']:40,}")

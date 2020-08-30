@@ -131,6 +131,13 @@ class StateDatabaseReader(object):
         data = self.get_by_key(key)
         return CoinPart.from_bytes(data)
 
+    def get_stake_part(self, address: Address) -> StakePart:
+        key = StakePart.make_key(address)
+        data = self.get_by_key(key)
+        stake_part = StakePart.from_bytes(data)
+        stake_part.set_complete(True)
+        return stake_part
+
     def iterate_stake_part(self, cmp: callable) -> list:
         def stake_parser(value: bytes) -> StakePart:
             stake_part = StakePart.from_bytes(value)
