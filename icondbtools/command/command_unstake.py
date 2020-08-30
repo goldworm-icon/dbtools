@@ -381,7 +381,7 @@ class CommandUnstakeStatus(Command):
                 stake_part = reader.get_stake_part(address)
                 unstake_amount = v["transactions"][0][1]
                 if (stake_part.unstake_block_height and stake_part.unstake == unstake_amount) or \
-                        (len(stake_part.unstakes_info) > 0 and stake_part.unstakes_info[0][1] == unstake_amount):
+                        (len(stake_part.unstakes_info) > 0 and stake_part.unstakes_info[0][0] == unstake_amount):
                     self._increase_stats(invisible, address, unstake_amount)
                 elif coin_part.balance >= unstake_amount:
                     self._increase_stats(visible_can_burn, address, unstake_amount)
