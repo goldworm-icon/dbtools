@@ -15,10 +15,8 @@
 
 import argparse
 import sys
-from pprint import pprint
 
 from icondbtools.command.command_total_balance import CommandTotalBalance
-
 from .__about__ import version, name
 from .command.command_account import CommandAccount
 from .command.command_balance import CommandBalance
@@ -28,6 +26,7 @@ from .command.command_clear import CommandClear
 from .command.command_copy import CommandCopy
 from .command.command_dbinfo import CommandDbinfo
 from .command.command_fastsync import CommandFastSync
+from .command.command_ghost_icx import CommandGhostICX
 from .command.command_iiss_data import CommandIISSData
 from .command.command_iiss_tx_data import CommandIISSTXData
 from .command.command_invalidtx import CommandInvalidTx
@@ -39,8 +38,8 @@ from .command.command_sync import CommandSync
 from .command.command_term import CommandTerm
 from .command.command_token import CommandToken
 from .command.command_tps import CommandTps
-from .command.command_txresult import CommandTxResult
 from .command.command_transactions import CommandTransactions
+from .command.command_txresult import CommandTxResult
 from .utils.timer import Timer
 
 
@@ -65,6 +64,7 @@ def main():
         CommandBalance,
         CommandTransactions,
         CommandTotalBalance,
+        CommandGhostICX,
 
         # Commands for compact db
         CommandCDB,
