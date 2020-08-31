@@ -3,7 +3,7 @@
 __all__ = ("ExtType", "encode", "decode", "Meta")
 
 from abc import ABCMeta, abstractmethod
-from enum import Enum, IntEnum
+from enum import Enum
 from typing import Type
 
 import msgpack
@@ -53,7 +53,6 @@ def register_class(cls: Type[Serializable]):
     ext_type = cls.get_ext_type()
     if isinstance(ext_type, int):
         registry[ext_type] = cls
-        print(registry)
 
 
 def encode(obj: object) -> bytes:
