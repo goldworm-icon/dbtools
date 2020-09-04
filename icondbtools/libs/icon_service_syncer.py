@@ -257,7 +257,8 @@ class IconServiceSyncer(object):
                 break
 
             if main_preps is None:
-                preps: list = self._block_reader.load_main_preps(block_dict)
+                prev_block_dict: dict = self._block_reader.get_block_by_block_height(height - 1)
+                preps: list = self._block_reader.load_main_preps(prev_block_dict)
                 main_preps: Optional['NodeContainer'] = NodeContainer.from_list(preps=preps)
 
             loopchain_block: 'LoopchainBlock' = LoopchainBlock.from_dict(block_dict)
