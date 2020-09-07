@@ -20,6 +20,7 @@ class TPSCalculator(object):
     """Calculate TPS based on confirmed transactions in blockchain
 
     """
+
     def __init__(self):
         self._block_reader = BlockDatabaseReader()
 
@@ -36,16 +37,18 @@ class TPSCalculator(object):
         total_period_us: int = 0
         prev_timestamp_us: int = 0
 
-        print(f'{"height":>8} | {"txs":>8} | {"total txs":>10} | {"period_s":>16} | {"total period_s":>16}')
-        self._print_horizon_line('-', 80)
+        print(
+            f'{"height":>8} | {"txs":>8} | {"total txs":>10} | {"period_s":>16} | {"total period_s":>16}'
+        )
+        self._print_horizon_line("-", 80)
 
         for height in range(start, end + 1):
             block: dict = self._block_reader.get_block_by_block_height(height)
 
             try:
-                timestamp_us: int = int(block['timestamp'], 16)
+                timestamp_us: int = int(block["timestamp"], 16)
             except:
-                timestamp_us: int = block['time_stamp']
+                timestamp_us: int = block["time_stamp"]
 
             if height == start:
                 start_us = timestamp_us
@@ -61,16 +64,18 @@ class TPSCalculator(object):
                 break
 
             try:
-                tx_list: list = block['transactions']
+                tx_list: list = block["transactions"]
             except:
-                tx_list: list = block['confirmed_transaction_list']
+                tx_list: list = block["confirmed_transaction_list"]
 
             count = len(tx_list)
             tx_count += count
             total_period_us += period_us
             prev_timestamp_us = timestamp_us
 
-            print(f'{height:>8} | {count:>8} | {tx_count:>10} | {period_us / 10**6:>16} | {total_period_us / 10**6:>16}')
+            print(
+                f"{height:>8} | {count:>8} | {tx_count:>10} | {period_us / 10**6:>16} | {total_period_us / 10**6:>16}"
+            )
 
         self._print_result(tx_count, start_us, end_us, start, end)
 
@@ -78,7 +83,7 @@ class TPSCalculator(object):
         last_block: dict = self._block_reader.get_last_block()
 
         try:
-            last_height: int = int(last_block['height'], 16)
+            last_height: int = int(last_block["height"], 16)
         except:
             last_height: int = last_block["height"]
 
@@ -87,19 +92,26 @@ class TPSCalculator(object):
 
         return last_height
 
-    def _print_result(self, tx_count: int,
-                      start_us: int, end_us: int,
-                      start_height: int, end_height: int):
+    def _print_result(
+        self,
+        tx_count: int,
+        start_us: int,
+        end_us: int,
+        start_height: int,
+        end_height: int,
+    ):
         # Print the result
         period_us: int = end_us - start_us
-        tps: int = tx_count * 10**6 / period_us
+        tps: int = tx_count * 10 ** 6 / period_us
         blocks: int = end_height - start_height + 1
 
-        print(f'tps: {tps}\n'
-              f'transactions: {tx_count}\n'
-              f'blocks: {blocks}\n'
-              f'period: {period_us / 10**6} seconds, {period_us} microseconds')
-        self._print_horizon_line('-', 51)
+        print(
+            f"tps: {tps}\n"
+            f"transactions: {tx_count}\n"
+            f"blocks: {blocks}\n"
+            f"period: {period_us / 10**6} seconds, {period_us} microseconds"
+        )
+        self._print_horizon_line("-", 51)
 
     @staticmethod
     def _print_horizon_line(c: str, count: int):

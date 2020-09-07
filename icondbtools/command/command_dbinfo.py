@@ -20,21 +20,21 @@ from icondbtools.command.command import Command
 from icondbtools.libs.state_database_reader import StateDatabaseReader
 from collections import namedtuple
 
-KeyInfo = namedtuple('KeyInfo', 'name, key, from_func')
+KeyInfo = namedtuple("KeyInfo", "name, key, from_func")
 
 
 class CommandDbinfo(Command):
-    PREP_PREFIX: bytes = b'prep'
+    PREP_PREFIX: bytes = b"prep"
     COMMAND_LIST = [
-        KeyInfo(name='TERM', key=PREP_PREFIX + b'term', from_func=Term.from_list)
+        KeyInfo(name="TERM", key=PREP_PREFIX + b"term", from_func=Term.from_list)
     ]
 
     def __init__(self, sub_parser, common_parser):
         self.add_parser(sub_parser, common_parser)
 
     def add_parser(self, sub_parser, common_parser):
-        name = 'dbinfo'
-        desc = 'Print the information of instance in statedb'
+        name = "dbinfo"
+        desc = "Print the information of instance in statedb"
 
         # create the parser for block
         parser_block = sub_parser.add_parser(name, parents=[common_parser], help=desc)
@@ -43,10 +43,10 @@ class CommandDbinfo(Command):
     def get_list_idx(self):
 
         while True:
-            print('Enter the number to check information')
+            print("Enter the number to check information")
 
             for i in range(len(self.COMMAND_LIST)):
-                print(f'{i} : {self.COMMAND_LIST[i].name}')
+                print(f"{i} : {self.COMMAND_LIST[i].name}")
 
             try:
                 picked_number = int(input())
@@ -55,7 +55,7 @@ class CommandDbinfo(Command):
                     break
 
             except ValueError:
-                print('Entered wrong number')
+                print("Entered wrong number")
 
         return picked_number
 
@@ -70,8 +70,10 @@ class CommandDbinfo(Command):
         value = state_reader.get_by_key(self.COMMAND_LIST[picked_number].key)
 
         if value is not None:
-            pprint(self.COMMAND_LIST[picked_number].from_func(MsgPackForDB.loads(value)))
+            pprint(
+                self.COMMAND_LIST[picked_number].from_func(MsgPackForDB.loads(value))
+            )
         else:
-            print(f'value is not exist, key = {self.COMMAND_LIST[picked_number].key}')
+            print(f"value is not exist, key = {self.COMMAND_LIST[picked_number].key}")
 
         state_reader.close()

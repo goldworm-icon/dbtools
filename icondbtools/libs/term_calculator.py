@@ -39,14 +39,20 @@ class TermCalculator:
         :return: sequence which start is 1, start BH, end BH, and number of the term period the block belongs to
         """
         if block_height < self.DECENTRALIZATION_START_BH:
-            print(f"BH-{block_height} is less then DECENTRALIZATION START BH-{self.DECENTRALIZATION_START_BH}.")
+            print(
+                f"BH-{block_height} is less then DECENTRALIZATION START BH-{self.DECENTRALIZATION_START_BH}."
+            )
             exit(1)
 
         value = block_height - self.DECENTRALIZATION_START_BH
         seq = value // self.DECENTRALIZATION_TERM_PERIOD + 1
-        start_height = (seq - 1) * self.DECENTRALIZATION_TERM_PERIOD + self.DECENTRALIZATION_START_BH
+        start_height = (
+            seq - 1
+        ) * self.DECENTRALIZATION_TERM_PERIOD + self.DECENTRALIZATION_START_BH
         end_height = start_height + self.DECENTRALIZATION_TERM_PERIOD - 1
-        number = block_height - start_height + 1  # what number of the term period the input block is
+        number = (
+            block_height - start_height + 1
+        )  # what number of the term period the input block is
 
         term = Term(seq, start_height, end_height, number)
         return term

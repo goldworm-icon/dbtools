@@ -18,7 +18,7 @@ import os
 import pkg_resources
 
 DIR_PATH = os.path.abspath(os.path.dirname(__file__))
-PROJECT_ROOT_PATH = os.path.abspath(os.path.join(DIR_PATH, '..', '..'))
+PROJECT_ROOT_PATH = os.path.abspath(os.path.join(DIR_PATH, "..", ".."))
 
 
 def get_dbtools_version() -> str:
@@ -27,11 +27,17 @@ def get_dbtools_version() -> str:
     :return: version of tbears.
     """
     try:
-        version = pkg_resources.get_distribution('icondbtools').version
+        version = pkg_resources.get_distribution("icondbtools").version
     except pkg_resources.DistributionNotFound:
-        version_path = os.path.join(PROJECT_ROOT_PATH, 'VERSION')
-        with open(version_path, mode='r') as version_file:
+        version_path = os.path.join(PROJECT_ROOT_PATH, "VERSION")
+        with open(version_path, mode="r") as version_file:
             version = version_file.read()
     except:
-        version = 'unknown'
+        version = "unknown"
     return version
+
+
+def estimate_remaining_time_s(
+        total_blocks: int, blocks_done: int, elapsed_time_s: float) -> float:
+    blocks_to_do = total_blocks - blocks_done
+    return blocks_to_do * elapsed_time_s / blocks_done

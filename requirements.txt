@@ -2,3 +2,4 @@ pytest
 plyvel
 iconcommons
 iconservice
+msgpack~=1.0.0

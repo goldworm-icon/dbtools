@@ -14,29 +14,38 @@
 # limitations under the License.
 
 import hashlib
+from typing import Union, Optional
 
 import plyvel
 
+from iconservice.base.address import Address
 from iconservice.base.block import Block
+from iconservice.icx.coin_part import CoinPart, CoinPartFlag
+from iconservice.icx.delegation_part import DelegationPart
 from iconservice.icx.icx_account import Account
+from iconservice.icx.stake_part import StakePart
 
 
 class StateHash(object):
-    def __init__(self,
-                 hash_data: bytes=None,
-                 rows: int=0,
-                 total_key_size: int=0,
-                 total_value_size: int=0):
+    def __init__(
+        self,
+        hash_data: bytes = None,
+        rows: int = 0,
+        total_key_size: int = 0,
+        total_value_size: int = 0,
+    ):
         self.hash_data = hash_data
         self.rows = rows
         self.total_key_size = total_key_size
         self.total_value_size = total_value_size
 
     def __str__(self):
-        return f'hash: {self.hash_data.hex()}\n' \
-            f'rows: {self.rows}\n' \
-            f'total_key_size: {self.total_key_size}\n' \
-            f'total_value_size: {self.total_value_size}'
+        return (
+            f"hash: {self.hash_data.hex()}\n"
+            f"rows: {self.rows}\n"
+            f"total_key_size: {self.total_key_size}\n"
+            f"total_value_size: {self.total_value_size}"
+        )
 
 
 class StateDatabaseReader(object):
@@ -51,20 +60,58 @@ class StateDatabaseReader(object):
             self._db.close()
             self._db = None
 
-    def get_account(self, address: 'Address') -> 'Account':
+    def get_account(self, address: "Address", current_block_height: int, revision: int) -> Optional["Account"]:
         """Read the account from statedb
 
         :param address:
+        :param current_block_height:
+        :param revision:
         :return:
         """
         value: bytes = self._db.get(address.to_bytes())
         if value is None:
             return None
 
-        account = Account.from_bytes(value)
-        account.address = address
+        coin_part = self._get_part(CoinPart, address)
+        stake_part = self._get_part(StakePart, address)
+        print("coinPart flag : ", coin_part.flags)
+        print("coinPart balance : ", coin_part.balance)
+        print("coinPart has Unstake : ", CoinPartFlag.HAS_UNSTAKE in coin_part.flags)
+        print("stakePart stake : ", stake_part.stake)
+        print("stakePart unstake : ", stake_part.unstake)
+        print("stakePart unstakes_info : ", stake_part.unstakes_info)
+        print("stakePart unstakeBlockHeight : ", stake_part.unstake_block_height)
 
-        return account
+        return Account(
+            address,
+            current_block_height,
+            revision,
+            coin_part=coin_part,
+            stake_part=stake_part
+        )
+
+    @property
+    def iterator(self):
+        return self._db.iterator()
+
+    def get_coin_part(self, address: 'Address') -> CoinPart:
+        return self._get_part(CoinPart, address)
+
+    def get_stake_part(self, address: 'Address') -> StakePart:
+        return self._get_part(StakePart, address)
+
+    def get_delegation_part(self, address: 'Address') -> DelegationPart:
+        return self._get_part(DelegationPart, address)
+
+    def _get_part(self,
+                  part_class: Union[type(CoinPart), type(StakePart), type(DelegationPart)],
+                  address: 'Address') -> Union['CoinPart', 'StakePart', 'DelegationPart']:
+        key: bytes = part_class.make_key(address)
+        value: bytes = self._db.get(key)
+
+        part = part_class.from_bytes(value) if value else part_class()
+        part.set_complete(True)
+        return part
 
     def get_by_key(self, key):
         value: bytes = self._db.get(key)
@@ -74,18 +121,22 @@ class StateDatabaseReader(object):
 
         return value
 
-    def get_last_block(self) -> 'Block':
+    def get_last_block(self) -> "Block":
         """Read the last commited block from statedb
 
         :return: last block
         """
-        value: bytes = self._db.get(b'last_block')
+        value: bytes = self._db.get(b"last_block")
         if value is None:
             return None
 
         return Block.from_bytes(value)
 
-    def create_state_hash(self, prefix: bytes=None) -> 'StateHash':
+    def get_total_supply(self) -> int:
+        value: bytes = self._db.get(b'total_supply')
+        return int.from_bytes(value, 'big') if value else 0
+
+    def create_state_hash(self, prefix: bytes = None) -> "StateHash":
         """Read key and value from state db and create sha3 hash value from them
 
         :return: StateHash object

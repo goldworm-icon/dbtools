@@ -24,19 +24,21 @@ if TYPE_CHECKING:
 
 
 class CommandAccount(Command):
-
     def __init__(self, sub_parser, common_parser):
         self.add_parser(sub_parser, common_parser)
 
     def add_parser(self, sub_parser, common_parser):
-        name = 'account'
-        desc = 'Print the information of the account indicated by an address'
+        name = "account"
+        desc = "Print the information of the account indicated by an address"
 
         # create the parser for account
         parser_account = sub_parser.add_parser(name, parents=[common_parser], help=desc)
         parser_account.add_argument(
-            '--address', type=str, required=True,
-            help='EOA or SCORE address. ex) hx21a0f22e65ad8cd76c282b8b7fb35ba0368aa9bd')
+            "--address",
+            type=str,
+            required=True,
+            help="EOA or SCORE address. ex) hx21a0f22e65ad8cd76c282b8b7fb35ba0368aa9bd",
+        )
         parser_account.set_defaults(func=self.run)
 
     def run(self, args):
@@ -46,18 +48,25 @@ class CommandAccount(Command):
         :return:
         """
         db_path: str = args.db
-        address: 'Address' = Address.from_string(args.address)
+        address: "Address" = Address.from_string(args.address)
         reader = StateDatabaseReader()
 
         try:
             reader.open(db_path)
+            block = reader.get_last_block()
+            print(f"BH: {block.height}")
 
-            account: 'Account' = reader.get_account(address)
+            account: "Account" = reader.get_account(address, reader.get_last_block().height, 10)
             if account is None:
                 print(f"Account not found: {address}")
             else:
-                print(f"address: {account.address}\n"
-                      f"amount: {account.balance / 10 ** 18} in icx\n"
-                      f"stake: {account.stake}\n")
+                print(
+                    f"address: {account.address}\n"
+                    f"amount (loop): {account.balance:_}\n"
+                    f"stake: {account.stake_part.stake:_}\n"
+                    f"unstake: {account.stake_part.unstake:_}\n"
+                    f"unstakeInfo: {account.stake_part.unstakes_info}\n"
+                    f"total: {account.balance + account.total_stake:_}\n"
+                )
         finally:
             reader.close()

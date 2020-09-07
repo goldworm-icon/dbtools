@@ -24,16 +24,17 @@ if TYPE_CHECKING:
 
 
 class CommandStateLastBlock(Command):
-
     def __init__(self, sub_parser, common_parser):
         self.add_parser(sub_parser, common_parser)
 
     def add_parser(self, sub_parser, common_parser):
-        name = 'statelastblock'
-        desc = 'Print the information of last block commited to statedb'
+        name = "statelastblock"
+        desc = "Print the information of last block commited to statedb"
 
         # create the parser for statelastblock
-        parser_state_last_block = sub_parser.add_parser(name, parents=[common_parser], help=desc)
+        parser_state_last_block = sub_parser.add_parser(
+            name, parents=[common_parser], help=desc
+        )
         parser_state_last_block.set_defaults(func=self.run)
 
     def run(self, args):
@@ -48,12 +49,14 @@ class CommandStateLastBlock(Command):
         try:
             reader.open(db_path)
 
-            block: 'Block' = reader.get_last_block()
+            block: "Block" = reader.get_last_block()
 
-            print(f'height: {block.height}\n'
-                  f'timestamp: {block.timestamp} '
-                  f'({datetime.fromtimestamp(block.timestamp / 10 ** 6)})\n'
-                  f'prev_hash: 0x{block.prev_hash.hex()}\n'
-                  f'block_hash: 0x{block.hash.hex()}')
+            print(
+                f"height: {block.height}\n"
+                f"timestamp: {block.timestamp} "
+                f"({datetime.fromtimestamp(block.timestamp / 10 ** 6)})\n"
+                f"prev_hash: 0x{block.prev_hash.hex()}\n"
+                f"block_hash: 0x{block.hash.hex()}"
+            )
         finally:
             reader.close()

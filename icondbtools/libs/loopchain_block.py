@@ -21,16 +21,18 @@ from ..utils.convert_type import str_to_int, convert_hex_str_to_bytes
 
 
 class LoopchainBlock(object):
-
-    def __init__(self,
-                 version: str = None,
-                 height: int = -1,
-                 timestamp: int = -1,
-                 block_hash: bytes = None,
-                 prev_block_hash: bytes = None,
-                 leader: 'Address' = None,
-                 state_hash: bytes = None,
-                 transactions: list = None):
+    def __init__(
+        self,
+        version: str = None,
+        height: int = -1,
+        timestamp: int = -1,
+        block_hash: bytes = None,
+        prev_block_hash: bytes = None,
+        leader: "Address" = None,
+        state_hash: bytes = None,
+        prev_votes: Optional[list] = None,
+        transactions: list = None,
+    ):
         self.version = version
         self.height = height
         self.block_hash = block_hash
@@ -38,18 +40,19 @@ class LoopchainBlock(object):
         self.timestamp: int = timestamp
         self.leader = leader
         self.state_hash: bytes = state_hash
+        self.prev_votes: Optional[list] = prev_votes
         self.transactions = transactions
 
     def __bool__(self):
         return True
 
     @classmethod
-    def from_bytes(cls, data: bytes) -> 'LoopchainBlock':
+    def from_bytes(cls, data: bytes) -> "LoopchainBlock":
         block_dict: dict = json.loads(data)
         return cls.from_dict(block_dict)
 
     @classmethod
-    def from_dict(cls, block: dict) -> 'LoopchainBlock':
+    def from_dict(cls, block: dict) -> "LoopchainBlock":
         version: str = block["version"]
         handlers = {
             "0.1a": cls.from_dict_v1,
@@ -59,8 +62,8 @@ class LoopchainBlock(object):
         return handler(block)
 
     @classmethod
-    def from_dict_v1(cls, block: dict) -> 'LoopchainBlock':
-        version = block['version']
+    def from_dict_v1(cls, block: dict) -> "LoopchainBlock":
+        version = block["version"]
         height: int = block["height"]
         block_hash: bytes = convert_hex_str_to_bytes(block["block_hash"])
         prev_block_hash: bytes = convert_hex_str_to_bytes(block["prev_block_hash"])
@@ -69,18 +72,22 @@ class LoopchainBlock(object):
         timestamp: int = block[key]
 
         state_hash: bytes = cls._get_commit_state(block)
-        leader: 'Address' = cls._get_peer_id(block)
+        leader: "Address" = cls._get_peer_id(block)
 
-        transactions: list = block['confirmed_transaction_list']
+        prev_votes: Optional[list] = block.get("prevVotes")
+        transactions: list = block["confirmed_transaction_list"]
 
-        return LoopchainBlock(version=version,
-                              height=height,
-                              block_hash=block_hash,
-                              timestamp=timestamp,
-                              prev_block_hash=prev_block_hash,
-                              state_hash=state_hash,
-                              leader=leader,
-                              transactions=transactions)
+        return LoopchainBlock(
+            version=version,
+            height=height,
+            block_hash=block_hash,
+            timestamp=timestamp,
+            prev_block_hash=prev_block_hash,
+            state_hash=state_hash,
+            leader=leader,
+            prev_votes=prev_votes,
+            transactions=transactions,
+        )
 
     @classmethod
     def _get_commit_state(cls, block: dict) -> bytes:
@@ -90,15 +97,15 @@ class LoopchainBlock(object):
             return b""
 
     @classmethod
-    def _get_peer_id(cls, block: dict) -> Optional['Address']:
-        peer_id = block['peer_id']
+    def _get_peer_id(cls, block: dict) -> Optional["Address"]:
+        peer_id = block["peer_id"]
         if peer_id:
             return Address.from_string(peer_id)
 
         return None
 
     @classmethod
-    def _from_dict_recent_v(cls, block: dict) -> 'LoopchainBlock':
+    def _from_dict_recent_v(cls, block: dict) -> "LoopchainBlock":
         # In case of version >= 0.3
         version: str = block["version"]
 
@@ -108,13 +115,17 @@ class LoopchainBlock(object):
         leader = Address.from_string(block["leader"])
         timestamp: int = str_to_int(block["timestamp"])
         state_hash: bytes = convert_hex_str_to_bytes(block["stateHash"])
+        prev_votes: Optional[list] = block.get("prevVotes")
         transactions: list = block["transactions"]
 
-        return LoopchainBlock(version=version,
-                              height=height,
-                              block_hash=block_hash,
-                              timestamp=timestamp,
-                              prev_block_hash=prev_block_hash,
-                              state_hash=state_hash,
-                              leader=leader,
-                              transactions=transactions)
+        return LoopchainBlock(
+            version=version,
+            height=height,
+            block_hash=block_hash,
+            timestamp=timestamp,
+            prev_block_hash=prev_block_hash,
+            state_hash=state_hash,
+            leader=leader,
+            prev_votes=prev_votes,
+            transactions=transactions,
+        )

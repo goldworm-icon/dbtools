@@ -4,12 +4,12 @@ from iconservice.base.address import Address
 
 
 class Node(object):
-    def __init__(self, address: 'Address', p2p_endpoint: str):
+    def __init__(self, address: "Address", p2p_endpoint: str):
         self._address = address
         self._p2p_endpoint = p2p_endpoint
 
     @property
-    def address(self) -> 'Address':
+    def address(self) -> "Address":
         return self._address
 
     @property

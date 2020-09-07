@@ -19,13 +19,12 @@ from icondbtools.command.command import Command
 
 
 class CommandClear(Command):
-
     def __init__(self, sub_parser, common_parser):
         self.add_parser(sub_parser, common_parser)
 
     def add_parser(self, sub_parser, common_parser):
-        name = 'clear'
-        desc = 'Remove .score and .statedb'
+        name = "clear"
+        desc = "Remove .score and .statedb"
 
         # create the parser for clear
         parser_clear = sub_parser.add_parser(name, help=desc)
@@ -37,7 +36,7 @@ class CommandClear(Command):
         :param args:
         :return:
         """
-        paths = ['.score', '.statedb']
+        paths = [".score", ".statedb"]
         for path in paths:
             try:
                 shutil.rmtree(path)

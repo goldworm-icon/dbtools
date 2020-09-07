@@ -3,7 +3,13 @@ from typing import Optional
 
 import plyvel
 
-from ..libs import TRANSACTION_COUNT_KEY, NID_KEY, LAST_BLOCK_KEY, PREPS_KEY_PREFIX, BLOCK_HEIGHT_KEY_PREFIX
+from ..libs import (
+    TRANSACTION_COUNT_KEY,
+    NID_KEY,
+    LAST_BLOCK_KEY,
+    PREPS_KEY_PREFIX,
+    BLOCK_HEIGHT_KEY_PREFIX,
+)
 from ..utils.convert_type import bytes_to_hex
 
 
@@ -68,8 +74,10 @@ class BlockDatabaseRawReader(object):
         else:
             transactions: Optional[list] = block.get("transactions")
         if transactions is None:
-            raise ValueError(f"Cannot find transactions from the block."
-                             f" check the block version {version}")
+            raise ValueError(
+                f"Cannot find transactions from the block."
+                f" check the block version {version}"
+            )
 
         return transactions
 
@@ -128,7 +136,7 @@ class BlockDatabaseRawReader(object):
         :param block_height: block height in integer
         :return: block height key
         """
-        return BLOCK_HEIGHT_KEY_PREFIX + block_height.to_bytes(12, 'big')
+        return BLOCK_HEIGHT_KEY_PREFIX + block_height.to_bytes(12, "big")
 
     @staticmethod
     def convert_hash_to_key(data_hash: bytes) -> bytes:

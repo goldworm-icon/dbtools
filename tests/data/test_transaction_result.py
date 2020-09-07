@@ -23,13 +23,17 @@ from icondbtools.utils.convert_type import convert_hex_str_to_bytes, bytes_to_he
 
 class TestTransactionResult(unittest.TestCase):
     def test_from_dict_with_icx_transfer_tx(self):
-        tx_hash: bytes = convert_hex_str_to_bytes("0xb35299d299951c16e417be40c3c0f68ed941dadccfe50f3b8501600695504855")
-        block_height = 0xe65585
-        block_hash = convert_hex_str_to_bytes("0x42d887e9a51aad7d69f22bbcc4fa7b74d7549beb202cd1577bcf0ded62e57785")
+        tx_hash: bytes = convert_hex_str_to_bytes(
+            "0xb35299d299951c16e417be40c3c0f68ed941dadccfe50f3b8501600695504855"
+        )
+        block_height = 0xE65585
+        block_hash = convert_hex_str_to_bytes(
+            "0x42d887e9a51aad7d69f22bbcc4fa7b74d7549beb202cd1577bcf0ded62e57785"
+        )
         tx_index = 0x2
         to = Address.from_string("hxf3db3ffed154bb34af67429e8038e5f4aca84390")
-        step_used = 0x186a0
-        step_price = 0x2540be400
+        step_used = 0x186A0
+        step_price = 0x2540BE400
         status = 0x1
 
         tx_result_data = {
@@ -43,7 +47,7 @@ class TestTransactionResult(unittest.TestCase):
             "cumulativeStepUsed": "0x912d0",
             "eventLogs": [],
             "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-            "status": hex(status)
+            "status": hex(status),
         }
 
         tx_result = TransactionResult.from_dict(tx_result_data)
@@ -59,20 +63,26 @@ class TestTransactionResult(unittest.TestCase):
         assert tx_result.status == status
 
     def test_from_dict_with_claim_iscore_tx(self):
-        tx_hash: bytes = convert_hex_str_to_bytes("0x5241633c13fefaa423148a43b703c5f5a2478d592a91ef0483845729c635c89c")
-        block_height = 0xde2cf7
-        block_hash = convert_hex_str_to_bytes("0xad934d67b8bd658dd2261a60afb3d7909cc329defd1ddb21c23d2947cceeb80c")
+        tx_hash: bytes = convert_hex_str_to_bytes(
+            "0x5241633c13fefaa423148a43b703c5f5a2478d592a91ef0483845729c635c89c"
+        )
+        block_height = 0xDE2CF7
+        block_hash = convert_hex_str_to_bytes(
+            "0xad934d67b8bd658dd2261a60afb3d7909cc329defd1ddb21c23d2947cceeb80c"
+        )
         tx_index = 0x1
         to = Address.from_string("cx0000000000000000000000000000000000000000")
-        step_used = 0x1a2c0
-        step_price = 0x2540be400
+        step_used = 0x1A2C0
+        step_price = 0x2540BE400
         status = 0x1
 
         # eventLog
-        score_address = Address.from_string("cx0000000000000000000000000000000000000000")
+        score_address = Address.from_string(
+            "cx0000000000000000000000000000000000000000"
+        )
         signature = "IScoreClaimed(int,int)"
-        iscore = 0x147f175d36cd5737754e38
-        icx = 0x53f415f8af514478a93
+        iscore = 0x147F175D36CD5737754E38
+        icx = 0x53F415F8AF514478A93
 
         tx_result_data = {
             "txHash": bytes_to_hex(tx_hash),
@@ -87,11 +97,11 @@ class TestTransactionResult(unittest.TestCase):
                 {
                     "scoreAddress": str(score_address),
                     "indexed": [signature],
-                    "data": [hex(iscore), hex(icx)]
+                    "data": [hex(iscore), hex(icx)],
                 }
             ],
             "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-            "status": hex(status)
+            "status": hex(status),
         }
 
         tx_result = TransactionResult.from_dict(tx_result_data)
@@ -116,5 +126,5 @@ class TestTransactionResult(unittest.TestCase):
         assert event_log.data[1] == icx
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
