@@ -240,13 +240,16 @@ class IconServiceSyncer(object):
 
         prev_block: Optional["Block"] = None
         prev_loopchain_block: Optional["LoopchainBlock"] = None
+        main_preps: Optional['NodeContainer'] = None
         if start_height > 0:
             block_dict = self._block_reader.get_block_by_block_height(start_height - 1)
             prev_loopchain_block = LoopchainBlock.from_dict(block_dict)
 
-        main_preps: Optional["NodeContainer"] = None
-        next_main_preps: Optional["NodeContainer"] = None
+            # init main_preps
+            preps: list = self._block_reader.load_main_preps(block_dict)
+            main_preps: Optional['NodeContainer'] = NodeContainer.from_list(preps=preps)
 
+        next_main_preps: Optional["NodeContainer"] = None
         end_height = start_height + count - 1
 
         for height in range(start_height, start_height + count):
@@ -255,11 +258,6 @@ class IconServiceSyncer(object):
             if block_dict is None:
                 print(f"last block: {height - 1}")
                 break
-
-            if main_preps is None:
-                prev_block_dict: dict = self._block_reader.get_block_by_block_height(height - 1)
-                preps: list = self._block_reader.load_main_preps(prev_block_dict)
-                main_preps: Optional['NodeContainer'] = NodeContainer.from_list(preps=preps)
 
             loopchain_block: 'LoopchainBlock' = LoopchainBlock.from_dict(block_dict)
             block: 'Block' = _create_iconservice_block(loopchain_block)
