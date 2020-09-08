@@ -325,6 +325,8 @@ class IconServiceSyncer(object):
             is_calculation_block = self._check_calculation_block(block)
 
             if is_calculation_block:
+                preps = self._block_reader.load_main_preps(block_dict)
+                next_main_preps = NodeContainer.from_list(preps=preps)
                 word_detector.start()
                 time.sleep(0.5)
                 if iiss_db_backup_path is not None:
