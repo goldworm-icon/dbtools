@@ -20,14 +20,10 @@ import os
 import shutil
 import time
 from concurrent.futures import ThreadPoolExecutor
-from typing import TYPE_CHECKING, Optional, List, Tuple, Dict
+from typing import TYPE_CHECKING, Optional, List, Tuple
 
 from iconcommons.icon_config import IconConfig
 from iconcommons.logger import Logger
-
-from icondbtools.utils.convert_type import object_to_str
-from icondbtools.utils.transaction import create_transaction_requests
-from icondbtools.word_detector import WordDetector
 from iconservice.base.address import Address
 from iconservice.base.block import Block
 from iconservice.database.batch import TransactionBatchValue
@@ -39,9 +35,13 @@ from iconservice.iconscore.icon_score_context import (
     IconScoreContext,
 )
 from iconservice.iiss.reward_calc.storage import Storage
+
+from icondbtools.data.vote import Vote
+from icondbtools.utils.convert_type import object_to_str
+from icondbtools.utils.transaction import create_transaction_requests
+from icondbtools.word_detector import WordDetector
 from .block_database_reader import BlockDatabaseReader
 from .loopchain_block import LoopchainBlock
-from icondbtools.data.vote import Vote
 from ..data.node_container import NodeContainer
 
 if TYPE_CHECKING:
@@ -240,16 +240,6 @@ class IconServiceSyncer(object):
 
         prev_block: Optional["Block"] = None
         prev_loopchain_block: Optional["LoopchainBlock"] = None
-        main_preps: Optional['NodeContainer'] = None
-        if start_height > 0:
-            block_dict = self._block_reader.get_block_by_block_height(start_height - 1)
-            prev_loopchain_block = LoopchainBlock.from_dict(block_dict)
-
-            # init main_preps
-            preps: list = self._block_reader.load_main_preps(block_dict)
-            main_preps: Optional['NodeContainer'] = NodeContainer.from_list(preps=preps)
-
-        next_main_preps: Optional["NodeContainer"] = None
         end_height = start_height + count - 1
 
         for height in range(start_height, start_height + count):
@@ -261,7 +251,8 @@ class IconServiceSyncer(object):
 
             loopchain_block: 'LoopchainBlock' = LoopchainBlock.from_dict(block_dict)
             block: 'Block' = _create_iconservice_block(loopchain_block)
-
+            main_preps_as_dict = self.get_main_preps()["result"]
+            main_preps: Optional["NodeContainer"] = NodeContainer.from_list(main_preps_as_dict["preps"])
             tx_requests: list = create_transaction_requests(loopchain_block)
             prev_block_generator: Optional[
                 "Address"
@@ -292,7 +283,6 @@ class IconServiceSyncer(object):
                 prev_block_votes,
             )
             tx_results, state_root_hash = invoke_result[0], invoke_result[1]
-            main_preps_as_dict: Optional[Dict] = invoke_result[3]
 
             commit_state: bytes = self._block_reader.get_commit_state(
                 block_dict, channel
@@ -325,8 +315,6 @@ class IconServiceSyncer(object):
             is_calculation_block = self._check_calculation_block(block)
 
             if is_calculation_block:
-                preps = self._block_reader.load_main_preps(block_dict)
-                next_main_preps = NodeContainer.from_list(preps=preps)
                 word_detector.start()
                 time.sleep(0.5)
                 if iiss_db_backup_path is not None:
@@ -347,13 +335,6 @@ class IconServiceSyncer(object):
             self._backup_state_db(block, backup_period)
             prev_block = block
             prev_loopchain_block = loopchain_block
-
-            if next_main_preps:
-                main_preps = next_main_preps
-                next_main_preps = None
-
-            if main_preps_as_dict is not None:
-                next_main_preps = NodeContainer.from_dict(main_preps_as_dict)
 
         self._block_reader.close()
         word_detector.stop()
@@ -535,6 +516,9 @@ class IconServiceSyncer(object):
                     shutil.copytree(basename, f"{dirname}/{basename}/")
                 except FileExistsError:
                     pass
+
+    def get_main_preps(self) -> dict:
+        return self._engine.inner_call({"method": "ise_getPRepList"})
 
     def close(self):
         pass
