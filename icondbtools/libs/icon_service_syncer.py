@@ -244,18 +244,19 @@ class IconServiceSyncer(object):
         next_main_preps: Optional["NodeContainer"] = None
 
         if start_height > 0:
-            block_dict = self._block_reader.get_block_by_block_height(start_height - 1)
-            prev_loopchain_block = LoopchainBlock.from_dict(block_dict)
+            prev_block_dict = self._block_reader.get_block_by_block_height(start_height - 1)
+            prev_loopchain_block = LoopchainBlock.from_dict(prev_block_dict)
 
             # init main_preps
-            preps: list = self._block_reader.load_main_preps(block_dict)
+            preps: list = self._block_reader.load_main_preps(prev_block_dict)
             main_preps: Optional['NodeContainer'] = NodeContainer.from_list(preps=preps)
 
             # when sync from the first block of term, have to initialize next_main_preps here
             # in that case, invoke_result[3] will be None on first block and can not update next_main_preps
-            block = self._engine._get_last_block()
+            block_dict = self._block_reader.get_block_by_block_height(start_height)
+            loopchain_block = LoopchainBlock.from_dict(block_dict)
+            block = _create_iconservice_block(loopchain_block)
             if self._check_calculation_block(block):
-                block_dict = self._block_reader.get_block_by_block_height(start_height)
                 preps: list = self._block_reader.load_main_preps(block_dict)
                 next_main_preps: Optional['NodeContainer'] = NodeContainer.from_list(preps=preps)
 
