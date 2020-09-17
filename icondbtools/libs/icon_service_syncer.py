@@ -24,10 +24,6 @@ from typing import TYPE_CHECKING, Optional, List, Tuple, Dict
 
 from iconcommons.icon_config import IconConfig
 from iconcommons.logger import Logger
-
-from icondbtools.utils.convert_type import object_to_str
-from icondbtools.utils.transaction import create_transaction_requests
-from icondbtools.word_detector import WordDetector
 from iconservice.base.address import Address
 from iconservice.base.block import Block
 from iconservice.database.batch import TransactionBatchValue
@@ -39,9 +35,13 @@ from iconservice.iconscore.icon_score_context import (
     IconScoreContext,
 )
 from iconservice.iiss.reward_calc.storage import Storage
+
+from icondbtools.data.vote import Vote
+from icondbtools.utils.convert_type import object_to_str
+from icondbtools.utils.transaction import create_transaction_requests
+from icondbtools.word_detector import WordDetector
 from .block_database_reader import BlockDatabaseReader
 from .loopchain_block import LoopchainBlock
-from icondbtools.data.vote import Vote
 from ..data.node_container import NodeContainer
 
 if TYPE_CHECKING:
@@ -241,15 +241,25 @@ class IconServiceSyncer(object):
         prev_block: Optional["Block"] = None
         prev_loopchain_block: Optional["LoopchainBlock"] = None
         main_preps: Optional['NodeContainer'] = None
+        next_main_preps: Optional["NodeContainer"] = None
+
         if start_height > 0:
-            block_dict = self._block_reader.get_block_by_block_height(start_height - 1)
-            prev_loopchain_block = LoopchainBlock.from_dict(block_dict)
+            prev_block_dict = self._block_reader.get_block_by_block_height(start_height - 1)
+            prev_loopchain_block = LoopchainBlock.from_dict(prev_block_dict)
 
             # init main_preps
-            preps: list = self._block_reader.load_main_preps(block_dict)
+            preps: list = self._block_reader.load_main_preps(prev_block_dict)
             main_preps: Optional['NodeContainer'] = NodeContainer.from_list(preps=preps)
 
-        next_main_preps: Optional["NodeContainer"] = None
+            # when sync from the first block of term, have to initialize next_main_preps here
+            # in that case, invoke_result[3] will be None on first block and can not update next_main_preps
+            block_dict = self._block_reader.get_block_by_block_height(start_height)
+            loopchain_block = LoopchainBlock.from_dict(block_dict)
+            block = _create_iconservice_block(loopchain_block)
+            if self._check_calculation_block(block):
+                preps: list = self._block_reader.load_main_preps(block_dict)
+                next_main_preps: Optional['NodeContainer'] = NodeContainer.from_list(preps=preps)
+
         end_height = start_height + count - 1
 
         for height in range(start_height, start_height + count):
@@ -505,15 +515,12 @@ class IconServiceSyncer(object):
     def _check_calculation_block(self, block: "Block") -> bool:
         """check calculation block"""
 
-        precommit_data_manager: PrecommitDataManager = getattr(
-            self._engine, "_precommit_data_manager"
-        )
-        precommit_data: PrecommitData = precommit_data_manager.get(block.hash)
-        if precommit_data.revision < Revision.IISS.value:
-            return False
-
         context = IconScoreContext(IconScoreContextType.DIRECT)
+        revision = self._engine._get_revision_from_rc(context)
         context.block = block
+
+        if revision < Revision.IISS.value:
+            return False
 
         start_block = context.engine.iiss.get_start_block_of_calc(context)
         return start_block == block.height
