@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import csv
+import json
 from typing import TYPE_CHECKING
 
 from iconservice.base.address import Address
@@ -48,6 +50,7 @@ class CommandTransactions(Command):
         parser.add_argument("--to", dest="to", required=True)
         parser.add_argument("--start", type=int, dest="start", help="start BH", required=True)
         parser.add_argument("--end", type=int, dest="end", help="end BH", required=True)
+        parser.add_argument("--input", type=str, help="input file path", required=True)
         parser.add_argument("--output", type=str, help="output file path", required=True)
         parser.set_defaults(func=self.run)
 
@@ -57,20 +60,44 @@ class CommandTransactions(Command):
         to = Address.from_string(args.to)
         start: int = args.start
         end: int = args.end
-        path: str = args.output
+        input_path: str = args.input
+        output_path: str = args.output
 
         tx_filter = MyFilter(from_, to)
 
         transaction_collector = TransactionCollector()
         transaction_collector.open(db_path)
 
-        it = transaction_collector.run(start, end, tx_filter)
+        tx_it = transaction_collector.run(start, end, tx_filter)
 
-        size = 0
-        with open(path, "wt") as f:
-            for tx, tx_result in it:
-                f.write(f"0x{tx.tx_hash.hex()}\n")
-                size += 1
+        src = open(input_path, 'r', encoding='utf-8')
+        dst = open(output_path, 'w', encoding='utf-8')
+        rdr = csv.reader(src)
+        wr = csv.writer(dst)
+
+        for i, line in enumerate(rdr):
+            if line[2] == "icx_sendTransaction":
+                payload = json.loads(line[-1])
+                timestamp = int(payload["params"]["timestamp"], 16)
+                # add URL
+                url = self._get_tracker_url(tx_it, timestamp)
+                line.append(url)
+            else:
+                if i == 0:
+                    line.append("Tracker URL")
+                else:
+                    line.append("N/A")
+            wr.writerow(line)
 
         transaction_collector.close()
-        print(f"tx_count: {size}")
+        src.close()
+        dst.close()
+
+    @staticmethod
+    def _get_tracker_url(tx_it, timestamp: int) -> str:
+        for tx, tx_result in tx_it:
+            if tx.timestamp == timestamp:
+                return f"https://tracker.icon.foundation/transaction/0x{tx.tx_hash.hex()}"
+
+        return "N/A"
+
