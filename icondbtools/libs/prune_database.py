@@ -14,6 +14,8 @@
 # limitations under the License.
 
 import json
+import logging
+
 import plyvel
 import timeit
 
@@ -36,27 +38,28 @@ class PruneDatabase:
 
     def run_v1(self):
         start_time = timeit.default_timer()
-        print(f"run_v1 Start")
+
+        logging.warning(f"run_v1 Start")
         self._ready_v1()
         self._make_new_db_v1()
         end_time = timeit.default_timer()
-        print(f"run_v1 Done {end_time - start_time}sec")
+        logging.warning(f"run_v1 Done {end_time - start_time}sec")
 
     def run_v2(self):
         start_time = timeit.default_timer()
-        print(f"run_v2 Start")
+        logging.warning(f"run_v2 Start")
         self._ready_v2()
         self._make_new_db_v2()
         end_time = timeit.default_timer()
-        print(f"run_v2 Done {end_time - start_time}sec")
+        logging.warning(f"run_v2 Done {end_time - start_time}sec")
 
     def _ready_v1(self):
-        print(f"ready_v1 Init")
+        logging.warning(f"ready_v1 Init")
         src_db = plyvel.DB(name=self._db_path)
         new_db = plyvel.DB(name=self._dest_db_path, create_if_missing=True)
         tmp_db = plyvel.DB(name=f"{TMP_ROOT_PATH}/tmp_db", create_if_missing=True)
 
-        print(f"ready_v1 Process Start")
+        logging.warning(f"ready_v1 Process Start")
         block_height_key = b'block_height_key'
         total_cnt: int = 0
         for key, value in src_db.iterator():
@@ -65,23 +68,23 @@ class PruneDatabase:
                 tmp_db.put(key, value)
             new_db.put(key, value)
             total_cnt += 1
-        print(f"ready_v1 Process Done")
-        print(f"ready_v1 total_cnt: {total_cnt}")
+        logging.warning(f"ready_v1 Process Done")
+        logging.warning(f"ready_v1 total_cnt: {total_cnt}")
 
         tmp_db.close()
         new_db.close()
         src_db.close()
-        print(f"ready_v1 Release")
+        logging.warning(f"ready_v1 Release")
 
     def _make_new_db_v1(self):
-        print(f"make_new_db_v1 Init")
+        logging.warning(f"make_new_db_v1 Init")
         src_db = plyvel.DB(name=self._db_path)
         new_db = plyvel.DB(name=self._dest_db_path)
         tmp_db = plyvel.DB(name=f"{TMP_ROOT_PATH}/tmp_db")
 
         last_block_bh: int = self._get_last_block_bh(src_db)
 
-        print(f"make_new_db_v1 Process Start")
+        logging.warning(f"make_new_db_v1 Process Start")
         prune_bh = last_block_bh - self._remain_blocks
 
         prune_cnt: int = 0
@@ -91,21 +94,21 @@ class PruneDatabase:
             if i < prune_bh:
                 new_db.put(block_hash, b'')
                 prune_cnt += 1
-        print(f"make_new_db_v1 Process Done")
-        print(f"make_new_db_v1 prune_cnt: {prune_cnt}")
+        logging.warning(f"make_new_db_v1 Process Done")
+        logging.warning(f"make_new_db_v1 prune_cnt: {prune_cnt}")
 
         tmp_db.close()
         new_db.close()
         src_db.close()
-        print(f"ready_v1 Release")
+        logging.warning(f"ready_v1 Release")
 
     def _ready_v2(self):
-        print(f"ready_v2 Init")
+        logging.warning(f"ready_v2 Init")
         src_db = plyvel.DB(name=self._db_path)
         new_db = plyvel.DB(name=self._dest_db_path, create_if_missing=True)
         tmp_db = plyvel.DB(name=f"{TMP_ROOT_PATH}/tmp_db", create_if_missing=True)
 
-        print(f"ready_v2 Process Start")
+        logging.warning(f"ready_v2 Process Start")
         hash_len = 64
         block_height_key = b'block_height_key'
         total_cnt: int = 0
@@ -116,23 +119,23 @@ class PruneDatabase:
             else:
                 new_db.put(key, value)
             total_cnt += 1
-        print(f"ready_v2 Process Done")
-        print(f"ready_v2 total_cnt: {total_cnt}")
+        logging.warning(f"ready_v2 Process Done")
+        logging.warning(f"ready_v2 total_cnt: {total_cnt}")
 
         tmp_db.close()
         new_db.close()
         src_db.close()
-        print(f"ready_v2 Release")
+        logging.warning(f"ready_v2 Release")
 
     def _make_new_db_v2(self):
-        print(f"make_new_db_v1 Init")
+        logging.warning(f"make_new_db_v2 Init")
         src_db = plyvel.DB(name=self._db_path)
         new_db = plyvel.DB(name=self._dest_db_path)
         tmp_db = plyvel.DB(name=f"{TMP_ROOT_PATH}/tmp_db")
 
         last_block_bh: int = self._get_last_block_bh(src_db)
 
-        print(f"make_new_db_v2 Process Start")
+        logging.warning(f"make_new_db_v2 Process Start")
         prune_bh = last_block_bh - self._remain_blocks
         b_prune_cnt: int = 0
         t_prune_cnt: int = 0
@@ -158,14 +161,14 @@ class PruneDatabase:
                         t_prune_cnt += 1
                     else:
                         new_db.put(tx_hash, tx_data)
-        print(f"make_new_db_v2 Process Done")
-        print(f"make_new_db_v2 b_prune_cnt: {b_prune_cnt}")
-        print(f"make_new_db_v2 t_prune_cnt: {t_prune_cnt}")
+        logging.warning(f"make_new_db_v2 Process Done")
+        logging.warning(f"make_new_db_v2 b_prune_cnt: {b_prune_cnt}")
+        logging.warning(f"make_new_db_v2 t_prune_cnt: {t_prune_cnt}")
 
         tmp_db.close()
         new_db.close()
         src_db.close()
-        print(f"ready_v2 Release")
+        logging.warning(f"ready_v2 Release")
 
     def clear(self):
         remove_dir(TMP_ROOT_PATH)
