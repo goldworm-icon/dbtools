@@ -49,6 +49,7 @@ from ..fastsync.utils import (
 from ..migrate.block import Block as BinBlock
 from ..utils import estimate_remaining_time_s
 from ..utils.timer import Timer
+from ..utils.utils import remove_dir
 
 if TYPE_CHECKING:
     from iconservice.database.batch import BlockBatch
@@ -321,7 +322,7 @@ class IconServiceSyncer(object):
                         f"{Storage.IISS_RC_DB_NAME_PREFIX}{block_height - 1}",
                     )
                     if os.path.exists(dst_path):
-                        shutil.rmtree(dst_path)
+                        remove_dir(dst_path)
                     shutil.copytree(entry.path, dst_path)
                     break
 

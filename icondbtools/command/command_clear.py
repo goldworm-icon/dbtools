@@ -13,9 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import shutil
-
 from icondbtools.command.command import Command
+from icondbtools.utils.utils import remove_dir
 
 
 class CommandClear(Command):
@@ -38,7 +37,4 @@ class CommandClear(Command):
         """
         paths = [".score", ".statedb"]
         for path in paths:
-            try:
-                shutil.rmtree(path)
-            except FileNotFoundError:
-                pass
+            remove_dir(path)

@@ -12,7 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import logging
+import os
+import shutil
 from typing import Union
 
 from iconservice.base.address import Address
@@ -114,3 +116,19 @@ def convert_genesis_transaction_to_request(tx_dict: dict):
         account["balance"] = int(account["balance"], 16)
 
     return request
+
+
+def make_dir(dir_path: str):
+    try:
+        os.mkdir(dir_path)
+    except OSError:
+        logging.warning(f"Creation of the directory {dir_path} failed")
+    else:
+        logging.warning(f"Successfully created the directory {dir_path}")
+
+
+def remove_dir(path: str):
+    try:
+        shutil.rmtree(path)
+    except FileNotFoundError:
+        pass
