@@ -15,6 +15,7 @@
 
 import json
 import plyvel
+import timeit
 
 from icondbtools.utils.utils import remove_dir, make_dir
 
@@ -34,36 +35,50 @@ class PruneDatabase:
         make_dir(TMP_ROOT_PATH)
 
     def run_v1(self):
+        start_time = timeit.default_timer()
+        print(f"run_v1 Start")
         self._ready_v1()
         self._make_new_db_v1()
+        end_time = timeit.default_timer()
+        print(f"run_v1 Done {end_time - start_time}sec")
 
     def run_v2(self):
+        start_time = timeit.default_timer()
+        print(f"run_v2 Start")
         self._ready_v2()
         self._make_new_db_v2()
+        end_time = timeit.default_timer()
+        print(f"run_v2 Done {end_time - start_time}sec")
 
     def _ready_v1(self):
+        print(f"ready_v1 Init")
         src_db = plyvel.DB(name=self._db_path)
         new_db = plyvel.DB(name=self._dest_db_path, create_if_missing=True)
         tmp_db = plyvel.DB(name=f"{TMP_ROOT_PATH}/tmp_db", create_if_missing=True)
 
+        print(f"ready_v1 Process Start")
         block_height_key = b'block_height_key'
         for key, value in src_db.iterator():
             if key.startswith(block_height_key):
                 # hash or # block height key mapper
                 tmp_db.put(key, value)
             new_db.put(key, value)
+        print(f"ready_v1 Process Done")
 
         tmp_db.close()
         new_db.close()
         src_db.close()
+        print(f"ready_v1 Release")
 
     def _make_new_db_v1(self):
+        print(f"make_new_db_v1 Init")
         src_db = plyvel.DB(name=self._db_path)
         new_db = plyvel.DB(name=self._dest_db_path)
         tmp_db = plyvel.DB(name=f"{TMP_ROOT_PATH}/tmp_db")
 
         last_block_bh: int = self._get_last_block_bh(src_db)
 
+        print(f"make_new_db_v1 Process Start")
         prune_bh = last_block_bh - self._remain_blocks
         for i in range(last_block_bh):
             self._put_block_to_new_db(
@@ -72,16 +87,20 @@ class PruneDatabase:
                 prune_bh=prune_bh,
                 index=i
             )
+        print(f"make_new_db_v1 Process Done")
 
         tmp_db.close()
         new_db.close()
         src_db.close()
+        print(f"ready_v1 Release")
 
     def _ready_v2(self):
+        print(f"ready_v2 Init")
         src_db = plyvel.DB(name=self._db_path)
         new_db = plyvel.DB(name=self._dest_db_path, create_if_missing=True)
         tmp_db = plyvel.DB(name=f"{TMP_ROOT_PATH}/tmp_db", create_if_missing=True)
 
+        print(f"ready_v2 Process Start")
         hash_len = 64
         block_height_key = b'block_height_key'
         for key, value in src_db.iterator():
@@ -90,18 +109,22 @@ class PruneDatabase:
                 tmp_db.put(key, value)
             else:
                 new_db.put(key, value)
+        print(f"ready_v2 Process Done")
 
         tmp_db.close()
         new_db.close()
         src_db.close()
+        print(f"ready_v2 Release")
 
     def _make_new_db_v2(self):
+        print(f"make_new_db_v1 Init")
         src_db = plyvel.DB(name=self._db_path)
         new_db = plyvel.DB(name=self._dest_db_path)
         tmp_db = plyvel.DB(name=f"{TMP_ROOT_PATH}/tmp_db")
 
         last_block_bh: int = self._get_last_block_bh(src_db)
 
+        print(f"make_new_db_v1 Process Start")
         prune_bh = last_block_bh - self._remain_blocks
         for i in range(last_block_bh):
             block_data_bytes: bytes = self._put_block_to_new_db(
@@ -122,10 +145,12 @@ class PruneDatabase:
                         new_db.put(tx_hash, b'')
                     else:
                         new_db.put(tx_hash, tx_data)
+        print(f"make_new_db_v1 Process Done")
 
         tmp_db.close()
         new_db.close()
         src_db.close()
+        print(f"ready_v1 Release")
 
     def clear(self):
         remove_dir(TMP_ROOT_PATH)
