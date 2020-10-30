@@ -41,6 +41,12 @@ class CommandPrune(Command):
             default=86400
         )
         parser_block.add_argument(
+            "-v",
+            dest="version",
+            type=int,
+            help="Version",
+        )
+        parser_block.add_argument(
             "--dest",
             type=str,
             help="Dest new database path",
@@ -53,6 +59,7 @@ class CommandPrune(Command):
         db_path: str = args.db
         dest_path: str = args.dest
         remain_blocks: int = args.remain_blocks
+        version: int = args.version
         debug_prt: bool = args.debug_prt
 
         prune_db = PruneDatabase(
@@ -60,8 +67,11 @@ class CommandPrune(Command):
             dest_path=dest_path,
             remain_blocks=remain_blocks
         )
-        prune_db.ready_make()
-        prune_db.make_v1()
+
+        if version == 1:
+            prune_db.run_v1()
+        else:
+            prune_db.run_v2()
         prune_db.clear()
 
         if debug_prt:
