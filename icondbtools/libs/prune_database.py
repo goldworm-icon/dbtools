@@ -81,12 +81,10 @@ class PruneDatabase:
         print(f"make_new_db_v1 Process Start")
         prune_bh = last_block_bh - self._remain_blocks
         for i in range(last_block_bh):
-            self._put_block_to_new_db(
-                tmp_db=tmp_db,
-                new_db=new_db,
-                prune_bh=prune_bh,
-                index=i
-            )
+            key: bytes = b'block_height_key' + i.to_bytes(12, 'big')
+            block_hash: bytes = tmp_db.get(key)
+            if i < prune_bh:
+                new_db.put(block_hash, b'')
         print(f"make_new_db_v1 Process Done")
 
         tmp_db.close()
@@ -177,9 +175,9 @@ class PruneDatabase:
         block_hash: bytes = tmp_db.get(key)
         block_data_bytes: bytes = tmp_db.get(block_hash)
         if index < prune_bh:
-            new_db.put(block_hash, block_data_bytes)
-        else:
             new_db.put(block_hash, b'')
+        else:
+            new_db.put(block_hash, block_data_bytes)
         return block_data_bytes
 
 
