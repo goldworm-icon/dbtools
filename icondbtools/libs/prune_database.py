@@ -58,12 +58,15 @@ class PruneDatabase:
 
         print(f"ready_v1 Process Start")
         block_height_key = b'block_height_key'
+        total_cnt: int = 0
         for key, value in src_db.iterator():
             if key.startswith(block_height_key):
                 # hash or # block height key mapper
                 tmp_db.put(key, value)
             new_db.put(key, value)
+            total_cnt += 1
         print(f"ready_v1 Process Done")
+        print(f"ready_v1 total_cnt: {total_cnt}")
 
         tmp_db.close()
         new_db.close()
@@ -80,12 +83,16 @@ class PruneDatabase:
 
         print(f"make_new_db_v1 Process Start")
         prune_bh = last_block_bh - self._remain_blocks
+
+        prune_cnt: int = 0
         for i in range(last_block_bh):
             key: bytes = b'block_height_key' + i.to_bytes(12, 'big')
             block_hash: bytes = tmp_db.get(key)
             if i < prune_bh:
                 new_db.put(block_hash, b'')
+                prune_cnt += 1
         print(f"make_new_db_v1 Process Done")
+        print(f"make_new_db_v1 prune_cnt: {prune_cnt}")
 
         tmp_db.close()
         new_db.close()
@@ -101,13 +108,16 @@ class PruneDatabase:
         print(f"ready_v2 Process Start")
         hash_len = 64
         block_height_key = b'block_height_key'
+        total_cnt: int = 0
         for key, value in src_db.iterator():
             if len(key) == hash_len or key.startswith(block_height_key):
                 # hash or # block height key mapper
                 tmp_db.put(key, value)
             else:
                 new_db.put(key, value)
+            total_cnt += 1
         print(f"ready_v2 Process Done")
+        print(f"ready_v2 total_cnt: {total_cnt}")
 
         tmp_db.close()
         new_db.close()
@@ -122,15 +132,19 @@ class PruneDatabase:
 
         last_block_bh: int = self._get_last_block_bh(src_db)
 
-        print(f"make_new_db_v1 Process Start")
+        print(f"make_new_db_v2 Process Start")
         prune_bh = last_block_bh - self._remain_blocks
+        b_prune_cnt: int = 0
+        t_prune_cnt: int = 0
         for i in range(last_block_bh):
-            block_data_bytes: bytes = self._put_block_to_new_db(
-                tmp_db=tmp_db,
-                new_db=new_db,
-                prune_bh=prune_bh,
-                index=i
-            )
+            key: bytes = b'block_height_key' + i.to_bytes(12, 'big')
+            block_hash: bytes = tmp_db.get(key)
+            block_data_bytes: bytes = tmp_db.get(block_hash)
+            if 1 < i < prune_bh:
+                new_db.put(block_hash, b'')
+                b_prune_cnt += 1
+            else:
+                new_db.put(block_hash, block_data_bytes)
 
             if i > 0:
                 block_data_str: str = bytes.decode(block_data_bytes)
@@ -141,14 +155,17 @@ class PruneDatabase:
                     tx_data: bytes = tmp_db.get(tx_hash)
                     if i < prune_bh:
                         new_db.put(tx_hash, b'')
+                        t_prune_cnt += 1
                     else:
                         new_db.put(tx_hash, tx_data)
-        print(f"make_new_db_v1 Process Done")
+        print(f"make_new_db_v2 Process Done")
+        print(f"make_new_db_v2 b_prune_cnt: {b_prune_cnt}")
+        print(f"make_new_db_v2 t_prune_cnt: {t_prune_cnt}")
 
         tmp_db.close()
         new_db.close()
         src_db.close()
-        print(f"ready_v1 Release")
+        print(f"ready_v2 Release")
 
     def clear(self):
         remove_dir(TMP_ROOT_PATH)
@@ -168,17 +185,6 @@ class PruneDatabase:
         last_block_str: str = bytes.decode(last_block_bytes)
         last_block: dict = json.loads(last_block_str)
         return int(last_block["height"], 0)
-
-    @classmethod
-    def _put_block_to_new_db(cls, tmp_db, new_db, prune_bh: int, index: int) -> bytes:
-        key: bytes = b'block_height_key' + index.to_bytes(12, 'big')
-        block_hash: bytes = tmp_db.get(key)
-        block_data_bytes: bytes = tmp_db.get(block_hash)
-        if index < prune_bh:
-            new_db.put(block_hash, b'')
-        else:
-            new_db.put(block_hash, block_data_bytes)
-        return block_data_bytes
 
 
 def main():
