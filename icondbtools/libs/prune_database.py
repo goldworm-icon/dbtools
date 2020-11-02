@@ -22,7 +22,8 @@ import timeit
 from icondbtools.utils.utils import remove_dir, make_dir
 
 TMP_ROOT_PATH: str = "tmp"
-WB_SIZE: int = 5_000
+WB_SIZE: int = 10_000
+DB_PROGRESS: int = 1_000_000
 PRT_SIZE: int = 10_000
 
 
@@ -35,8 +36,8 @@ class PruneDatabase:
         self._dest_db_path: str = dest_path
         self._remain_blocks: int = remain_blocks
 
-        remove_dir(TMP_ROOT_PATH)
-        make_dir(TMP_ROOT_PATH)
+        # remove_dir(TMP_ROOT_PATH)
+        # make_dir(TMP_ROOT_PATH)
 
     def run_v1(self):
         start_time = timeit.default_timer()
@@ -50,7 +51,7 @@ class PruneDatabase:
     def run_v2(self):
         start_time = timeit.default_timer()
         logging.warning(f"run_v2 Start")
-        self._ready_v2()
+        # self._ready_v2()
         self._make_new_db_v2()
         end_time = timeit.default_timer()
         logging.warning(f"run_v2 Done {end_time - start_time}sec")
@@ -78,7 +79,7 @@ class PruneDatabase:
             total_cnt += 1
 
             # DEBUG
-            if total_cnt % PRT_SIZE == 0:
+            if total_cnt % DB_PROGRESS == 0:
                 logging.warning(f"ready_v1 total_cnt: {total_cnt}")
 
         self._db_put_batch(tmp_db, tmp_db_cache)
@@ -153,7 +154,7 @@ class PruneDatabase:
             total_cnt += 1
 
             # DEBUG
-            if total_cnt % PRT_SIZE == 0:
+            if total_cnt % DB_PROGRESS == 0:
                 logging.warning(f"ready_v2 total_cnt: {total_cnt}")
 
         self._db_put_batch(tmp_db, tmp_db_cache)
@@ -197,16 +198,18 @@ class PruneDatabase:
                 block_data_str: str = bytes.decode(block_data_bytes)
                 block_data: dict = json.loads(block_data_str)
                 version: str = block_data["version"]
-                if version in ["0.1a", "0.3"]:
+
+                if "confirmed_transaction_list" in block_data:
                     txs: list = block_data["confirmed_transaction_list"]
                 else:
                     txs: list = block_data["transactions"]
 
                 for tx in txs:
-                    if version == "0.1a":
+                    if "tx_hash" in tx:
                         tx_hash: bytes = tx["tx_hash"].encode()
                     else:
                         tx_hash: bytes = tx["txHash"].encode()
+
                     tx_data: bytes = tmp_db.get(tx_hash)
                     if i < prune_bh:
                         new_db_cache[tx_hash] = b''
@@ -247,7 +250,11 @@ class PruneDatabase:
         last_block_bytes: bytes = src_db.get(last_block_hash)
         last_block_str: str = bytes.decode(last_block_bytes)
         last_block: dict = json.loads(last_block_str)
-        return int(last_block["height"], 0)
+
+        if isinstance(last_block["height"], int):
+            return last_block["height"]
+        else:
+            return int(last_block["height"], 0)
 
     @classmethod
     def _db_put_batch(cls, db, db_cache):
@@ -264,7 +271,7 @@ class PruneDatabase:
 
 def main():
     prune_db = PruneDatabase(
-        db_path="../db_7100_icon_dex",
+        db_path="../db_icon_dex",
         dest_path="../new_icon_dex",
         remain_blocks=10
     )
