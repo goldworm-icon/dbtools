@@ -22,7 +22,8 @@ import timeit
 from icondbtools.utils.utils import remove_dir, make_dir
 
 TMP_ROOT_PATH: str = "tmp"
-WB_SIZE: int = 5000
+WB_SIZE: int = 5_000
+PRT_SIZE: int = 10_000
 
 
 class PruneDatabase:
@@ -76,6 +77,10 @@ class PruneDatabase:
             self._db_put_batch_with_clear(new_db, new_db_cache)
             total_cnt += 1
 
+            # DEBUG
+            if total_cnt % PRT_SIZE == 0:
+                logging.warning(f"ready_v1 total_cnt: {total_cnt}")
+
         self._db_put_batch(tmp_db, tmp_db_cache)
         self._db_put_batch(new_db, new_db_cache)
 
@@ -101,13 +106,17 @@ class PruneDatabase:
         new_db_cache: dict = {}
 
         prune_cnt: int = 0
-        for i in range(last_block_bh):
+        for i in range(prune_bh):
             key: bytes = b'block_height_key' + i.to_bytes(12, 'big')
             block_hash: bytes = tmp_db.get(key)
-            if 0 < i < prune_bh:
+            if 0 < i:
                 new_db_cache[block_hash] = b''
                 self._db_put_batch_with_clear(new_db, new_db_cache)
                 prune_cnt += 1
+
+                # DEBUG
+                if prune_cnt % PRT_SIZE == 0:
+                    logging.warning(f"make_new_db_v1 prune_cnt: {prune_cnt}")
 
         self._db_put_batch(new_db, new_db_cache)
 
@@ -142,6 +151,10 @@ class PruneDatabase:
                 new_db_cache[key] = value
                 self._db_put_batch_with_clear(new_db, new_db_cache)
             total_cnt += 1
+
+            # DEBUG
+            if total_cnt % PRT_SIZE == 0:
+                logging.warning(f"ready_v2 total_cnt: {total_cnt}")
 
         self._db_put_batch(tmp_db, tmp_db_cache)
         self._db_put_batch(new_db, new_db_cache)
@@ -193,6 +206,10 @@ class PruneDatabase:
                     else:
                         new_db_cache[tx_hash] = tx_data
                     self._db_put_batch_with_clear(new_db, new_db_cache)
+
+            # DEBUG
+            if i % PRT_SIZE == 0:
+                logging.warning(f"make_new_db_v2 process: {i}")
 
         self._db_put_batch(new_db, new_db_cache)
 
