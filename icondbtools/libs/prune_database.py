@@ -21,7 +21,8 @@ import timeit
 
 from icondbtools.utils.utils import remove_dir, make_dir
 
-TMP_ROOT_PATH = "tmp"
+TMP_ROOT_PATH: str = "tmp"
+WB_SIZE: int = 5000
 
 
 class PruneDatabase:
@@ -62,12 +63,22 @@ class PruneDatabase:
         logging.warning(f"ready_v1 Process Start")
         block_height_key = b'block_height_key'
         total_cnt: int = 0
+
+        tmp_db_cache: dict = {}
+        new_db_cache: dict = {}
+
         for key, value in src_db.iterator():
             if key.startswith(block_height_key):
                 # hash or # block height key mapper
-                tmp_db.put(key, value)
-            new_db.put(key, value)
+                tmp_db_cache[key] = value
+                self._db_put_batch_with_clear(tmp_db, tmp_db_cache)
+            new_db_cache[key] = value
+            self._db_put_batch_with_clear(new_db, new_db_cache)
             total_cnt += 1
+
+        self._db_put_batch(tmp_db, tmp_db_cache)
+        self._db_put_batch(new_db, new_db_cache)
+
         logging.warning(f"ready_v1 Process Done")
         logging.warning(f"ready_v1 total_cnt: {total_cnt}")
 
@@ -87,13 +98,19 @@ class PruneDatabase:
         logging.warning(f"make_new_db_v1 Process Start")
         prune_bh = last_block_bh - self._remain_blocks
 
+        new_db_cache: dict = {}
+
         prune_cnt: int = 0
         for i in range(last_block_bh):
             key: bytes = b'block_height_key' + i.to_bytes(12, 'big')
             block_hash: bytes = tmp_db.get(key)
             if 0 < i < prune_bh:
-                new_db.put(block_hash, b'')
+                new_db_cache[block_hash] = b''
+                self._db_put_batch_with_clear(new_db, new_db_cache)
                 prune_cnt += 1
+
+        self._db_put_batch(new_db, new_db_cache)
+
         logging.warning(f"make_new_db_v1 Process Done")
         logging.warning(f"make_new_db_v1 prune_cnt: {prune_cnt}")
 
@@ -112,13 +129,23 @@ class PruneDatabase:
         hash_len = 64
         block_height_key = b'block_height_key'
         total_cnt: int = 0
+
+        tmp_db_cache: dict = {}
+        new_db_cache: dict = {}
+
         for key, value in src_db.iterator():
             if len(key) == hash_len or key.startswith(block_height_key):
                 # hash or # block height key mapper
-                tmp_db.put(key, value)
+                tmp_db_cache[key] = value
+                self._db_put_batch_with_clear(tmp_db, tmp_db_cache)
             else:
-                new_db.put(key, value)
+                new_db_cache[key] = value
+                self._db_put_batch_with_clear(new_db, new_db_cache)
             total_cnt += 1
+
+        self._db_put_batch(tmp_db, tmp_db_cache)
+        self._db_put_batch(new_db, new_db_cache)
+
         logging.warning(f"ready_v2 Process Done")
         logging.warning(f"ready_v2 total_cnt: {total_cnt}")
 
@@ -139,15 +166,19 @@ class PruneDatabase:
         prune_bh = last_block_bh - self._remain_blocks
         b_prune_cnt: int = 0
         t_prune_cnt: int = 0
+
+        new_db_cache: dict = {}
+
         for i in range(last_block_bh):
             key: bytes = b'block_height_key' + i.to_bytes(12, 'big')
             block_hash: bytes = tmp_db.get(key)
             block_data_bytes: bytes = tmp_db.get(block_hash)
             if 0 < i < prune_bh:
-                new_db.put(block_hash, b'')
+                new_db_cache[block_hash] = b''
                 b_prune_cnt += 1
             else:
-                new_db.put(block_hash, block_data_bytes)
+                new_db_cache[block_hash] = block_data_bytes
+            self._db_put_batch_with_clear(new_db, new_db_cache)
 
             if i > 0:
                 block_data_str: str = bytes.decode(block_data_bytes)
@@ -157,10 +188,14 @@ class PruneDatabase:
                     tx_hash: bytes = tx["txHash"].encode()
                     tx_data: bytes = tmp_db.get(tx_hash)
                     if i < prune_bh:
-                        new_db.put(tx_hash, b'')
+                        new_db_cache[tx_hash] = b''
                         t_prune_cnt += 1
                     else:
-                        new_db.put(tx_hash, tx_data)
+                        new_db_cache[tx_hash] = tx_data
+                    self._db_put_batch_with_clear(new_db, new_db_cache)
+
+        self._db_put_batch(new_db, new_db_cache)
+
         logging.warning(f"make_new_db_v2 Process Done")
         logging.warning(f"make_new_db_v2 b_prune_cnt: {b_prune_cnt}")
         logging.warning(f"make_new_db_v2 t_prune_cnt: {t_prune_cnt}")
@@ -189,14 +224,26 @@ class PruneDatabase:
         last_block: dict = json.loads(last_block_str)
         return int(last_block["height"], 0)
 
+    @classmethod
+    def _db_put_batch(cls, db, db_cache):
+        with db.write_batch() as wb:
+            for k, v in db_cache.items():
+                wb.put(k, v)
+
+    @classmethod
+    def _db_put_batch_with_clear(cls, db, db_cache):
+        if len(db_cache) > WB_SIZE:
+            cls._db_put_batch(db, db_cache)
+            db_cache.clear()
+
 
 def main():
     prune_db = PruneDatabase(
         db_path="../db_7100_icon_dex",
         dest_path="../new_icon_dex",
-        remain_blocks=86400
+        remain_blocks=10
     )
-    prune_db.run_v1()
+    prune_db.run_v2()
     prune_db.clear()
     prune_db.debug_prt("../new_icon_dex")
 
