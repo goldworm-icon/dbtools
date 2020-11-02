@@ -196,9 +196,17 @@ class PruneDatabase:
             if i > 0:
                 block_data_str: str = bytes.decode(block_data_bytes)
                 block_data: dict = json.loads(block_data_str)
-                txs: list = block_data["transactions"]
+                version: str = block_data["version"]
+                if version in ["0.1a", "0.3"]:
+                    txs: list = block_data["confirmed_transaction_list"]
+                else:
+                    txs: list = block_data["transactions"]
+
                 for tx in txs:
-                    tx_hash: bytes = tx["txHash"].encode()
+                    if version == "0.1a":
+                        tx_hash: bytes = tx["tx_hash"].encode()
+                    else:
+                        tx_hash: bytes = tx["txHash"].encode()
                     tx_data: bytes = tmp_db.get(tx_hash)
                     if i < prune_bh:
                         new_db_cache[tx_hash] = b''
