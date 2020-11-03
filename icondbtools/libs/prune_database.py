@@ -77,45 +77,56 @@ class PruneDatabase:
         else:
             return int(last_block["height"], 0)
 
-    @classmethod
-    def _get_tx_hash(cls, data_list: list, q_list):
-        for data in data_list:
-            block_data_str: str = bytes.decode(data)
-            block_data: dict = json.loads(block_data_str)
-            if "confirmed_transaction_list" in block_data:
-                txs: list = block_data["confirmed_transaction_list"]
-            else:
-                txs: list = block_data["transactions"]
-            for tx in txs:
-                if "tx_hash" in tx:
-                    tx_hash: bytes = tx["tx_hash"].encode()
-                else:
-                    tx_hash: bytes = tx["txHash"].encode()
-                q_list.append(tx_hash)
-
     def test(self):
+        src_db = plyvel.DB(name=self._db_path)
         new_db = plyvel.DB(name=self._dest_db_path)
-        index = 0
-        for k, v in new_db.iterator():
-            if len(k) == HASH_LEN and v != b'':
-                new_db.put(k, v)
-                logging.warning(f"{k}, {v}")
 
-            if v != b'':
-                logging.warning(f"{k}/{v}")
-
-            # DEBUG
-            if index % PRT_SIZE == 0:
-                logging.warning(f"test process: {index}, {k}, {v}")
-            index += 1
+        last_block_bh: int = self._get_last_block_bh(src_db)
+        recover_bh_start: int = last_block_bh - self._remain_blocks
+        self._recover_block(
+            block_height=0,
+            src_db=src_db,
+            new_db=new_db
+        )
+        for i in range(recover_bh_start, last_block_bh):
+            self._recover_block(
+                block_height=i,
+                src_db=src_db,
+                new_db=new_db
+            )
         new_db.close()
+
+    @classmethod
+    def _recover_block(cls, block_height: int, src_db, new_db):
+        key: bytes = b'block_height_key' + block_height.to_bytes(12, 'big')
+        block_hash: bytes = src_db.get(key)
+        block_data_bytes: bytes = src_db.get(block_hash)
+        new_db.put(block_hash, block_data_bytes)
+
+        if block_height == 0:
+            return
+
+        block_data_str: str = bytes.decode(block_data_bytes)
+        block_data: dict = json.loads(block_data_str)
+        if "confirmed_transaction_list" in block_data:
+            txs: list = block_data["confirmed_transaction_list"]
+        else:
+            txs: list = block_data["transactions"]
+        for tx in txs:
+            if "tx_hash" in tx:
+                tx_hash: bytes = tx["tx_hash"].encode()
+            else:
+                tx_hash: bytes = tx["txHash"].encode()
+
+            tx_data_bytes: bytes = src_db.get(tx_hash)
+            new_db.put(tx_hash, tx_data_bytes)
 
 
 def main():
     prune_db = PruneDatabase(
         db_path="../db_icon_dex",
         dest_path="../new_icon_dex_v1",
-        remain_blocks=10
+        remain_blocks=86400
     )
     # prune_db.run_v1()
     prune_db.test()
