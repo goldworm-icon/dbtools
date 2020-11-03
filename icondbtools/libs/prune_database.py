@@ -21,7 +21,6 @@ import plyvel
 import timeit
 
 HASH_LEN: int = 64
-WB_SIZE: int = 10_000
 PRT_SIZE: int = 100_000
 
 
@@ -52,13 +51,11 @@ class PruneDatabase:
     def _prune_db(self):
         logging.warning(f"prune_db Init")
         new_db = plyvel.DB(name=self._dest_db_path)
-        new_db_cache: dict = {}
         index = 0
 
         for k, v in new_db.iterator():
             if len(k) == HASH_LEN and v != b'':
-                new_db_cache[k] = b''
-                self._db_put_batch_with_clear(new_db, new_db_cache)
+                new_db.put(k, b'')
 
             # DEBUG
             if index % PRT_SIZE == 0:
