@@ -52,19 +52,25 @@ class PruneDatabase:
         logging.warning(f"prune_db Init")
         new_db = plyvel.DB(name=self._dest_db_path)
 
-        index = 0
+        prune_cnt: int = 0
+        total_cnt: int = 0
+        total_bytes: int = 0
 
         for k, v in new_db.iterator():
             if len(k) == HASH_LEN and v != b'':
                 new_db.delete(k)
                 new_db.put(k, b'')
 
-            # DEBUG
-            if index % PRT_SIZE == 0:
-                logging.warning(f"prune_db process: {index}")
-            index += 1
+                # DEBUG
+                if prune_cnt % PRT_SIZE == 0:
+                    logging.warning(f"prune_db prune_cnt: {prune_cnt}")
+                total_bytes += len(v)
+                prune_cnt += 1
+            total_cnt += 1
 
         new_db.close()
+        logging.warning(f"prune_db total prune_cnt: {prune_cnt}, {total_bytes}")
+        logging.warning(f"prune_db total_cnt: {total_cnt}")
         logging.warning(f"prune_db Release")
 
     @classmethod
