@@ -42,6 +42,37 @@ class PruneDatabase:
         end_time = timeit.default_timer()
         logging.warning(f"run Done {end_time - start_time}sec")
 
+    def run_new(self):
+        logging.warning(f"run Start")
+        start_time = timeit.default_timer()
+        self._move()
+        self._recover_blocks()
+        end_time = timeit.default_timer()
+        logging.warning(f"run Done {end_time - start_time}sec")
+
+    def _move(self):
+        src_db = plyvel.DB(name=self._db_path)
+        new_db = plyvel.DB(name=self._dest_db_path, create_if_missing=True)
+
+        prune_cnt: int = 0
+        total_cnt: int = 0
+        for k, v in src_db.iterator():
+            if len(k) == HASH_LEN:
+                new_db.put(k, b'')
+                prune_cnt += 1
+            else:
+                new_db.put(k, v)
+            total_cnt += 1
+
+            # DEBUG
+            if prune_cnt % PRT_SIZE == 0:
+                logging.warning(f"test prune_cnt: {prune_cnt}")
+        # DEBUG
+        logging.warning(f"test total_cnt: {total_cnt}")
+
+        new_db.close()
+        src_db.close()
+
     def _ready(self):
         logging.warning(f"ready Init")
         logging.warning(f"copy dir {self._db_path} to {self._dest_db_path}")
@@ -73,18 +104,6 @@ class PruneDatabase:
         logging.warning(f"prune_db total_cnt: {total_cnt}")
         logging.warning(f"prune_db Release")
 
-    @classmethod
-    def _get_last_block_bh(cls, src_db) -> int:
-        last_block_hash: bytes = src_db.get(b'last_block_key')
-        last_block_bytes: bytes = src_db.get(last_block_hash)
-        last_block_str: str = bytes.decode(last_block_bytes)
-        last_block: dict = json.loads(last_block_str)
-
-        if isinstance(last_block["height"], int):
-            return last_block["height"]
-        else:
-            return int(last_block["height"], 0)
-
     def _recover_blocks(self):
         src_db = plyvel.DB(name=self._db_path)
         new_db = plyvel.DB(name=self._dest_db_path)
@@ -103,6 +122,18 @@ class PruneDatabase:
                 new_db=new_db
             )
         new_db.close()
+
+    @classmethod
+    def _get_last_block_bh(cls, src_db) -> int:
+        last_block_hash: bytes = src_db.get(b'last_block_key')
+        last_block_bytes: bytes = src_db.get(last_block_hash)
+        last_block_str: str = bytes.decode(last_block_bytes)
+        last_block: dict = json.loads(last_block_str)
+
+        if isinstance(last_block["height"], int):
+            return last_block["height"]
+        else:
+            return int(last_block["height"], 0)
 
     @classmethod
     def _recover_block(cls, block_height: int, src_db, new_db):
@@ -136,7 +167,7 @@ def main():
         dest_path="../new_icon_dex_v1",
         remain_blocks=86400
     )
-    prune_db.run()
+    prune_db.run_new()
 
 
 if __name__ == "__main__":

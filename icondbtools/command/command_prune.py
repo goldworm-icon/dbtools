@@ -60,5 +60,4 @@ class CommandPrune(Command):
             remain_blocks=remain_blocks
         )
 
-        prune_db.run()
-
+        prune_db.run_new()
