@@ -34,11 +34,11 @@ class PruneDatabase:
         self._remain_blocks: int = remain_blocks
 
     def run(self):
-        start_time = timeit.default_timer()
-
         logging.warning(f"run Start")
+        start_time = timeit.default_timer()
         self._ready()
         self._prune_db()
+        self._recover_blocks()
         end_time = timeit.default_timer()
         logging.warning(f"run Done {end_time - start_time}sec")
 
@@ -51,10 +51,12 @@ class PruneDatabase:
     def _prune_db(self):
         logging.warning(f"prune_db Init")
         new_db = plyvel.DB(name=self._dest_db_path)
+
         index = 0
 
         for k, v in new_db.iterator():
             if len(k) == HASH_LEN and v != b'':
+                new_db.delete(k)
                 new_db.put(k, b'')
 
             # DEBUG
@@ -77,7 +79,7 @@ class PruneDatabase:
         else:
             return int(last_block["height"], 0)
 
-    def test(self):
+    def _recover_blocks(self):
         src_db = plyvel.DB(name=self._db_path)
         new_db = plyvel.DB(name=self._dest_db_path)
 
@@ -128,8 +130,7 @@ def main():
         dest_path="../new_icon_dex_v1",
         remain_blocks=86400
     )
-    # prune_db.run_v1()
-    prune_db.test()
+    prune_db.run()
 
 
 if __name__ == "__main__":
