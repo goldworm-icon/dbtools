@@ -68,6 +68,7 @@ class PruneDatabase:
             if prune_cnt % PRT_SIZE == 0:
                 logging.warning(f"test prune_cnt: {prune_cnt}")
         # DEBUG
+        logging.warning(f"test Total prune_cnt: {prune_cnt}")
         logging.warning(f"test total_cnt: {total_cnt}")
 
         new_db.close()
@@ -109,13 +110,14 @@ class PruneDatabase:
         new_db = plyvel.DB(name=self._dest_db_path)
 
         last_block_bh: int = self._get_last_block_bh(src_db)
+        logging.warning(f"last_block_bh: {last_block_bh}")
         recover_bh_start: int = last_block_bh - self._remain_blocks
         self._recover_block(
             block_height=0,
             src_db=src_db,
             new_db=new_db
         )
-        for i in range(recover_bh_start, last_block_bh):
+        for i in range(recover_bh_start, last_block_bh+1):
             self._recover_block(
                 block_height=i,
                 src_db=src_db,
