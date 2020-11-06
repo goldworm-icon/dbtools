@@ -18,6 +18,7 @@
 * [token](#token)
 * [copy](#copy)
 * [term](#term)
+* [prune](#prune)
 
 ## sync
 
@@ -334,5 +335,26 @@ Decentralization info of the block and period the block belongs to for only Main
 - start BH: 10362083
 - end BH: 10405202
 - 1 block from start BH-10362083
+```
+
+## prune
+
+- Prune Block DB to optimize storage.
+- Remains Block (default 86400)
+
+```bash
+(venv) $ icondbtools prune -h
+usage: icondbtools prune [-h] --db DB [-d] [-b REMAIN_BLOCKS] --dest DEST
+
+optional arguments:
+  -h, --help        show this help message and exit
+  --db DB
+  -b REMAIN_BLOCKS  Prune LastBlock - remain_blocks (default 86400)
+  --dest DEST       Dest new database path
+
+# example
+(venv) $ icondbtools prune --db ./db_icon_dex --dest ./new_icon_dex -b 86400
+
+
 ```
 

@@ -28,12 +28,6 @@ class CommandPrune(Command):
         # create the parser for block
         parser_block = sub_parser.add_parser(name, parents=[common_parser], help=desc)
         parser_block.add_argument(
-            "-d",
-            dest="debug_prt",
-            help="Debug dest database for string",
-            action='store_true',
-        )
-        parser_block.add_argument(
             "-b",
             dest="remain_blocks",
             type=int,
