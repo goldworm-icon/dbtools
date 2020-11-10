@@ -283,14 +283,6 @@ class IconServiceSyncer(object):
                 List[Tuple["Address", int]]
             ] = _create_prev_block_votes(block_dict, prev_block_generator, main_preps)
 
-            Logger.info(
-                tag=self._TAG, msg=f"prev_block_generator={prev_block_generator}"
-            )
-            Logger.info(
-                tag=self._TAG, msg=f"prev_block_validators={prev_block_validators}"
-            )
-            Logger.info(tag=self._TAG, msg=f"prev_block_votes={prev_block_votes}")
-
             if prev_block is not None and prev_block.hash != block.prev_hash:
                 raise Exception()
 
