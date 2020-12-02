@@ -4,17 +4,22 @@ from datetime import timedelta
 
 import plyvel
 
-from .block import Block
-from ..fastsync.block_reader import Bucket
-from ..libs.block_database_raw_reader import BlockDatabaseRawReader
-from ..libs.loopchain_block import LoopchainBlock
-from ..utils.timer import Timer
+from icondbtools.migrate.block import Block
+from icondbtools.fastsync.block_reader import Bucket
+from icondbtools.libs.block_database_raw_reader import BlockDatabaseRawReader
+from icondbtools.libs.loopchain_block import LoopchainBlock
+from icondbtools.migrate.preps import PReps
+from icondbtools.utils.timer import Timer
 
 TAG = "MGT"
 
 
-def get_db_key_by_height(height: int) -> bytes:
-    return bytes(1) + int.to_bytes(height, 8, "big")
+def make_block_height_key(height: int) -> bytes:
+    return Bucket.BLOCK_HEIGHT.value + int.to_bytes(height, 8, "big")
+
+
+def make_preps_key(reps_hash: bytes) -> bytes:
+    return Bucket.PREPS.value + reps_hash
 
 
 class BlockMigrator(object):
@@ -70,9 +75,10 @@ class BlockMigrator(object):
             self._start_height = start
             self._blocks = count
 
+            self._migrate_preps()
             self._run(start, end=start + count)
-        except:
-            raise
+        except Exception as e:
+            raise e
         finally:
             # Write data remaining in write_batch to the target db
             self._flush()
@@ -115,7 +121,7 @@ class BlockMigrator(object):
         return block
 
     def _write_block(self, block: Block):
-        key: bytes = get_db_key_by_height(block.height)
+        key: bytes = make_block_height_key(block.height)
         value: bytes = block.to_bytes()
         self._write_batch.put(key, value)
 
@@ -143,3 +149,17 @@ class BlockMigrator(object):
         )
 
         print(" ".join(status), flush=True)
+
+    def _migrate_preps(self):
+        reps_data: dict = self._block_reader.get_reps_data()
+        for key, value in reps_data.items():
+            preps_key: bytes = make_preps_key(key)
+            preps = PReps.from_json_bytes(value)
+            value = preps.to_bytes()
+            self._write_batch.put(preps_key, value)
+
+
+if __name__ == '__main__':
+    bm = BlockMigrator()
+    bm.open(db_path="../db_icon_dex", new_db_path="../newdb")
+    bm.run(22600000, 100000)

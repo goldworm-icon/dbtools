@@ -16,14 +16,16 @@ from enum import Enum
 from typing import Optional
 
 import plyvel
+from icondbtools.migrate.preps import PReps
 
 from ..migrate.block import Block
 
 
 class Bucket(Enum):
     BLOCK_HEIGHT = b"\x00"
-    BLOCK_HASH = b"\x01"
-    BLOCK_RESULT = b"\x02"
+    # BLOCK_HASH = b"\x01"
+    # BLOCK_RESULT = b"\x02"
+    PREPS = b"\x03"
 
 
 class BlockDatabaseReader(object):
@@ -49,10 +51,6 @@ class BlockDatabaseReader(object):
 
     def get_block_by_height(self, block_height: int) -> Optional[Block]:
         key: bytes = self._get_key_by_height(block_height)
-        return self._get_block(key)
-
-    def get_block_by_hash(self, block_hash: bytes) -> Optional[Block]:
-        key: Optional[bytes] = self._get_key_by_block_hash(block_hash)
         return self._get_block(key)
 
     def get_start_block_height(self) -> int:
@@ -106,15 +104,28 @@ class BlockDatabaseReader(object):
 
         return int.from_bytes(key[1:], "big")
 
-    def _get_key_by_block_hash(self, block_hash: bytes) -> Optional[bytes]:
-        key: bytes = self._get_key(Bucket.BLOCK_HASH, block_hash)
-        key_data: Optional[bytes] = self._db.get(key)
-
-        return self._get_key(Bucket.BLOCK_HEIGHT, key_data)
-
     @classmethod
     def _get_key(cls, bucket: Bucket, key_data: bytes) -> Optional[bytes]:
         if key_data is None:
             return None
 
         return bucket.value + key_data
+
+    # def get_block_by_hash(self, block_hash: bytes) -> Optional[Block]:
+    #     key: Optional[bytes] = self._get_key_by_block_hash(block_hash)
+    #     return self._get_block(key)
+
+    # def _get_key_by_block_hash(self, block_hash: bytes) -> Optional[bytes]:
+    #     key: bytes = self._get_key(Bucket.BLOCK_HASH, block_hash)
+    #     key_data: Optional[bytes] = self._db.get(key)
+    #
+    #     return self._get_key(Bucket.BLOCK_HEIGHT, key_data)
+
+    def load_main_preps(self, reps_hash: Optional[bytes]) -> list:
+        if reps_hash is None:
+            return []
+
+        key: bytes = Bucket.PREPS.value + reps_hash
+        value: bytes = self._db.get(key=key)
+        preps: 'PReps' = PReps.from_bytes(value)
+        return preps.to_list()

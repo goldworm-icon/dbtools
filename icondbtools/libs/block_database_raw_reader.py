@@ -1,5 +1,5 @@
 import json
-from typing import Optional
+from typing import Optional, Dict
 
 import plyvel
 
@@ -158,9 +158,13 @@ class BlockDatabaseRawReader(object):
         """Get transaction count"""
         return self.get_data_by_key(TRANSACTION_COUNT_KEY)
 
-    def get_reps(self, reps_hash: bytes) -> Optional[bytes]:
+    def get_reps(self, reps_hash: bytes) -> bytes:
         key = PREPS_KEY_PREFIX + reps_hash
         reps = self._db.get(key)
         if reps is None:
             return b"{}"
         return reps
+
+    def get_reps_data(self) -> Dict[bytes, bytes]:
+        sub_db = self._db.prefixed_db(PREPS_KEY_PREFIX)
+        return {key: value for key, value in sub_db}

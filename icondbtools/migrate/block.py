@@ -27,18 +27,20 @@ class Block(object):
         STATE_HASH = auto()
         PREV_VOTES = auto()
         TXS = auto()
+        REPS_HASH = auto()
 
     def __init__(
-        self,
-        version: str = None,
-        height: int = -1,
-        timestamp: int = -1,
-        block_hash: bytes = None,
-        prev_block_hash: bytes = None,
-        leader: "Address" = None,
-        state_hash: bytes = None,
-        prev_votes: Optional[List[Vote]] = None,
-        transactions: List[Dict[str, Any]] = None,
+            self,
+            version: str = None,
+            height: int = -1,
+            timestamp: int = -1,
+            block_hash: bytes = None,
+            prev_block_hash: bytes = None,
+            leader: "Address" = None,
+            state_hash: bytes = None,
+            prev_votes: Optional[List[Vote]] = None,
+            transactions: List[Dict[str, Any]] = None,
+            reps_hash: bytes = None,
     ):
         """
         :param transactions: transactions which contains items have already been converted to object
@@ -53,6 +55,7 @@ class Block(object):
         self.state_hash: bytes = state_hash
         self.prev_votes: Optional[List[Vote]] = prev_votes
         self.transactions: List[Dict[str, Any]] = transactions
+        self.reps_hash: bytes = reps_hash
 
     def __str__(self):
         return (
@@ -64,7 +67,8 @@ class Block(object):
             f"leader={self.leader} "
             f"state_hash={bytes_to_hex(self.state_hash)} "
             f"prev_votes={self.prev_votes} "
-            f"transactions={self.transactions}"
+            f"transactions={self.transactions} "
+            f"reps_hash={self.reps_hash}"
         )
 
     def __dir__(self) -> Iterable[str]:
@@ -78,6 +82,7 @@ class Block(object):
             "state_hash",
             "prev_votes",
             "transactions",
+            "reps_hash"
         )
 
     def __eq__(self, other):
@@ -119,6 +124,7 @@ class Block(object):
             state_hash=loopchain_block.state_hash,
             prev_votes=prev_votes,
             transactions=transactions,
+            reps_hash=loopchain_block.reps_hash,
         )
 
     def to_bytes(self) -> bytes:
@@ -132,5 +138,6 @@ class Block(object):
             self.state_hash,
             self.prev_votes,
             self.transactions,
+            self.reps_hash,
         ]
         return pack.encode(obj)
