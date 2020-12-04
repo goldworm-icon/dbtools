@@ -184,13 +184,24 @@ class IconServiceSyncer(object):
 
         print("block_height | commit_state | state_root_hash | tx_count")
 
+        prev_bin_block: Optional["BinBlock"] = None
         prev_block: Optional["Block"] = None
-        prev_bin_block: Optional[BinBlock] = None
-        if start_height > 0:
-            prev_bin_block = self._block_reader.get_block_by_height(start_height - 1)
-
-        main_preps: Optional["NodeContainer"] = None
+        main_preps: Optional['NodeContainer'] = None
         next_main_preps: Optional["NodeContainer"] = None
+
+        if start_height > 0:
+            prev_bin_block: Optional[BinBlock] = self._block_reader.get_block_by_height(start_height - 1)
+            # init main_preps
+            preps: list = self._block_reader.load_main_preps(reps_hash=prev_bin_block.reps_hash)
+            main_preps: Optional['NodeContainer'] = NodeContainer.from_list(preps=preps)
+
+            # when sync from the first block of term, have to initialize next_main_preps here
+            # in that case, invoke_result[3] will be None on first block and can not update next_main_preps
+            cur_bin_block: Optional[BinBlock] = self._block_reader.get_block_by_height(start_height)
+            block: "Block" = create_iconservice_block(cur_bin_block)
+            if self._check_calculation_block(block):
+                preps: list = self._block_reader.load_main_preps(reps_hash=cur_bin_block.reps_hash)
+                next_main_preps: Optional['NodeContainer'] = NodeContainer.from_list(preps=preps)
 
         end_height = start_height + count - 1
 
@@ -287,8 +298,8 @@ class IconServiceSyncer(object):
                 time.sleep(0.5)
             # Prepare the next iteration
             self._backup_state_db(block, backup_period)
-            prev_block = block
-            prev_bin_block = bin_block
+            prev_block: 'Block' = block
+            prev_bin_block: 'BinBlock' = bin_block
 
             if next_main_preps:
                 main_preps = next_main_preps
@@ -450,15 +461,12 @@ class IconServiceSyncer(object):
     def _check_calculation_block(self, block: "Block") -> bool:
         """check calculation block"""
 
-        precommit_data_manager: PrecommitDataManager = getattr(
-            self._engine, "_precommit_data_manager"
-        )
-        precommit_data: PrecommitData = precommit_data_manager.get(block.hash)
-        if precommit_data.revision < Revision.IISS.value:
-            return False
-
         context = IconScoreContext(IconScoreContextType.DIRECT)
+        revision = self._engine._get_revision_from_rc(context)
         context.block = block
+
+        if revision < Revision.IISS.value:
+            return False
 
         start_block = context.engine.iiss.get_start_block_of_calc(context)
         return start_block == block.height

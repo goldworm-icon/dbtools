@@ -21,7 +21,7 @@ from typing import Optional
 
 import plyvel
 
-from icondbtools.libs import BLOCK_HEIGHT_KEY_PREFIX, LAST_BLOCK_KEY
+from icondbtools.libs import BLOCK_HEIGHT_KEY_PREFIX, LAST_BLOCK_KEY, PREPS_KEY_PREFIX
 from icondbtools.utils.convert_type import convert_hex_str_to_bytes
 
 
@@ -73,7 +73,7 @@ class BlockDatabaseReader(object):
         if reps_hash is None:
             return []
 
-        key: bytes = b'preps_key' + bytes.fromhex(reps_hash[2:])
+        key: bytes = PREPS_KEY_PREFIX + bytes.fromhex(reps_hash[2:])
         value: bytes = self._db.get(key=key)
         preps: list = json.loads(value)
         return preps

@@ -22,16 +22,17 @@ from ..utils.convert_type import str_to_int, convert_hex_str_to_bytes
 
 class LoopchainBlock(object):
     def __init__(
-        self,
-        version: str = None,
-        height: int = -1,
-        timestamp: int = -1,
-        block_hash: bytes = None,
-        prev_block_hash: bytes = None,
-        leader: "Address" = None,
-        state_hash: bytes = None,
-        prev_votes: Optional[list] = None,
-        transactions: list = None,
+            self,
+            version: str = None,
+            height: int = -1,
+            timestamp: int = -1,
+            block_hash: bytes = None,
+            prev_block_hash: bytes = None,
+            leader: "Address" = None,
+            state_hash: bytes = None,
+            prev_votes: Optional[list] = None,
+            transactions: list = None,
+            reps_hash: bytes = None,
     ):
         self.version = version
         self.height = height
@@ -42,6 +43,7 @@ class LoopchainBlock(object):
         self.state_hash: bytes = state_hash
         self.prev_votes: Optional[list] = prev_votes
         self.transactions = transactions
+        self.reps_hash: bytes = reps_hash
 
     def __bool__(self):
         return True
@@ -77,6 +79,10 @@ class LoopchainBlock(object):
         prev_votes: Optional[list] = block.get("prevVotes")
         transactions: list = block["confirmed_transaction_list"]
 
+        reps_hash: Optional[bytes] = None
+        if "repsHash" in block:
+            reps_hash: Optional[bytes] = convert_hex_str_to_bytes(block["repsHash"])
+
         return LoopchainBlock(
             version=version,
             height=height,
@@ -87,6 +93,7 @@ class LoopchainBlock(object):
             leader=leader,
             prev_votes=prev_votes,
             transactions=transactions,
+            reps_hash=reps_hash,
         )
 
     @classmethod
@@ -118,6 +125,10 @@ class LoopchainBlock(object):
         prev_votes: Optional[list] = block.get("prevVotes")
         transactions: list = block["transactions"]
 
+        reps_hash: Optional[bytes] = None
+        if "repsHash" in block:
+            reps_hash: Optional[bytes] = convert_hex_str_to_bytes(block["repsHash"])
+
         return LoopchainBlock(
             version=version,
             height=height,
@@ -128,4 +139,5 @@ class LoopchainBlock(object):
             leader=leader,
             prev_votes=prev_votes,
             transactions=transactions,
+            reps_hash=reps_hash,
         )
