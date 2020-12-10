@@ -13,19 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Tuple
-
 from icondbtools.command.command import Command
 from ..migrate.block_migrator import BlockMigrator
 
 
-class CommandMovePReps(Command):
+class CommandCopyPReps(Command):
     def __init__(self, sub_parser, common_parser):
         self.add_parser(sub_parser, common_parser)
 
     def add_parser(self, sub_parser, common_parser):
-        name = "mv_preps"
-        desc = "move preps data from src_db to dest_db"
+        name = "cp_preps"
+        desc = "copy preps data from src_db to dest_db"
 
         # create the parser for the 'sync' command
         parser = sub_parser.add_parser(name, parents=[common_parser], help=desc)
@@ -40,5 +38,5 @@ class CommandMovePReps(Command):
 
         block_migrator = BlockMigrator()
         block_migrator.open(db_path, new_db_path)
-        block_migrator.mv_preps()
+        block_migrator.cp_preps()
         block_migrator.close()

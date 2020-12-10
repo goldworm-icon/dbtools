@@ -85,7 +85,7 @@ class BlockMigrator(object):
             self._timer.stop()
             self._print_status()
 
-    def mv_preps(self):
+    def cp_preps(self):
         self._timer.start()
         try:
             self._migrate_preps()
@@ -173,5 +173,5 @@ class BlockMigrator(object):
 if __name__ == '__main__':
     bm = BlockMigrator()
     bm.open(db_path="../db_icon_dex", new_db_path="../newdb")
-    bm.mv_preps()
+    bm.cp_preps()
     bm.close()

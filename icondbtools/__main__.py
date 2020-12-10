@@ -41,7 +41,7 @@ from icondbtools.command.command_tps import CommandTps
 from icondbtools.command.command_transactions import CommandTransactions
 from icondbtools.command.command_txresult import CommandTxResult
 from icondbtools.command.command_prune import CommandPrune
-from icondbtools.command.command_mv_preps import CommandMovePReps
+from icondbtools.command.command_cp_preps import CommandCopyPReps
 from icondbtools.utils.timer import Timer
 
 
@@ -75,7 +75,7 @@ def main():
 
         # Pruning DB
         CommandPrune,
-        CommandMovePReps,
+        CommandCopyPReps,
     ]
 
     parser = argparse.ArgumentParser(prog=name, description=f"{name}-{version}")
