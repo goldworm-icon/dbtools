@@ -85,6 +85,17 @@ class BlockMigrator(object):
             self._timer.stop()
             self._print_status()
 
+    def mv_preps(self):
+        self._timer.start()
+        try:
+            self._migrate_preps()
+        except Exception as e:
+            raise e
+        finally:
+            # Write data remaining in write_batch to the target db
+            self._flush()
+            self._timer.stop()
+
     def _run(self, start: int, end: int):
         """
         :param start: start block to migrate
@@ -162,4 +173,5 @@ class BlockMigrator(object):
 if __name__ == '__main__':
     bm = BlockMigrator()
     bm.open(db_path="../db_icon_dex", new_db_path="../newdb")
-    bm.run(22600000, 100000)
+    bm.mv_preps()
+    bm.close()
