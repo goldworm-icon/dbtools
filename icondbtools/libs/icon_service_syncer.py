@@ -43,6 +43,7 @@ from icondbtools.word_detector import WordDetector
 from .block_database_reader import BlockDatabaseReader
 from .loopchain_block import LoopchainBlock
 from ..data.node_container import NodeContainer
+from ..utils.utils import remove_dir
 
 if TYPE_CHECKING:
     from iconservice.database.batch import BlockBatch
@@ -378,7 +379,7 @@ class IconServiceSyncer(object):
                         f"{Storage.IISS_RC_DB_NAME_PREFIX}{block_height - 1}",
                     )
                     if os.path.exists(dst_path):
-                        shutil.rmtree(dst_path)
+                        remove_dir(dst_path)
                     shutil.copytree(entry.path, dst_path)
                     break
 

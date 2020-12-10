@@ -17,30 +17,31 @@ import argparse
 import sys
 
 from icondbtools.command.command_total_balance import CommandTotalBalance
-from .__about__ import version, name
-from .command.command_account import CommandAccount
-from .command.command_balance import CommandBalance
-from .command.command_block import CommandBlock
-from .command.command_cdb import CommandCDB
-from .command.command_clear import CommandClear
-from .command.command_copy import CommandCopy
-from .command.command_dbinfo import CommandDbinfo
-from .command.command_fastsync import CommandFastSync
-from .command.command_ghost_icx import CommandGhostICX
-from .command.command_iiss_data import CommandIISSData
-from .command.command_iiss_tx_data import CommandIISSTXData
-from .command.command_invalidtx import CommandInvalidTx
-from .command.command_lastblock import CommandLastBlock
-from .command.command_migrate import CommandMigrate
-from .command.command_statehash import CommandStateHash
-from .command.command_statelastblock import CommandStateLastBlock
-from .command.command_sync import CommandSync
-from .command.command_term import CommandTerm
-from .command.command_token import CommandToken
-from .command.command_tps import CommandTps
-from .command.command_transactions import CommandTransactions
-from .command.command_txresult import CommandTxResult
-from .utils.timer import Timer
+from icondbtools.__about__ import version, name
+from icondbtools.command.command_account import CommandAccount
+from icondbtools.command.command_balance import CommandBalance
+from icondbtools.command.command_block import CommandBlock
+from icondbtools.command.command_cdb import CommandCDB
+from icondbtools.command.command_clear import CommandClear
+from icondbtools.command.command_copy import CommandCopy
+from icondbtools.command.command_dbinfo import CommandDbinfo
+from icondbtools.command.command_fastsync import CommandFastSync
+from icondbtools.command.command_ghost_icx import CommandGhostICX
+from icondbtools.command.command_iiss_data import CommandIISSData
+from icondbtools.command.command_iiss_tx_data import CommandIISSTXData
+from icondbtools.command.command_invalidtx import CommandInvalidTx
+from icondbtools.command.command_lastblock import CommandLastBlock
+from icondbtools.command.command_migrate import CommandMigrate
+from icondbtools.command.command_statehash import CommandStateHash
+from icondbtools.command.command_statelastblock import CommandStateLastBlock
+from icondbtools.command.command_sync import CommandSync
+from icondbtools.command.command_term import CommandTerm
+from icondbtools.command.command_token import CommandToken
+from icondbtools.command.command_tps import CommandTps
+from icondbtools.command.command_transactions import CommandTransactions
+from icondbtools.command.command_txresult import CommandTxResult
+from icondbtools.command.command_prune import CommandPrune
+from icondbtools.utils.timer import Timer
 
 
 def main():
@@ -70,6 +71,9 @@ def main():
         CommandCDB,
         CommandMigrate,
         CommandFastSync,
+
+        # Pruning DB
+        CommandPrune
     ]
 
     parser = argparse.ArgumentParser(prog=name, description=f"{name}-{version}")
