@@ -168,6 +168,7 @@ class BlockMigrator(object):
             preps = PReps.from_json_bytes(value)
             value = preps.to_bytes()
             self._write_batch.put(preps_key, value)
+            self._bytes_to_write += len(value)
 
 
 if __name__ == '__main__':
