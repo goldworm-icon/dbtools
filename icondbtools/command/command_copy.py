@@ -31,6 +31,8 @@ from icondbtools.libs.block_database_raw_reader import (
     BlockDatabaseRawReader,
     TransactionParser,
 )
+from icondbtools.migrate.block_migrator import make_preps_key
+from icondbtools.migrate.preps import PReps
 
 
 class CommandCopy(Command):
@@ -139,20 +141,9 @@ class CommandCopy(Command):
 
     @classmethod
     def _write_reps_data(cls, wb, block_reader, block: bytes):
-        block_dict: dict = json.loads(block)
-
-        if block_dict["version"] != "0.1a":
-            # Copy reps_data
-            reps_hash: str = block_dict.get("repsHash", "0x")[2:]
-            reps_data = block_reader.get_reps(bytes.fromhex(reps_hash))
-            wb.put(PREPS_KEY_PREFIX + bytes.fromhex(reps_hash), reps_data)
-
-            # Copy next_reps_data
-            next_reps_hash = block_dict.get("nextRepsHash")
-            if next_reps_hash != ZERO_HASH:
-                next_reps_hash = bytes.fromhex(next_reps_hash[2:])
-                reps_data = block_reader.get_reps(next_reps_hash)
-                wb.put(PREPS_KEY_PREFIX + next_reps_hash, reps_data)
+        reps_data: dict = block_reader.get_reps_data()
+        for key, value in reps_data.items():
+            wb.put(key, value)
 
     @classmethod
     def _copy_stats(cls, wb, block_reader, last_block: bytes):

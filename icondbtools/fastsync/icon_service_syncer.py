@@ -470,6 +470,7 @@ class IconServiceSyncer(object):
             return False
 
         start_block = context.engine.iiss.get_start_block_of_calc(context)
+        print(f"start_block: {start_block}")
         return start_block == block.height
 
     @staticmethod
