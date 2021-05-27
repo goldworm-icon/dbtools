@@ -57,8 +57,13 @@ class CommandUnstake(Command):
             for result in iter_results:
                 coin_part = reader.get_coin_part(result[0])
                 stake_part = result[1]
-                value = {"balance": coin_part.balance}
-                value.update(stake_part.to_dict())
+                value = {
+                    "balance": coin_part.balance,
+                    "stake": stake_part.stake,
+                    "unstakesInfo": stake_part.unstakes_info,
+                    "unstakeBlockHeight": stake_part.unstake_block_height,
+                    "unstake": stake_part.unstake,
+                }
                 results[str(result[0])] = value
 
         finally:
