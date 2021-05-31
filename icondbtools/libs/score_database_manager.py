@@ -20,6 +20,18 @@ class ScoreDatabaseManager(object):
         key: bytes = self._create_dict_db_key(dict_db_name, address)
         self._db.put(key, value)
 
+    def get_array_db_size(self, db_name: str) -> bytes:
+        db_data_type: bytes = b'\x00'
+        items = [
+            self._score_address.to_bytes(),
+            db_data_type,
+            db_name.encode('utf-8'),
+            b"size",
+        ]
+        key: bytes = b'|'.join(items)
+        value: bytes = self._db.get(key)
+        return value
+
     def _create_dict_db_key(self, dict_db_name: str, address: bytes) -> bytes:
         dict_db_data_type: bytes = b"\x01"
         items = [

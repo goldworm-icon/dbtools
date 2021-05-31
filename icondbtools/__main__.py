@@ -37,6 +37,7 @@ from .command.command_statelastblock import CommandStateLastBlock
 from .command.command_sync import CommandSync
 from .command.command_term import CommandTerm
 from .command.command_token import CommandToken
+from .command.command_array import CommandArray
 from .command.command_tps import CommandTps
 from .command.command_transactions import CommandTransactions
 from .command.command_txresult import CommandTxResult
@@ -55,6 +56,7 @@ def main():
         CommandAccount,
         CommandTps,
         CommandToken,
+        CommandArray,
         CommandInvalidTx,
         CommandDbinfo,
         CommandIISSData,
