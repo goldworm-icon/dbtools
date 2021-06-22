@@ -16,6 +16,7 @@
 import argparse
 import sys
 
+from icondbtools.command.command_asset import CommandAsset
 from icondbtools.command.command_total_balance import CommandTotalBalance
 from .__about__ import version, name
 from .command.command_account import CommandAccount
@@ -53,6 +54,7 @@ def main():
         CommandStateHash,
         CommandStateLastBlock,
         CommandAccount,
+        CommandAsset,
         CommandTps,
         CommandToken,
         CommandInvalidTx,
