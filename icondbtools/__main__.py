@@ -16,6 +16,7 @@
 import argparse
 import sys
 
+from icondbtools.command.command_dict import CommandDict
 from icondbtools.command.command_total_balance import CommandTotalBalance
 from .__about__ import version, name
 from .command.command_account import CommandAccount
@@ -67,6 +68,7 @@ def main():
         CommandTransactions,
         CommandTotalBalance,
         CommandGhostICX,
+        CommandDict,
 
         # Commands for compact db
         CommandCDB,

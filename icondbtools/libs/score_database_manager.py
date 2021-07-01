@@ -33,12 +33,14 @@ class ScoreDatabaseManager(object):
         return value
 
     def _create_dict_db_key(self, dict_db_name: str, address: bytes) -> bytes:
+        if isinstance(address, Address):
+            address = address.to_bytes()
         dict_db_data_type: bytes = b"\x01"
         items = [
             self._score_address.to_bytes(),
             dict_db_data_type,
             dict_db_name.encode("utf-8"),
-            address.to_bytes(),
+            address,
         ]
 
         return b"|".join(items)
