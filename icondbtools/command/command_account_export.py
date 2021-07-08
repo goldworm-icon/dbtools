@@ -78,8 +78,6 @@ class CommandAccountExport(Command):
                         account = reader.get_account(address, block.height, revision)
                         result[str(address)] = get_account_info(account, revision)
                         i += 1
-                        if i % 100 == 0:
-                            print(".")
                     else:
                         continue
                 except BaseException as e:
@@ -137,12 +135,13 @@ def get_stake(account: 'Account', revision: int) -> dict:
 
 
 def get_delegation(account: 'Account') -> dict:
+    data = {}
     delegation_list: list = []
     for address, value in account.delegations:
         delegation_list.append({"address": str(address), "value": value})
-    data = {
-        "delegations": delegation_list
-    }
+
+    if len(delegation_list) > 0:
+        data["delegations"] = delegation_list
     return data
 
 
