@@ -14,6 +14,8 @@
 # limitations under the License.
 
 import json
+import os
+import subprocess
 from typing import Optional, List, Tuple
 
 from iconservice.base.address import Address
@@ -47,6 +49,11 @@ class CommandAccountExport(Command):
 
         # create the parser for account
         parser_account = sub_parser.add_parser(name, parents=[common_parser], help=desc)
+        parser_account.add_argument(
+            "--rc-dbtool",
+            type=str,
+            help="Path of reward calculator dbtool",
+        )
         parser_account.set_defaults(func=self.run)
 
     def run(self, args):
@@ -56,6 +63,9 @@ class CommandAccountExport(Command):
         :return:
         """
         db_path: str = args.db
+        rc_dbtool_path: str = args.rc_dbtool
+        path, _ = os.path.split(db_path)
+        rc_db_path: str = os.path.join(path, "rc", "IScore")
         reader = StateDatabaseReader()
 
         try:
@@ -65,10 +75,11 @@ class CommandAccountExport(Command):
             revision = get_revision(height)
             print(f"BH: {height}, Revision: {revision}")
 
-            result = {"block": height}
+            result = {"block": height, "accounts": {}}
 
             iterator = reader.iterator
 
+            print(f"> Read account information from {db_path}")
             i = 0
             errors = 0
             for key, value in iterator:
@@ -76,13 +87,25 @@ class CommandAccountExport(Command):
                     if is_account_key(key):
                         address = Address.from_bytes(key)
                         account = reader.get_account(address, block.height, revision)
-                        result[str(address)] = get_account_info(account, revision)
+                        result["accounts"][str(address)] = get_account_info(account, revision)
                         i += 1
                     else:
                         continue
                 except BaseException as e:
                     print(f"error {e}")
                     errors += 1
+
+            print(f"> Get IScore information from {rc_db_path} via {rc_dbtool_path}")
+            iscore_file = "./iscore.json"
+            cmd = f"{rc_dbtool_path} iscore -dbroot {rc_db_path} -output {iscore_file}"
+            popen = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+            popen.communicate()
+            print(f"> Merge account and IScore information")
+            with open(iscore_file, 'r', encoding='utf-8') as jf:
+                iscore: dict = json.load(jf)
+                for key, value in iscore.items():
+                    if key in result["accounts"]:
+                        result["accounts"][key]["iscore"] = value
 
             filename = f'./icon1_account_info_{height}.json'
             with open(filename, 'w', encoding='utf-8') as jf:
@@ -138,7 +161,7 @@ def get_delegation(account: 'Account') -> dict:
     data = {}
     delegation_list: list = []
     for address, value in account.delegations:
-        delegation_list.append({"address": str(address), "value": value})
+        delegation_list.append({"address": str(address), "value": hex(value)})
 
     if len(delegation_list) > 0:
         data["delegations"] = delegation_list
