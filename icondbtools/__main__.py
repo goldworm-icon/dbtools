@@ -19,6 +19,7 @@ import sys
 from icondbtools.command.command_total_balance import CommandTotalBalance
 from icondbtools.__about__ import version, name
 from icondbtools.command.command_account import CommandAccount
+from icondbtools.command.command_account_export import CommandAccountExport
 from icondbtools.command.command_balance import CommandBalance
 from icondbtools.command.command_block import CommandBlock
 from icondbtools.command.command_cdb import CommandCDB
@@ -55,6 +56,7 @@ def main():
         CommandStateHash,
         CommandStateLastBlock,
         CommandAccount,
+        CommandAccountExport,
         CommandTps,
         CommandToken,
         CommandInvalidTx,

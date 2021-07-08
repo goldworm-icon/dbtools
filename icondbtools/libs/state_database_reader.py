@@ -74,20 +74,22 @@ class StateDatabaseReader(object):
 
         coin_part = self._get_part(CoinPart, address)
         stake_part = self._get_part(StakePart, address)
-        print("coinPart flag : ", coin_part.flags)
-        print("coinPart balance : ", coin_part.balance)
-        print("coinPart has Unstake : ", CoinPartFlag.HAS_UNSTAKE in coin_part.flags)
-        print("stakePart stake : ", stake_part.stake)
-        print("stakePart unstake : ", stake_part.unstake)
-        print("stakePart unstakes_info : ", stake_part.unstakes_info)
-        print("stakePart unstakeBlockHeight : ", stake_part.unstake_block_height)
+        delegation_part = self._get_part(DelegationPart, address)
+        # print("coinPart flag : ", coin_part.flags)
+        # print("coinPart balance : ", coin_part.balance)
+        # print("coinPart has Unstake : ", CoinPartFlag.HAS_UNSTAKE in coin_part.flags)
+        # print("stakePart stake : ", stake_part.stake)
+        # print("stakePart unstake : ", stake_part.unstake)
+        # print("stakePart unstakes_info : ", stake_part.unstakes_info)
+        # print("stakePart unstakeBlockHeight : ", stake_part.unstake_block_height)
 
         return Account(
             address,
             current_block_height,
             revision,
             coin_part=coin_part,
-            stake_part=stake_part
+            stake_part=stake_part,
+            delegation_part=delegation_part,
         )
 
     @property
