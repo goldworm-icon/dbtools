@@ -24,6 +24,7 @@ from iconservice.icx.coin_part import CoinPart, CoinPartFlag
 from iconservice.icx.delegation_part import DelegationPart
 from iconservice.icx.icx_account import Account
 from iconservice.icx.stake_part import StakePart
+from iconservice.utils.msgpack_for_db import MsgPackForDB
 
 
 class StateHash(object):
@@ -137,6 +138,17 @@ class StateDatabaseReader(object):
     def get_total_supply(self) -> int:
         value: bytes = self._db.get(b'total_supply')
         return int.from_bytes(value, 'big') if value else 0
+
+    def get_total_stake(self) -> int:
+        value: bytes = self._db.get(b'iiss' + b'ts')
+        if value:
+            data = MsgPackForDB.loads(value)
+            version: int = data[0]
+            assert version == 0
+            total_stake: int = data[1]
+            return total_stake
+        else:
+            return 0
 
     def create_state_hash(self, prefix: bytes = None) -> "StateHash":
         """Read key and value from state db and create sha3 hash value from them

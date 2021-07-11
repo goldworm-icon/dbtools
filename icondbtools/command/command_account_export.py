@@ -75,7 +75,14 @@ class CommandAccountExport(Command):
             revision = get_revision(height)
             print(f"BH: {height}, Revision: {revision}")
 
-            result = {"block": height, "accounts": {}}
+            result = {
+                "blockHeight": height,
+                "status": {
+                    "totalSupply": reader.get_total_supply(),
+                    "totalStake": reader.get_total_stake(),
+                },
+                "accounts": {},
+            }
 
             iterator = reader.iterator
 
