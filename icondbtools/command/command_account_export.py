@@ -64,6 +64,8 @@ class CommandAccountExport(Command):
         """
         db_path: str = args.db
         rc_dbtool_path: str = args.rc_dbtool
+        if db_path[-1] == os.path.sep:
+            db_path = db_path[:-1]
         path, _ = os.path.split(db_path)
         rc_db_path: str = os.path.join(path, "rc", "IScore")
         reader = StateDatabaseReader()
@@ -114,7 +116,7 @@ class CommandAccountExport(Command):
                     if key in result["accounts"]:
                         result["accounts"][key]["iscore"] = value
 
-            filename = f'./icon1_account_info_{height}.json'
+            filename = f'./icon1_account_info_{height:08d}.json'
             with open(filename, 'w', encoding='utf-8') as jf:
                 json.dump(result, jf, indent=2)
             print(f"Get {i} accounts and {errors} errors. Check result file: {filename}")
