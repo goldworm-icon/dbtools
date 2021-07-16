@@ -12,10 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import json
-import os
 import subprocess
+from pathlib import Path
 from typing import Optional, List, Tuple
 
 from iconservice.base.address import Address
@@ -51,7 +50,7 @@ class CommandAccountExport(Command):
         parser_account = sub_parser.add_parser(name, parents=[common_parser], help=desc)
         parser_account.add_argument(
             "--rc-dbtool",
-            type=str,
+            type=Path,
             help="Path of reward calculator dbtool",
         )
         parser_account.set_defaults(func=self.run)
@@ -62,16 +61,20 @@ class CommandAccountExport(Command):
         :param args:
         :return:
         """
-        db_path: str = args.db
-        rc_dbtool_path: str = args.rc_dbtool
-        if db_path[-1] == os.path.sep:
-            db_path = db_path[:-1]
-        path, _ = os.path.split(db_path)
-        rc_db_path: str = os.path.join(path, "rc", "IScore")
+        db_path = Path(args.db).resolve()
+        if db_path.is_dir() is False:
+            raise ValueError("There is no state DB")
+        rc_db_path = db_path.parent / "rc" / "IScore"
+        if rc_db_path.is_dir() is False:
+            raise ValueError("There is no RC DB")
+        rc_dbtool_path: Path = args.rc_dbtool.resolve()
+        if rc_dbtool_path.is_file() is False:
+            raise ValueError("There is no RC dbtool")
+
         reader = StateDatabaseReader()
 
         try:
-            reader.open(db_path)
+            reader.open(str(db_path))
             block = reader.get_last_block()
             height = block.height
             revision = get_revision(height)
