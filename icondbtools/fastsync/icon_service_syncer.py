@@ -208,7 +208,7 @@ class IconServiceSyncer(object):
 
         self._timer.start()
 
-        for height in range(start_height, start_height + count):
+        for height in range(start_height, end_height + 1):
             bin_block = self._block_reader.get_block_by_height(height)
             if bin_block is None:
                 print(f"last block: {height - 1}")

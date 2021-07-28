@@ -50,3 +50,6 @@ class NodeContainer(object):
             nodes[node.address] = node
 
         return NodeContainer(state, nodes)
+
+    def __str__(self):
+        return "\n".join((f"{i}:{node}" for i, node in enumerate(self)))

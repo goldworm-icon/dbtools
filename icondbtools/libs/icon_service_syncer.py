@@ -263,7 +263,7 @@ class IconServiceSyncer(object):
 
         end_height = start_height + count - 1
 
-        for height in range(start_height, start_height + count):
+        for height in range(start_height, end_height + 1):
             block_dict: dict = self._block_reader.get_block_by_block_height(height)
 
             if block_dict is None:

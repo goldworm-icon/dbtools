@@ -28,3 +28,6 @@ class Node(object):
         p2p_endpoint: str = data["p2pEndpoint"]
 
         return Node(address, p2p_endpoint)
+
+    def __str__(self) -> str:
+        return f"{self._address}:{self._p2p_endpoint}"
