@@ -509,7 +509,7 @@ class IconServiceSyncer(object):
             f"{timedelta(seconds=estimated_time_s)}",
         )
 
-        print(" | ".join(status), flush=True)
+        print(f'{" | ".join(status)}\r', flush=True, end="")
 
     def close(self):
         pass

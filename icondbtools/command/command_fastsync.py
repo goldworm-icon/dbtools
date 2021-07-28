@@ -183,3 +183,4 @@ class CommandFastSync(Command):
             )
         finally:
             syncer.close()
+            print("\n")
