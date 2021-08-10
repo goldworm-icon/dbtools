@@ -20,6 +20,7 @@ from typing import Optional, List, Tuple
 from iconservice.base.address import Address
 from iconservice.icon_constant import Revision
 from iconservice.icx.icx_account import Account
+from iconservice.icx.issue.storage import RegulatorVariable
 
 from icondbtools.command.command import Command
 from icondbtools.libs.state_database_reader import StateDatabaseReader
@@ -86,14 +87,22 @@ class CommandAccountExport(Command):
                     "totalSupply": reader.get_total_supply(),
                     "totalStake": reader.get_total_stake(),
                 },
-                "accounts": {},
             }
 
-            iterator = reader.iterator
+            bs = reader.get_by_key(b'regulator_variable')
+            if bs is not None:
+                rv = RegulatorVariable.from_bytes(bs)
+                result["issue"] = {
+                    "issuedICX": rv.current_calc_period_issued_icx,
+                    "prevIssuedICX": rv.prev_calc_period_issued_icx,
+                    "overIssuedIScore": rv.over_issued_iscore,
+                }
 
             print(f"> Read account information from {db_path}")
+            result["accounts"] = {}
             i = 0
             errors = 0
+            iterator = reader.iterator
             for key, value in iterator:
                 try:
                     if is_account_key(key):
