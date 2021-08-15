@@ -14,17 +14,20 @@
 # limitations under the License.
 
 import hashlib
-from typing import Union, Optional
+from typing import Union, Optional, Iterator
 
 import plyvel
 
 from iconservice.base.address import Address
 from iconservice.base.block import Block
-from iconservice.icx.coin_part import CoinPart, CoinPartFlag
+from iconservice.icx.coin_part import CoinPart
 from iconservice.icx.delegation_part import DelegationPart
 from iconservice.icx.icx_account import Account
 from iconservice.icx.stake_part import StakePart
 from iconservice.utils.msgpack_for_db import MsgPackForDB
+from iconservice.iconscore.db import (
+    PrefixStorage, Key, KeyType
+)
 
 
 class StateHash(object):
@@ -116,13 +119,8 @@ class StateDatabaseReader(object):
         part.set_complete(True)
         return part
 
-    def get_by_key(self, key):
-        value: bytes = self._db.get(key)
-
-        if value is None:
-            return None
-
-        return value
+    def get_by_key(self, key: bytes) -> bytes:
+        return self._db.get(key)
 
     def get_last_block(self) -> "Block":
         """Read the last commited block from statedb
@@ -187,3 +185,10 @@ class StateDatabaseReader(object):
 
         state_hash: bytes = sha3_256.digest()
         return state_hash, rows, total_key_size, total_value_size
+
+
+def create_container_db_key(score: Address, prefix_keys: Iterator[Key], last_key: Union[bytes, Key], use_rlp: bool) -> bytes:
+    prefixes = PrefixStorage(prefix_keys)
+    body: bytes = prefixes.get_final_key(last_key, use_rlp)
+    sep = b"" if use_rlp else b"|"
+    return sep.join((score.to_bytes(), body))
