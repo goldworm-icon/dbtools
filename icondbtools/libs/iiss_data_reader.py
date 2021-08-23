@@ -18,6 +18,8 @@ from typing import List
 
 import plyvel
 
+from iconservice.iiss.reward_calc.msg_data import TxData
+
 
 class BPCountResult(object):
     def __init__(
@@ -98,6 +100,14 @@ class IISSDataReader(object):
         if self._db:
             self._db.close()
             self._db = None
+
+    @property
+    def iterator(self):
+        return self._db.iterator()
+
+    @property
+    def tx_iterator(self):
+        return self._db.iterator(prefix=TxData.PREFIX)
 
     def count_bp(self) -> "BPCountResult":
         prefix = b"BP"

@@ -17,13 +17,16 @@ import subprocess
 from pathlib import Path
 from typing import Optional, List, Tuple
 
+from icondbtools.command.command import Command
+from icondbtools.libs.iiss_data_reader import IISSDataReader
+from icondbtools.libs.state_database_reader import StateDatabaseReader
+from icondbtools.libs.term_calculator import TermCalculator, Term
 from iconservice.base.address import Address
 from iconservice.icon_constant import Revision
 from iconservice.icx.icx_account import Account
 from iconservice.icx.issue.storage import RegulatorVariable
+from iconservice.iiss.reward_calc.msg_data import TxData, TxType, DelegationTx
 
-from icondbtools.command.command import Command
-from icondbtools.libs.state_database_reader import StateDatabaseReader
 from .command_total_balance import is_account_key
 
 revision_array = [
@@ -65,6 +68,9 @@ class CommandAccountExport(Command):
         db_path = Path(args.db).resolve()
         if db_path.is_dir() is False:
             raise ValueError("There is no state DB")
+        iiss_db_path = db_path.parent / "iiss" / "current_db"
+        if iiss_db_path.is_dir():
+            export_iiss_data = True
         rc_db_path = db_path.parent / "rc" / "IScore"
         if rc_db_path.is_dir() is False:
             raise ValueError("There is no RC DB")
@@ -80,9 +86,11 @@ class CommandAccountExport(Command):
             height = block.height
             revision = get_revision(height)
             print(f"BH: {height}, Revision: {revision}")
-
+            term_calc = TermCalculator()
+            term: Term = term_calc.calc_decentralization_term_info_by_block(height)
             result = {
                 "blockHeight": height,
+                "termHeight": term.start_height,
                 "status": {
                     "totalSupply": reader.get_total_supply(),
                     "totalStake": reader.get_total_stake(),
@@ -97,6 +105,19 @@ class CommandAccountExport(Command):
                     "prevIssuedICX": rv.prev_calc_period_issued_icx,
                     "overIssuedIScore": rv.over_issued_iscore,
                 }
+
+            if export_iiss_data:
+                print(f"> Read IISS data from {iiss_db_path}")
+                result["front"] = {}
+                iiss_reader = IISSDataReader()
+                iiss_reader.open(str(iiss_db_path))
+                iterator = iiss_reader.tx_iterator
+                iiss_event = []
+                for key, value in iterator:
+                    tx = TxData.from_bytes(value)
+                    iiss_event.append(iiss_tx_to_json(tx))
+                if len(iiss_event) > 0:
+                    result["front"]["event"] = iiss_event
 
             print(f"> Read account information from {db_path}")
             result["accounts"] = {}
@@ -195,3 +216,14 @@ def get_revision(height: int) -> int:
             return idx - 1
 
     return idx
+
+
+def iiss_tx_to_json(tx: TxData) -> dict:
+    jso = {
+        "height": tx.block_height,
+        "address": str(tx.address),
+        "type": tx.type,
+    }
+    if tx.type == TxType.DELEGATION:
+        jso["data"] = [{"address": str(x.address), "value": x.value} for x in tx.data.delegation_info]
+    return jso
